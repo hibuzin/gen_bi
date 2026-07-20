@@ -1,0 +1,376 @@
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 3px 20px 20px 20px;
+  background: #ffffff;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  min-height: calc(100vh - 20px);
+  gap: 0; /* remove unwanted spacing */
+}
+
+.header {
+  padding: 18px 22px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header h1 {
+  font-size: var(--heading-text);
+  font-weight: var(--heading-fontweight);
+  color: var(--heading-color);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  
+}
+
+.leftPanel {
+  border-right: 1px solid #e5e7eb;
+  background: #fff;
+  padding-left: 0;   /* important */
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 3px solid #e8e5eb;
+}
+
+.tabBtn {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  background: #fff;
+  border-radius: 1px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #555;
+  border-bottom: 2px solid transparent;
+  transition: 0.2s ease;
+}
+
+.tabBtn:hover {
+  background: none;
+  color: #111827;
+}
+
+.active {
+  color: #4A3DC6;
+  border-bottom: 2px solid #4A3DC6;
+  background: #f3f3f6;
+}
+
+.active:hover {
+  background: #f3f3f6;
+  color: #4A3DC6;
+}
+
+.section {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sectionTitle {
+  padding: 16px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+  color: #222;
+}
+
+.optionList {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 18px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: 0.2s ease;
+  background: #fff;
+}
+
+.optionCard:hover {
+  border-color: #4A3DC6;
+  transform: translateY(-1px);
+}
+
+.selected {
+  border-color: rgb(234, 233, 233);
+  background: #f7f9f9;
+}
+
+.optionCard span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.check {
+  color: #4A3DC6;
+  font-size: 18px;
+}
+
+.logoBox {
+  padding: 20px;
+}
+
+.logoUpload {
+  height: 170px;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #4A3DC6;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.logoUpload:hover {
+  background: #fafafa;
+}
+
+.logoUpload svg {
+  font-size: 34px;
+}
+
+.noteBox {
+  margin-top: 16px;
+
+  background: #f5f3ff;
+
+  padding: 14px 16px;
+
+  border-radius: 10px;
+
+  color: #555;
+
+  font-size: 13px;
+
+  line-height: 1.7;
+
+  word-break: break-word;
+
+  white-space: normal;
+
+  overflow-wrap: break-word;
+}
+
+.rightPanel {
+  background: #fafafa;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  padding: 20px;   
+  box-sizing: border-box;
+}
+
+.previewBox {
+  width: 100%;
+  max-width: 500px;
+  margin: 0;
+  padding: 0;
+}
+.previewHeader {
+  background: #fff8db;
+  color: #555;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+
+.bill {
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  margin: auto;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  transition: 0.2s ease;
+}
+
+.billHeader {
+  text-align: center;
+}
+
+.shopTop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.billLogo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.previewLogo {
+  max-width: 130px;
+  max-height: 65px;
+  object-fit: contain;
+}
+
+.billHeader h2 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.billHeader p {
+  font-size: 11px;
+  margin: 1px 0;
+  color: #666;
+}
+
+.dashed {
+  border-top: 1px dashed #999;
+  margin: 12px 0;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  padding: 6px 0;
+}
+
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  text-align: left;
+  width: 75%;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+   text-align: right;
+  width: 8%;
+  padding-right: 6px;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  text-align: right;
+  width: 20%;
+}
+
+
+
+.table th {
+  font-size: 11px;
+  color: #666;
+  font-weight: 600;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 8px;
+
+  font-size: 13px;
+  color: #333;
+}
+
+.grand {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+}
+
+.barcodePreview {
+  width: 100%;
+  min-height: 500px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.printerImage {
+  width: 180px;
+  max-width: 100%;
+
+  object-fit: contain;
+
+  margin-bottom: 20px;
+}
+
+.barcodePreview h3 {
+  font-size: 10px;
+  font-weight: 300;
+
+  color: #65b0d5;
+
+  margin-bottom: 5px;
+}
+
+.barcodePreview p {
+  max-width: 420px;
+
+  font-size: 14px;
+  line-height: 1.7;
+
+  color: #666;
+}
+
+@media (max-width: 900px) {
+
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .leftPanel {
+    border-right: none;
+  }
+
+  .rightPanel {
+    padding: 20px;
+  }
+
+  .bill {
+    width: 100% !important;
+    max-width: 320px;
+  }
+}

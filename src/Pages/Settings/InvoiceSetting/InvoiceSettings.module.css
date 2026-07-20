@@ -1,0 +1,357 @@
+/* InvoiceSettings.module.css */
+
+.container{
+  padding:16px;
+  min-height:100vh;
+  background-color:#ffffff;
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+}
+
+.header{
+  margin-bottom:14px;
+}
+
+.header h1{
+  font-size:20px;
+  color:#2f2f2f;
+  font-weight:600;
+  margin-bottom:4px;
+}
+
+.header p{
+  font-size:13px;
+  color:#8c8c8c;
+}
+
+/* MAIN BILL */
+
+.billWrapper{
+  display:flex;
+  justify-content:center;
+}
+
+.bill{
+  width:100%;
+  max-width:980px;
+
+  background:white;
+
+  border:1px solid #d8cda9;
+
+  box-shadow:
+    0 1px 4px rgba(0,0,0,0.06);
+
+  overflow:hidden;
+}
+
+/* TOP */
+
+.topSection{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+
+  padding:18px 22px;
+
+  border-bottom:
+    1px solid #d8cda9;
+
+  position:relative;
+}
+
+
+.shopName{
+  font-size:22px;
+  font-family:
+    "Times New Roman",
+    serif;
+
+  color:#2d3354;
+
+  font-weight:700;
+
+  margin-bottom:10px;
+}
+
+.phone{
+  color:#6f6f6f;
+  font-size:13px;
+  font-weight:600;
+}
+
+.invoice{
+  width:100%;
+  max-width:980px;
+
+  background:white;
+
+  border:2px solid #d8cda9;
+
+  box-shadow:
+    0 1px 4px rgba(0,0,0,0.06);
+
+  overflow:hidden;
+}
+
+.invoiceType{
+  text-align:right;
+}
+
+.invoiceType h3{
+  font-size:22px;
+  color:#2d3354;
+  font-weight:700;
+  margin-bottom:4px;
+}
+
+.invoiceType span{
+  display:inline-block;
+
+  background:#efefef;
+
+  color:#5e5e5e;
+
+  font-size:10px;
+
+  padding:4px 10px;
+
+  border-radius:2px;
+
+  font-weight:700;
+}
+
+/* INFO */
+
+.infoGrid{
+  display:grid;
+  grid-template-columns:
+    repeat(3,1fr);
+
+  border-bottom:
+    1px solid #d8cda9;
+}
+
+.infoBox{
+  padding:12px 16px;
+
+  border-right:
+    1px solid #d8cda9;
+}
+
+.infoBox:last-child{
+  border-right:none;
+}
+
+.infoBox label{
+  display:block;
+
+  font-size:11px;
+
+  color:#7a7a7a;
+
+  margin-bottom:4px;
+
+  font-weight:700;
+}
+
+.infoBox p{
+  font-size:13px;
+  color:#2e2e2e;
+  font-weight:600;
+}
+
+/* ADDRESS */
+
+.addressSection{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+
+  border-bottom:
+    1px solid #d8cda9;
+}
+
+.addressBox{
+  padding:16px;
+
+  border-right:
+    1px solid #d8cda9;
+
+  min-height:120px;
+}
+
+.addressBox:last-child{
+  border-right:none;
+}
+
+.addressBox h4{
+  font-size:14px;
+  color:#2d3354;
+  margin-bottom:8px;
+  font-weight:700;
+}
+
+.addressBox p{
+  font-size:12px;
+  color:#4d4d4d;
+  line-height:1.6;
+}
+
+.bold{
+  font-weight:700;
+}
+
+/* TABLE */
+
+.tableWrapper{
+  width:100%;
+}
+
+.table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.table thead{
+  background:#f4f0e7;
+}
+
+.table th{
+  padding:10px;
+
+  font-size:11px;
+
+  color:#555;
+
+  text-align:left;
+
+  border-bottom:
+    1px solid #d8cda9;
+
+  font-weight:700;
+}
+
+.table td{
+  padding:12px 10px;
+
+  font-size:12px;
+
+  color:#333;
+
+  border-bottom:
+    1px solid #ece4ca;
+
+  vertical-align:top;
+}
+
+.table td span{
+  display:block;
+
+  font-size:10px;
+
+  color:#8c8c8c;
+
+  margin-top:2px;
+}
+
+/* BOTTOM */
+
+.bottomSection{
+  display:flex;
+  justify-content:space-between;
+
+  gap:40px;
+
+  padding:20px;
+
+  border-top:
+    1px solid #d8cda9;
+}
+
+.notes{
+  flex:1;
+}
+
+.notes h4{
+  font-size:13px;
+  color:#2d3354;
+  margin-bottom:8px;
+}
+
+.notes p{
+  font-size:11px;
+  color:#666;
+  line-height:1.6;
+  margin-bottom:8px;
+}
+
+.termTitle{
+  margin-top:20px;
+}
+
+
+.summaryRow td {
+  padding: 12px 10px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #5f5a4f;
+
+  background: #faf8f2;
+
+  border-top: 1px solid #ece3cf;
+}
+
+.summaryRow td:first-child {
+  text-align: right;
+}
+
+.grandRow td {
+  padding: 14px 10px;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  color: #1f2937;
+
+  background: #f3eee3;
+
+  border-top: 2px solid #d8c9a7;
+}
+
+.grandRow td:first-child {
+  text-align: right;
+}
+
+.footerTotals td {
+  padding: 16px 10px;
+
+  background: #faf8f2;
+
+  border-top: 1px solid #d8cda9;
+
+  vertical-align: top;
+}
+
+.totalLabel {
+  font-size: 11px;
+  font-weight: 700;
+
+  color: #8b7d63;
+
+  margin-bottom: 5px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.4px;
+}
+
+.totalValue {
+  font-size: 15px;
+  font-weight: 700;
+
+  color: #1f2937;
+}

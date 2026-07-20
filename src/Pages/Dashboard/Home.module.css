@@ -1,0 +1,265 @@
+.container {
+  padding: 20px;
+  background: #fff;
+  border-radius: 5px;
+
+  height: calc(100vh - 40px);
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+/* FIXED HEADER */
+.pageHeader {
+  flex-shrink: 0;
+
+  background: #ffffff;
+
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
+  padding-bottom: 14px;
+}
+
+.pageHeader h1 {
+  margin: 0;
+
+  font-size: var(--heading-text);
+  font-weight: var(--heading-fontweight);
+
+  color: var(--heading-color);
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+
+  background: #d7dce2;
+
+  margin-top: 12px;
+}
+
+.sectionHeader {
+  margin: 5px;
+}
+
+.sectionHeader h1 {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.pageContent {
+  flex: 1;
+  padding-top: 18px;
+}
+
+.header {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 16px 0;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* SAME AS CUSTOMER PAGE */
+
+.infoCard {
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #d6d4d4;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.infoCard:hover {
+  transform: translateY(-2px);
+}
+
+.infoCard p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.infoCard h2 {
+  margin-top: 8px;
+  font-size: 20px;
+  font-family: Inter, sans-serif;
+  text-align: left;
+  color: #292d35;
+  font-weight: 300;
+}
+
+.cardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardTitle p {
+  margin: 0;
+  color: inherit;
+}
+
+.externalIcon {
+  color: #212529;
+}
+
+.customerCardBox {
+  background: linear-gradient(135deg, #ecfdf5, #ffffff);
+}
+
+.pointsCardBox {
+  background: linear-gradient(135deg, #fef2f2, #ffffff);
+}
+
+.activeCardBox {
+  background: linear-gradient(135deg, #e5f4ff, #fffcfc);
+}
+/* Card Colors */
+
+.customerCard {
+  color: #36b97e;  
+}
+
+.pointsCard {
+  color: #C59242;
+}
+
+.activeCard {
+  color: #c2c1c1;
+}
+
+
+@media (max-width: 900px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+.tableCard {
+  background: white;
+  margin-top: 18px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.tableHeader {
+  padding: 14px;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  font-size: 12px;
+  padding: 10px;
+  color: #6b7280;
+  background: #f9fafb;
+}
+
+.table td {
+  padding: 14px 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.table th:not(:last-child),
+.table td:not(:last-child) {
+  border-bottom: 1px solid #e5e7eb;
+  border-right: 1px solid #d1d5db;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+}
+
+.emptyBox p {
+  font-weight: 600;
+  margin: 0;
+}
+
+.emptyBox span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.chartCard {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 16px;
+  border: 1px solid #f1f5f9;
+  margin-top: 16px;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.chartHeader h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.chartHeader select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 13px;
+  color: #111827;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chartHeader select:hover {
+  border-color: #ffffff;
+}
+
+.chartHeader select:focus {
+  border-color: #4f46e5;
+}
+
+.chartCard .recharts-wrapper {
+  margin-top: 10px;
+}
+
+

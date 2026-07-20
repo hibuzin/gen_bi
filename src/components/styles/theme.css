@@ -1,0 +1,44 @@
+:root {
+  /* primary brand */
+  --primary-color: #4f452b;
+
+  --sidebar-bg: #1a6e6c ; 
+  /* sidebar hover accent */
+  --sidebar-accent:  #d4af37; 
+
+  /* avatar */
+  --avatar-bg: #07615e;
+  --avatar-text: #ffffff;
+
+  /* button */
+  --button-bg: #106161;
+  --button-text: #ffffff;
+  --hover: 0.9;
+
+  /* hover */
+  --button-hover: #106161;
+
+  /* focus (input / active highlight) */
+  --focus-color: #106161;
+
+  /* text */
+  --text-primary: #111;
+  --text-secondary: #6b7280;
+  --field-height: 38px;
+
+  /* dropdown accent */
+  --dropdown-hover: #0d5835;
+
+  /* sidebar sizes */
+  --sidebar-font: 14px;
+  --sidebar-icon: 16px;
+
+  /* appbar control */
+  --admin-role: 15px;
+
+  /* headings */
+  --heading-text: 20px;
+  --heading-color: rgb(31, 30, 30);
+  --heading-fontweight:500;
+ 
+}

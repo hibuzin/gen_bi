@@ -1,0 +1,363 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.tenderModal {
+  width: min(900px, 96vw);
+  height: min(610px, 92vh);
+  display: flex;
+  flex-direction: column;
+  background: #eef2f5;
+  border: 1px solid #4e6478;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.32);
+}
+
+.titleBar {
+  min-height: 34px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #1688c8 0%, #07558a 100%);
+  border-bottom: 1px solid #173f5d;
+}
+
+.closeButton {
+  width: 28px;
+  height: 28px;
+  border: none;
+  color: #ffffff;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+  background: transparent;
+}
+
+.modalBody {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1.04fr;
+}
+
+.leftSection {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 28px 22px;
+  background: #f4f6f7;
+  border-right: 1px solid #546779;
+  overflow-y: auto;
+}
+
+.amountHeader {
+  display: grid;
+  grid-template-columns: 125px minmax(150px, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.amountHeader span {
+  color: #344454;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.amountHeader strong {
+  min-height: 37px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 14px;
+  color: #ffffff;
+  font-size: 22px;
+  background: #10a7d8;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px #2790b1;
+}
+
+.summaryList {
+  margin-bottom: 18px;
+  border-top: 1px solid #ccd3d9;
+}
+
+.summaryList > div {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 8px;
+  color: #364758;
+  font-size: 13px;
+  border-bottom: 1px solid #ccd3d9;
+}
+
+.summaryList strong {
+  color: #1e293b;
+}
+
+.fieldGroup,
+.loyaltyField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldGroup span,
+.loyaltyField span {
+  color: #344454;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fieldGroup input,
+.loyaltyField input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  color: #17202a;
+  font-size: 14px;
+  background: #ffffff;
+  border: 1px solid #9ba8b2;
+  border-radius: 2px;
+  outline: none;
+}
+
+.fieldGroup input:focus,
+.loyaltyField input:focus {
+  border-color: #0585bf;
+  box-shadow: 0 0 0 2px rgba(5, 133, 191, 0.15);
+}
+
+.loyaltyField {
+  margin-bottom: 18px;
+}
+
+.detailGrid,
+.splitGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.creditNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 16px;
+  color: #7c2d12;
+  font-size: 13px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+}
+
+.leftFooter {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.disablePrint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #6c7882;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.rightSection {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #172536;
+}
+
+.paymentOptions {
+  flex: 1;
+  background: #eef2f5;
+  overflow-y: auto;
+}
+
+.paymentOption {
+  width: 100%;
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  padding: 0 13px;
+  color: #263747;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  background: #eef2f5;
+  border: none;
+  border-bottom: 1px solid #c4ccd3;
+}
+
+.paymentOption:hover {
+  background: #d9e8f2;
+}
+
+.paymentOptionActive {
+  color: #ffffff;
+  background: #075da8;
+}
+
+.paymentOptionActive:hover {
+  background: #075da8;
+}
+
+.paymentOption strong {
+  font-size: 14px;
+}
+
+.tenderReceived {
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 13px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  background: #172536;
+  border-bottom: 3px solid #dfe5e9;
+}
+
+.tenderReceived strong {
+  font-size: 20px;
+  text-align: right;
+}
+
+.pendingBox {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  background: #172536;
+}
+
+.pendingBox strong {
+  color: #ff4b4b;
+  font-size: 34px;
+  font-weight: 500;
+}
+
+.footerActions {
+  min-height: 54px;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  background: #e7ebee;
+  border-top: 1px solid #adb7bf;
+}
+
+.doneButton,
+.exitButton {
+  min-width: 110px;
+  height: 36px;
+  color: #354655;
+  font-size: 13px;
+  cursor: pointer;
+  background: linear-gradient(#ffffff, #d8dde1);
+  border: 1px solid #9ba7b0;
+  border-radius: 2px;
+}
+
+.doneButton:hover,
+.exitButton:hover {
+  background: #ffffff;
+}
+
+.doneButton:disabled,
+.exitButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.statusSection {
+  padding: 12px;
+  background: #eef2f5;
+  border-bottom: 1px solid #b9c3ca;
+}
+
+.statusTitle {
+  margin: 0 0 8px;
+  color: #263747;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.statusOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.statusBtn {
+  height: 38px;
+  color: #263747;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #9ba8b2;
+}
+
+.statusBtnActive {
+  color: #ffffff;
+  background: #075da8;
+  border-color: #075da8;
+}
+
+@media (max-width: 760px) {
+  .tenderModal {
+    height: 94vh;
+  }
+
+  .modalBody {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .leftSection {
+    overflow: visible;
+    border-right: none;
+    border-bottom: 1px solid #546779;
+  }
+
+  .rightSection {
+    min-height: 400px;
+  }
+
+  .amountHeader {
+    grid-template-columns: 1fr;
+  }
+
+  .amountHeader span {
+    text-align: left;
+  }
+}

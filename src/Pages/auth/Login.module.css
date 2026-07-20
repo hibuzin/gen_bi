@@ -1,0 +1,168 @@
+.container {
+  height: 100vh;
+  background:  #c2c9da,;
+
+  display: flex;
+  flex-direction: column;   /* IMPORTANT */
+  justify-content: center;
+  align-items: center;
+
+  padding: 10px;
+}
+
+
+
+.securityBox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+}
+
+.securityWrapper {
+  width: 100%;
+  margin-top: auto; 
+   padding: 10px 0; 
+  margin-top: auto;
+
+  display: flex;
+  justify-content: center;
+
+  border-radius: 0 0 10px 10px;     
+  background: #f3f4f6; 
+  border-top: 1px solid #e6eaf0; 
+}
+
+.secureItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.secureIcon {
+  color: #1d72d8;
+  font-size: 18px;
+}
+
+.isoCircle {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #1d72d8;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 8px;
+  font-weight: 700;
+  color: #1d72d8;
+  font-family: serif;
+}
+
+.brand {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ff7a00;
+
+  margin-bottom: 10px;
+}
+
+
+.label {
+  font-size: 12px;
+  font-weight: 530;
+  color: #4f5765;
+
+  margin-top: 6px;
+  margin-bottom: -10px;
+}
+
+
+.formBox {
+  width: 100%;
+  max-width: 380px;
+
+  background: #fff;
+  padding: 32px;
+  border-radius: 10px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.formBox input {
+  box-sizing: border-box;
+}
+
+.formBox h1 {
+  text-align: left;
+  color: #0f172a;
+  font-size: 20px;
+   margin: 0;  
+  font-weight: 700;
+}
+
+.formBox input {
+  padding: 12px 14px;
+  height: 34px;
+  border-radius: 2px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+
+  outline: none;
+  transition: 0.2s ease;
+  font-size: 14px;
+}
+
+.formBox input:focus {
+  border-color: var(--focus-color);
+  background: #ffffff;
+
+}
+
+.formBox button {
+  padding: 12px;
+  height: 34px;
+  border: none;
+  border-radius: 2px;
+
+  background: var(--button-bg);
+  color: white;
+
+  font-weight: 600;
+  font-size: 15px;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.formBox button:hover {
+  background: var(--button-hover);
+  transform: translateY(-1px);
+}
+
+.signupText {
+  margin-top: 10px;
+  font-size: 13px;
+  text-align: center;
+  color: #555;
+}
+
+.signupText span {
+  color: #aeaccc;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.signupText span:hover {
+  text-decoration: underline;
+}
