@@ -10,17 +10,17 @@ import { API } from "../../constants/api";
 function Onboarding() {
   const [lang, setLang] = useState("en");
 
-const [form, setForm] = useState({
-  CompanyName: "",
-  CompanyPhone: "",
-  CompanyEmail: "",
-  password: "",
-  address: "",
-  state: "",
-  pincode: "",
-  city: "",
-  gstnumber: "",
-});
+  const [form, setForm] = useState({
+    CompanyName: "",
+    CompanyPhone: "",
+    CompanyEmail: "",
+    password: "",
+    address: "",
+    state: "",
+    pincode: "",
+    city: "",
+    gstnumber: "",
+  });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -52,35 +52,35 @@ const [form, setForm] = useState({
     try {
       setLoading(true);
 
-     const res = await fetch(API.registerSuperAdmin, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(form),
-});
+      const res = await fetch(API.registerSuperAdmin, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
 
       const data = await res.json();
-if (res.ok && data.success) {
-  setMessage(data.message || "Setup completed");
-  setType("success");
+      if (res.ok && data.success) {
+        setMessage(data.message || "Setup completed");
+        setType("success");
 
-  // Save user
-  localStorage.setItem("user", JSON.stringify(data.data.user || data.data));
+        // Save user
+        localStorage.setItem("user", JSON.stringify(data.data.user || data.data));
 
-  // Save token if backend returns it
-  if (data.token) {
-    localStorage.setItem("token", data.token);
-  } else if (data.data?.token) {
-    localStorage.setItem("token", data.data.token);
-  }
+        // Save token if backend returns it
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        } else if (data.data?.token) {
+          localStorage.setItem("token", data.data.token);
+        }
 
-  localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("isLoggedIn", "true");
 
-  setTimeout(() => {
-    navigate("/home", { replace: true });
-  }, 1200);
-}else {
+        setTimeout(() => {
+          navigate("/home", { replace: true });
+        }, 1200);
+      } else {
         setMessage(data.message || "Failed");
         setType("error");
       }
@@ -115,17 +115,17 @@ if (res.ok && data.success) {
 
             <div className={styles.badgeRow}>
 
-  <div className={styles.badge}>
-    <FaShieldAlt className={styles.badgeIcon} />
-    <span>100% Secure</span>
-  </div>
+              <div className={styles.badge}>
+                <FaShieldAlt className={styles.badgeIcon} />
+                <span>100% Secure</span>
+              </div>
 
-  <div className={styles.isoBadge}>
-    <span className={styles.isoCircle}>ISO</span>
-    <span className={styles.isoText}>ISO Certified</span>
-  </div>
+              <div className={styles.isoBadge}>
+                <span className={styles.isoCircle}>ISO</span>
+                <span className={styles.isoText}>ISO Certified</span>
+              </div>
 
-</div>
+            </div>
           </div>
 
           {/* DIVIDER */}
@@ -186,6 +186,14 @@ if (res.ok && data.success) {
               <button onClick={handleSubmit} disabled={loading}>
                 {loading ? "Setting up..." : "Finish Setup"}
               </button>
+
+              <div className={styles.loginText}>
+                Already have an account?{" "}
+                <span onClick={() => navigate("/login")}>
+                  Login
+                </span>
+              </div>
+
             </div>
           </div>
 

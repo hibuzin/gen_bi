@@ -1,12 +1,12 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(15, 23, 42, 0.48);
+  background: rgba(155, 154, 159, 0.18);
 }
 
 .tenderModal {
@@ -14,11 +14,11 @@
   height: min(610px, 92vh);
   display: flex;
   flex-direction: column;
-  background: #eef2f5;
-  border: 1px solid #4e6478;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 18px 50px rgba(76, 60, 206, 0.18);
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.32);
 }
 
 .titleBar {
@@ -30,8 +30,8 @@
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
-  background: linear-gradient(180deg, #1688c8 0%, #07558a 100%);
-  border-bottom: 1px solid #173f5d;
+  background: #5949d6;
+  border-bottom: 1px solid #4b41b9;
 }
 
 .closeButton {
@@ -58,8 +58,8 @@
   display: flex;
   flex-direction: column;
   padding: 32px 28px 22px;
-  background: #f4f6f7;
-  border-right: 1px solid #546779;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
   overflow-y: auto;
 }
 
@@ -72,7 +72,7 @@
 }
 
 .amountHeader span {
-  color: #344454;
+  color: #6b7280;
   font-size: 15px;
   font-weight: 700;
   text-align: right;
@@ -84,32 +84,33 @@
   align-items: center;
   justify-content: flex-end;
   padding: 0 14px;
-  color: #ffffff;
+  background: #7261f0;
+  border: 1px solid #6654f0;
+  color: floralwhite;
+  box-shadow: none;
   font-size: 22px;
-  background: #10a7d8;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px #2790b1;
+
 }
 
 .summaryList {
   margin-bottom: 18px;
-  border-top: 1px solid #ccd3d9;
+  border-top: 1px solid #e5e7eb;
 }
 
-.summaryList > div {
+.summaryList>div {
   min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 0 8px;
-  color: #364758;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
   font-size: 13px;
-  border-bottom: 1px solid #ccd3d9;
 }
 
 .summaryList strong {
-  color: #1e293b;
+  color: #111827;
 }
 
 .fieldGroup,
@@ -121,7 +122,7 @@
 
 .fieldGroup span,
 .loyaltyField span {
-  color: #344454;
+  color: #6b7280;
   font-size: 12px;
   font-weight: 700;
 }
@@ -134,15 +135,15 @@
   color: #17202a;
   font-size: 14px;
   background: #ffffff;
-  border: 1px solid #9ba8b2;
-  border-radius: 2px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
   outline: none;
 }
 
 .fieldGroup input:focus,
 .loyaltyField input:focus {
-  border-color: #0585bf;
-  box-shadow: 0 0 0 2px rgba(5, 133, 191, 0.15);
+  border-color: #7364e8;
+  box-shadow: 0 0 0 3px rgba(76, 60, 206, 0.12);
 }
 
 .loyaltyField {
@@ -162,10 +163,10 @@
   flex-direction: column;
   gap: 7px;
   padding: 16px;
-  color: #7c2d12;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
   font-size: 13px;
-  background: #fff7ed;
-  border: 1px solid #fdba74;
 }
 
 .leftFooter {
@@ -186,12 +187,12 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: #172536;
+  background: #f8fafc;
 }
 
 .paymentOptions {
   flex: 1;
-  background: #eef2f5;
+  background: #ffffff;
   overflow-y: auto;
 }
 
@@ -202,26 +203,27 @@
   grid-template-columns: 28px 1fr;
   align-items: center;
   padding: 0 13px;
-  color: #263747;
+  background: #ffffff;
+  color: #3e3751;
+  border-bottom: 1px solid #e5e7eb;
   font-size: 14px;
   text-align: left;
   cursor: pointer;
-  background: #eef2f5;
   border: none;
-  border-bottom: 1px solid #c4ccd3;
 }
 
 .paymentOption:hover {
-  background: #d9e8f2;
+   background: #c1b9f99e;
+   color: #ffffff;
 }
 
 .paymentOptionActive {
+   background: #6454dd;
   color: #ffffff;
-  background: #075da8;
 }
 
 .paymentOptionActive:hover {
-  background: #075da8;
+  background: #4C3CCE;
 }
 
 .paymentOption strong {
@@ -236,9 +238,9 @@
   gap: 10px;
   padding: 13px;
   color: #ffffff;
+  background: #5b4dc7;
   font-size: 14px;
   font-weight: 700;
-  background: #172536;
   border-bottom: 3px solid #dfe5e9;
 }
 
@@ -256,11 +258,11 @@
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
-  background: #172536;
+  background: #514d6e;
 }
 
 .pendingBox strong {
-  color: #ff4b4b;
+   color: #ffffff;
   font-size: 34px;
   font-weight: 500;
 }
@@ -271,37 +273,40 @@
   justify-content: center;
   gap: 4px;
   padding: 8px;
-  background: #e7ebee;
-  border-top: 1px solid #adb7bf;
+ background: #ffffff;
+  border-top: 1px solid #e5e7eb;
 }
 
 .doneButton,
 .exitButton {
   min-width: 110px;
   height: 36px;
-  color: #354655;
   font-size: 13px;
   cursor: pointer;
-  background: linear-gradient(#ffffff, #d8dde1);
-  border: 1px solid #9ba7b0;
-  border-radius: 2px;
+   background: #5948d4;
+  color: #ffffff;
+  border: 1px solid #5f50cb;
+  border-radius: 6px;
+
 }
 
 .doneButton:hover,
 .exitButton:hover {
-  background: #ffffff;
+   background: #5d4ee6;
 }
 
 .doneButton:disabled,
 .exitButton:disabled {
+   background: #a5b4fc;
+  border-color: #a5b4fc;
   opacity: 0.55;
   cursor: not-allowed;
 }
 
 .statusSection {
   padding: 12px;
-  background: #eef2f5;
-  border-bottom: 1px solid #b9c3ca;
+ background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .statusTitle {
@@ -324,13 +329,50 @@
   font-weight: 700;
   cursor: pointer;
   background: #ffffff;
-  border: 1px solid #9ba8b2;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
 }
 
 .statusBtnActive {
+  background: #6354d6;
+  border-color: #6b5cdf;
   color: #ffffff;
-  background: #075da8;
-  border-color: #075da8;
+}
+
+.leftFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.shareOptions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.shareCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.shareCheckbox input {
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+}
+
+.whatsappIcon {
+  color: #25d366;
+}
+
+.smsIcon {
+  color: #8a7ee4;
 }
 
 @media (max-width: 760px) {

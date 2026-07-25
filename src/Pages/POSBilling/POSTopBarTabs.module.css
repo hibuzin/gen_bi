@@ -1,0 +1,113 @@
+.topBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 50px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f7f7f8;
+  flex-shrink: 0;
+}
+
+.topTitle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.dateTime {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.exitBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  font-size: 11px;
+  font-weight: 500;
+  color: #27292b;
+  cursor: pointer;
+  padding: 7px 10px;
+  border-radius: 2px;
+}
+
+.exitBtn:hover {
+  background: #f3f4f6;
+}
+
+.exitBtn kbd {
+  font-family: inherit;
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.tabsRow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.tabActive,
+.tabHold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  cursor: pointer;
+  border-right: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.tabActive {
+  background: #fffded;
+  color: #111827;
+  font-weight: 600;
+}
+
+.tabHold {
+  background: #f8fafc;
+  color: #374151;
+  font-weight: 500;
+}
+
+.tabHold:hover {
+  background: #f1f5f9;
+}
+
+.closeTabBtn {
+  margin-left: 8px;
+  border: none;
+  background: transparent;
+  color: #777;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.closeTabBtn:hover {
+  color: #e53935;
+}
+
+.tabAdd {
+  padding: 20px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+.tabAdd:hover {
+  background: #eff6ff;
+}

@@ -1,6 +1,6 @@
- //const BASE_URL = "https://hibuz-general-billing-frontend.onrender.com";
+  const BASE_URL = "https://hibuz-billing-backend-3nqw.onrender.com/api";
 
-const BASE_URL = "http://localhost:5000/api";
+ // const BASE_URL = "http://localhost:5000/api";
 
 
 export const API = {

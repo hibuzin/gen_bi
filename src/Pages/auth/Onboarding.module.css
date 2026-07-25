@@ -229,7 +229,22 @@
   cursor: not-allowed;
 }
 
+.loginText {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
 
+.loginText span {
+  font-weight: 600;
+  color: #5b4df7;
+  cursor: pointer;
+}
+
+.loginText span:hover {
+  text-decoration: underline;
+}
 
 /* ─── RESPONSIVE ────────────────────────────── */
 

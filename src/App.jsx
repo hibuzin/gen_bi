@@ -75,7 +75,6 @@ import PrintSettings from "./Pages/Settings/PrintSetting/PrintSettings";
 import ManageUsers from "./Pages/Settings/ManageUsers/ManageUsers";
 import HelpSupport from "./Pages/Settings/Help/HelpSupport";
 import BulkAction from "./Pages/Items/BulkAction";
-import { API } from "./constants/api";
 
 function MainLayout() {
   const [collapsed, setCollapsed] =
@@ -326,108 +325,56 @@ function MainLayout() {
 
 function AppRoutes() {
   const location = useLocation();
-
   const token = localStorage.getItem("token");
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [isRegistered, setIsRegistered] =
-    useState(false);
-
-
-
-  useEffect(() => {
-    checkSetup();
-  }, []);
-
-  const checkSetup = async () => {
-    try {
-      const res = await fetch(
-        API.setstatus,
-      );
-
-      const data = await res.json();
-
-      setIsRegistered(data.isRegistered);
-
-    } catch (err) {
-
-      console.log(err);
-
-    } finally {
-
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (location.pathname === "/create-purchase") {
-
-    if (!token)
-      return <Navigate to="/login" replace />;
-
-    return <CreatePurchase />;
-  }
-  // ROOT ROUTE
+  // ROOT
   if (location.pathname === "/") {
-
-    // token irundha direct home
-    if (token) {
-      return <Navigate to="/home" replace />;
-    }
-
-    // token illa na old flow
-    return isRegistered ? (
-      <Navigate to="/login" replace />
+    return token ? (
+      <Navigate to="/home" replace />
     ) : (
       <Navigate to="/onboarding" replace />
     );
   }
 
-  // LOGIN ROUTE
-  if (location.pathname === "/login") {
-
-    // already logged in
+  // ONBOARDING
+  if (location.pathname === "/onboarding") {
     if (token) {
       return <Navigate to="/home" replace />;
-    }
-
-    // registered user
-    if (isRegistered) {
-      return <Login />;
-    }
-
-    // not registered
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  // ONBOARDING ROUTE
-  if (location.pathname === "/onboarding") {
-
-    // already registered na onboarding open aaga kudathu
-    if (isRegistered) {
-      return <Navigate to="/login" replace />;
     }
 
     return <Onboarding />;
   }
 
-  // REGISTER ROUTE
-  if (location.pathname === "/register") {
-    return <Register />;
+  // LOGIN
+  if (location.pathname === "/login") {
+    if (token) {
+      return <Navigate to="/home" replace />;
+    }
+
+    return <Login />;
   }
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  // CREATE PURCHASE
+  if (location.pathname === "/create-purchase") {
+    if (!token) {
+      return <Navigate to="/onboarding" replace />;
+    }
+
+    return <CreatePurchase />;
   }
 
+  // POS BILLING
   if (location.pathname === "/posbilling") {
-    if (!token) return <Navigate to="/login" replace />;
+    if (!token) {
+      return <Navigate to="/onboarding" replace />;
+    }
+
     return <POSBilling />;
+  }
+
+  // ALL OTHER PROTECTED ROUTES
+  if (!token) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <MainLayout />;

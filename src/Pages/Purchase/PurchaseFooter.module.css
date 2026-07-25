@@ -1,0 +1,163 @@
+.invoiceFooter {
+  flex-shrink: 0;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  padding: 8px 16px;
+}
+
+.footerColumns {
+  display: grid;
+  grid-template-columns: repeat(4, 260px);
+  justify-content: end;
+  gap: 10px;
+}
+
+.footerColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.footerField {
+  display: grid;
+  grid-template-columns: 120px 120px;
+  align-items: center;
+  min-height: 30px;
+  font-size: 12px;
+}
+
+.summaryField {
+  width: 150px;
+  grid-template-columns: auto auto;
+  column-gap: 12px;
+  
+}
+
+.summaryField strong {
+  text-align: left;
+}
+
+.footerField > span:first-child {
+  color: #6e7781;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.footerField strong {
+  text-align: right;
+  color: #24292f;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.footerInput {
+  width: 130px;
+  height: 28px;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  border: 1px solid #d0d7de;
+  border-radius: 5px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.footerInput span {
+  color: #6e7781;
+  font-size: 12px;
+}
+
+.footerInput input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: right;
+  font-size: 12px;
+}
+
+.footerSelect,
+.footerTextInput {
+  width: 90px;
+  height: 28px;
+  justify-self: end;
+  border: 1px solid #d0d7de;
+  border-radius: 5px;
+  padding: 0 7px;
+  background: #fff;
+  outline: none;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.footerInput:focus-within,
+.footerSelect:focus,
+.footerTextInput:focus {
+  border-color: #4c3cce;
+}
+
+.totalAmountField strong {
+  color: #4c3cce;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.footerInput {
+  width: 120px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 5px;
+  padding: 0 7px;
+  border: 1px solid #d0d7de;
+  border-radius: 5px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.footerInput span {
+  color: #6e7781;
+  font-size: 12px;
+}
+
+.footerInput input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+  text-align: right;
+}
+
+.footerSelect,
+.footerTextInput {
+  width: 120px;
+  height: 28px;
+  justify-self: end;
+  border: 1px solid #d0d7de;
+  border-radius: 5px;
+  padding: 0 7px;
+  background: #fff;
+  outline: none;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+.footerSelect:focus,
+.footerTextInput:focus,
+.footerInput:focus-within {
+  border-color: #4c3cce;
+}
+
+.totalAmountField strong {
+  color: #4c3cce;
+  font-size: 14px;
+  font-weight: 700;
+}

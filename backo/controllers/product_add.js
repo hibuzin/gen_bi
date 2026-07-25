@@ -44,7 +44,7 @@ exports.productcreate = async (req, res) => {
             lowStockQty
         } = req.body;
 
-        if (!name) {
+        if (!name || !categoryId) {
             return res.status(400).json({
                 success: false,
                 message: "Name required"
@@ -55,21 +55,17 @@ exports.productcreate = async (req, res) => {
 
         const itemCode = await generateItemCode(hierarchy.superAdminId);
 
-        let cat = null;
-
-if (categoryId) {
-    cat = await category.findOne({
-        _id: categoryId,
-        superAdminId: hierarchy.superAdminId
-    });
-
-    if (!cat) {
-        return res.status(404).json({
-            success: false,
-            message: "Category not found"
+        const cat = await category.findOne({
+            _id: categoryId,
+            superAdminId: hierarchy.superAdminId
         });
-    }
-}
+
+        if (!cat) {
+            return res.status(404).json({
+                success: false,
+                message: "Category not found"
+            });
+        }
 
         const processedGstRate = Number(gstRate || 0);
 
@@ -210,10 +206,8 @@ if (categoryId) {
             costPrice: processedCostPrice,
             sellingPrice: processedSellingPrice,
 
-          
-
-            categoryId: categoryId || null,
-categoryName: cat?.name || "",
+            categoryId,
+            categoryName: cat.name || "",
 
             hsnCode: hsnCode ? String(hsnCode).trim() : "",
             gstRate: processedGstRate,
@@ -348,7 +342,7 @@ exports.bulkProductCreate = async (req, res) => {
                 const hsnCode = item.hsnCode ? String(item.hsnCode).trim() : "";
                 const barcodeCode = item.barcode ? String(item.barcode).trim() : "";
 
-                if (!name) {
+                if (!name || !categoryId) {
                     errors.push({
                         row: i + 1,
                         name,
@@ -846,7 +840,15 @@ exports.searchProducts = async (req, res) => {
             costPrice: Number(product.costPrice || 0),
             sellingPrice: Number(product.sellingPrice || 0),
 
-            mrps: product.mrps || [],
+            mrp:
+                product.mrps?.length > 0
+                    ? Number(product.mrps[0].mrp || 0)
+                    : 0,
+
+            unitValue: Number(product.unitValue || 0),
+            unit: product.unit || "",
+
+            mrp: Number(product.mrp || 0),
 
             status:
                 Number(product.stock || 0) <= 0
@@ -1078,22 +1080,17 @@ exports.updateProduct = async (req, res) => {
         }
 
         if (categoryId) {
-           let cat = null;
+            const cat = await category.findOne({
+                _id: categoryId,
+                superAdminId: hierarchy.superAdminId
+            });
 
-if (categoryId) {
-    cat = await category.findOne({
-        _id: categoryId,
-        superAdminId: hierarchy.superAdminId
-    });
-
-    if (!cat) {
-        return res.status(404).json({
-            success: false,
-            message: "Category not found"
-        });
-    }
-
-}
+            if (!cat) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Category not found"
+                });
+            }
 
             product.categoryId = categoryId;
             product.categoryName = cat.name || "";
@@ -1243,22 +1240,29 @@ if (categoryId) {
         ) {
             const barcodeCode = String(barcode).trim();
 
-            const existingBarcode = await Barcode.findOne({
+            const duplicate = await Barcode.findOne({
                 code: barcodeCode,
-                superAdminId: hierarchy.superAdminId
+                superAdminId: hierarchy.superAdminId,
+                productId: { $ne: product._id }
             });
 
-            if (
-                existingBarcode &&
-                String(existingBarcode.productId) !== String(product._id)
-            ) {
+            if (duplicate) {
                 return res.status(400).json({
                     success: false,
-                    message: "Barcode already exists for another product"
+                    message: "Barcode already exists"
                 });
             }
 
-            if (!existingBarcode) {
+            const existingBarcode = await Barcode.findOne({
+                productId: product._id,
+                superAdminId: hierarchy.superAdminId
+            });
+
+
+            if (existingBarcode) {
+                existingBarcode.code = barcodeCode;
+                await existingBarcode.save();
+            } else {
                 createdBarcode = await Barcode.create({
                     productId: product._id,
                     code: barcodeCode,
@@ -1277,7 +1281,7 @@ if (categoryId) {
                     isSold: false,
 
                     ...hierarchy,
-                    createdBy: req.user.userId
+                    createdBy: req.user.userId || req.user.id
                 });
             }
         }
@@ -1294,7 +1298,9 @@ if (categoryId) {
                     mrp: product.mrp,
                     costPrice: product.costPrice,
                     sellingPrice: product.sellingPrice,
-                    gstRate: product.gstRate
+                    gstRate: product.gstRate,
+                    unit: product.unit,
+                    unitValue: product.unitValue
                 }
             }
         );

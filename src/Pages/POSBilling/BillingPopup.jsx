@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
+import { FaWhatsapp } from "react-icons/fa";
+import { MdSms } from "react-icons/md";
 import styles from "./BillingPopup.module.css";
+import ThermalReceipt from "./ThermalReceipt";
 
 const PAYMENT_OPTIONS = [
     { key: "cash", shortcut: "A", label: "Cash" },
@@ -11,6 +14,10 @@ const PAYMENT_OPTIONS = [
 ];
 
 function BillingPopup({
+    items = [],
+    customerName = "",
+    customerPhone = "",
+
     summary,
     prevBalance = 0,
 
@@ -350,10 +357,15 @@ function BillingPopup({
 
                 <div className={styles.modalBody}>
                     <section className={styles.leftSection}>
-                        <div className={styles.amountHeader}>
-                            <span>Due Amount</span>
-                            <strong>₹ {payableAmount.toFixed(2)}</strong>
-                        </div>
+                        <ThermalReceipt
+                            items={items}
+                            summary={summary}
+                            customerName={customerName}
+                            customerPhone={customerPhone}
+                            paidAmount={totalReceived}
+                            balanceAmount={balanceAmount}
+                            preview={true}
+                        />
 
                         <div className={styles.summaryList}>
                             <div>
@@ -386,10 +398,35 @@ function BillingPopup({
                         {renderPaymentFields()}
 
                         <div className={styles.leftFooter}>
-                            <label className={styles.disablePrint}>
-                                <input type="checkbox" />
-                                <span>Disable bill print</span>
-                            </label>
+
+                            <div className={styles.shareOptions}>
+                                <label className={styles.shareCheckbox}>
+                                    <input type="checkbox" />
+
+                                    <FaWhatsapp
+                                        className={styles.whatsappIcon}
+                                        size={16}
+                                    />
+
+                                    <span>WhatsApp</span>
+                                </label>
+
+                                <label className={styles.shareCheckbox}>
+                                    <input type="checkbox" />
+
+                                    <MdSms
+                                        className={styles.smsIcon}
+                                        size={17}
+                                    />
+
+                                    <span>SMS</span>
+                                </label>
+
+                                <label className={styles.shareCheckbox}>
+                                    <input type="checkbox" />
+                                    <span>Disable bill print</span>
+                                </label>
+                            </div>
                         </div>
                     </section>
 

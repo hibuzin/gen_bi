@@ -52,33 +52,68 @@ function Login() {
     showToast("Password is required", "error");
     return;
   }
+
   try {
     setLoading(true);
+
     const res = await fetch(API.login, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     });
 
     const data = await res.json();
 
+    console.log("LOGIN RESPONSE:", data);
+
     if (!res.ok || !data.success) {
-      showToast(data.message || "Invalid email or password", "error");
+      showToast(
+        data.message || "Invalid email or password",
+        "error"
+      );
       return;
     }
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    const token =
+      data.token ||
+      data.data?.token;
+
+    const user =
+      data.user ||
+      data.data?.user;
+
+    if (!token) {
+      console.error("Token missing:", data);
+      showToast("Login failed: Token not received", "error");
+      return;
+    }
+
+    localStorage.setItem("token", token);
+
+    if (user) {
+      localStorage.setItem(
+        "user",
+        JSON.stringify(user)
+      );
+    }
 
     showToast("Login successful!", "success");
 
     setTimeout(() => {
-      navigate("/home");
+      navigate("/home", { replace: true });
     }, 1000);
 
   } catch (error) {
-    console.error(error);
-    showToast("Server error. Try again later", "error");
+    console.error("LOGIN ERROR:", error);
+    showToast(
+      "Server error. Try again later",
+      "error"
+    );
   } finally {
     setLoading(false);
   }
@@ -87,65 +122,65 @@ function Login() {
   return (
     <div className={styles.container}>
       <AppBar
-  lang={lang}
-  setLang={setLang}
-/>
+        lang={lang}
+        setLang={setLang}
+      />
 
-      
+
       {message && <Toast message={message} type={messageType} />}
 
       <div className={styles.formBox}>
-         <div className={styles.brand}>
-     BILLING
-  </div>
+        <div className={styles.brand}>
+          BILLING
+        </div>
         <h1>Login</h1>
 
         <label className={styles.label}>Enter your email</label>
-<input
-  type="email"
-  placeholder="Email"
-  value={email}
-  ref={emailRef}
-  onChange={(e) => setEmail(e.target.value)}
-  onKeyDown={handleKeyDownEmail}
-/>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          ref={emailRef}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={handleKeyDownEmail}
+        />
 
-<label className={styles.label}>Enter your password</label>
-<input
-  type="password"
-  placeholder="Password"
-  value={password}
-  ref={passwordRef}
-  onChange={(e) => setPassword(e.target.value)}
-  onKeyDown={handleKeyDownPassword}
-/>
+        <label className={styles.label}>Enter your password</label>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          ref={passwordRef}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={handleKeyDownPassword}
+        />
 
         <button onClick={handleLogin} disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
 
-       <p className={styles.signupText}>
-  <span onClick={() => navigate("/register")}>
-    Forgot password?
-  </span>
-</p>
+        <p className={styles.signupText}>
+          <span onClick={() => navigate("/register")}>
+            Forgot password?
+          </span>
+        </p>
 
-{/* TRUST ROW */}
-<div className={styles.securityWrapper}>
-  <div className={styles.securityBox}>
-    <div className={styles.secureItem}>
-      <FaShieldAlt className={styles.secureIcon} />
-      <span>100% Secure</span>
-    </div>
+        {/* TRUST ROW */}
+        <div className={styles.securityWrapper}>
+          <div className={styles.securityBox}>
+            <div className={styles.secureItem}>
+              <FaShieldAlt className={styles.secureIcon} />
+              <span>100% Secure</span>
+            </div>
 
-    <div className={styles.secureItem}>
-      <div className={styles.isoCircle}>ISO</div>
-      <span>Certified</span>
-    </div>
-  </div>
-</div>
+            <div className={styles.secureItem}>
+              <div className={styles.isoCircle}>ISO</div>
+              <span>Certified</span>
+            </div>
+          </div>
+        </div>
       </div>
-      
+
     </div>
   );
 }

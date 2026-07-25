@@ -1,0 +1,267 @@
+.receipt {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  width: 340px;
+  max-height: 85vh;
+  font-weight: bold;
+  overflow-y: auto;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  margin: 0 auto;
+}
+
+.receipt * {
+  font-weight: bold !important;
+  color: #000000 !important;
+}
+
+.receiptHeader {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.receiptShopName {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.receiptWelcome {
+  margin: 2px 0 6px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.receiptPhone {
+  margin: 0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.receiptCenter {
+  text-align: center;
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+.receiptMeta {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+  font-size: 11px;
+}
+
+.receiptMetaLeft {
+  align-self: flex-start;
+}
+
+.receiptMetaRight {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: right;
+}
+
+.dashedLine {
+  border: none;
+  border-top: 1px dashed #9ca3af;
+  margin: 8px 0;
+}
+
+.receiptTableHead {
+  display: flex;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  margin: 4px 0;
+}
+
+.receiptRow {
+  display: flex;
+  gap: 4px;
+  font-size: 11px;
+  margin: 3px 0;
+}
+
+.colName {
+  flex: 2;
+}
+
+.colQty {
+  flex: 0.5;
+  text-align: center;
+}
+
+.colPrice {
+  flex: 1;
+  text-align: right;
+}
+
+.colAmt {
+  flex: 1;
+  text-align: right;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.summaryColon {
+  flex: 1;
+  text-align: center;
+}
+
+.summaryTotal {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.receiptFooter {
+  text-align: center;
+  font-size: 11px;
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.billBottomSection {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #000;
+}
+
+.totalLine {
+  min-height: 24px;
+  padding: 4px 2px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 28px;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+
+.totalLine span {
+  font-size: 11px;
+}
+
+.totalLine strong {
+  min-width: 78px;
+  text-align: right;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.paymentInfoRow {
+  padding: 7px 2px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  column-gap: 10px;
+  border-bottom: 1px solid #000;
+}
+
+.paymentInfoRow > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.paymentInfoRow span {
+  font-size: 10px;
+}
+
+.paymentInfoRow strong {
+  text-align: right;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.taxTable {
+  margin-top: 6px;
+  border-top: 1px dotted #777;
+  border-bottom: 1px dotted #777;
+}
+
+.taxRow {
+  min-height: 18px;
+  display: grid;
+  grid-template-columns: 0.8fr 1.3fr 1fr 1fr 1fr;
+  align-items: center;
+  text-align: right;
+}
+
+.taxRow span:first-child {
+  text-align: left;
+}
+
+.taxHeader {
+  font-size: 9px;
+  border-bottom: 1px dotted #777;
+}
+
+.taxHeader span {
+  font-weight: 600;
+}
+
+.savedAmountRow {
+  min-height: 28px;
+  margin-top: 7px;
+  padding: 4px 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px dotted #777;
+}
+
+.savedAmountRow span {
+  font-size: 11px;
+}
+
+.savedAmountRow strong {
+  min-width: 90px;
+  text-align: right;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.receiptPrintOnly {
+  display: none;
+}
+
+.receiptPreview {
+  display: block;
+}
+
+@media print {
+  :global(body *) {
+    visibility: hidden !important;
+  }
+
+  .receiptPrintOnly,
+  .receiptPrintOnly * {
+    visibility: visible !important;
+  }
+
+  .receiptPrintOnly {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80mm;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
