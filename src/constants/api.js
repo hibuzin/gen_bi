@@ -1,6 +1,5 @@
-  const BASE_URL = "https://hibuz-billing-backend-3nqw.onrender.com/api";
-
- // const BASE_URL = "http://localhost:5000/api";
+ //const BASE_URL = "https://hibuz-billing-backend-3nqw.onrender.com/api";
+const BASE_URL = "http://localhost:5000/api";
 
 
 export const API = {
@@ -22,6 +21,7 @@ export const API = {
   cashierUsers: `${BASE_URL}/super-admin/cashiers`,
   updatecashier: `${BASE_URL}/super-admin/cashier`,
   updateadmin: `${BASE_URL}/super-admin`,
+  createSuperAdminUser: `${BASE_URL}/super-admin/create-user`,
 
   // customers
   customers: `${BASE_URL}/customer/customers`,

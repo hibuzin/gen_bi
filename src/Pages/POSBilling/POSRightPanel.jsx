@@ -4,6 +4,8 @@ import { API } from "../../constants/api";
 
 function POSRightPanel({
   token,
+  isWalkInCustomer,
+  setIsWalkInCustomer,
   customerPhone,
   setCustomerPhone,
   customerName,
@@ -133,8 +135,25 @@ function POSRightPanel({
     <div className={styles.rightPanel}>
       <div className={styles.customerBox}>
         <div className={styles.recvLabel}>
-          <span>Customer (optional)</span>
-        </div>
+  <span>Customer</span>
+
+  <label className={styles.walkInCheck}>
+    <input
+      type="checkbox"
+      checked={isWalkInCustomer}
+      onChange={(e) => {
+        const checked = e.target.checked;
+
+        setIsWalkInCustomer(checked);
+
+        if (checked) {
+          clearCustomer();
+        }
+      }}
+    />
+    <span>  Walk-in Customer</span>
+  </label>
+</div>
         <div className={styles.customerFieldsRow}>
           <input
             type="text"

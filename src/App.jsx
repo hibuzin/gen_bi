@@ -1,12 +1,17 @@
 import AppBar from "./components/AppBar/AppBar";
 import Sidebar from "./components/Sidebar/Sidebar";
 import {
-  BrowserRouter,
   Routes,
   Route,
   useLocation,
   Navigate,
 } from "react-router-dom";
+
+const Router = window.location.protocol === "file:"
+  ? HashRouter
+  : BrowserRouter;
+
+import { BrowserRouter, HashRouter } from "react-router-dom";
 
 import { useState, useEffect } from "react";
 
@@ -382,9 +387,9 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <AppRoutes />
-    </BrowserRouter>
+    </Router>
   );
 }
 

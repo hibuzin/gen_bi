@@ -70,12 +70,12 @@
 }
 
 .tab:hover {
-  color: #4c3cce;
+  color: #036666;
 }
 
 .activeTab {
-  color: #4c3cce;
-  border-bottom: 2px solid #4c3cce;
+  color: #036666;
+  border-bottom: 2px solid #036666;
 }
 
 /* TABLE */

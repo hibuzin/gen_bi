@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 function CreateProduct() {
+  const defaultUnit = localStorage.getItem("defaultUnit") || "pcs";
   const [form, setForm] = useState({
     name: "",
     categoryId: "",
@@ -18,7 +19,7 @@ function CreateProduct() {
     description: "",
     barcode: "",
 
-    unit: "pcs",
+    unit: defaultUnit,
     unitValue: "",
     productType: "normal",
     parentProductId: "",
@@ -29,6 +30,7 @@ function CreateProduct() {
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showDefaultUnit, setShowDefaultUnit] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "" });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState("");
@@ -245,7 +247,7 @@ function CreateProduct() {
         sellingPrice: "",
         barcode: "",
         description: "",
-        unit: "pcs",
+       unit: localStorage.getItem("defaultUnit") || "pcs",
         unitValue: "",
         productType: "normal",
         pricingType: "standard",
@@ -504,9 +506,47 @@ function CreateProduct() {
 
           </div>
 
-          <div className={styles.sectionTitle}>
-            Inventory details
-          </div>
+         <div className={styles.sectionTitleRow}>
+  <div className={styles.sectionTitle}>
+    Inventory details
+  </div>
+
+  <button
+    type="button"
+    className={styles.defaultBtn}
+    onClick={() => setShowDefaultUnit(!showDefaultUnit)}
+  >
+    Default
+  </button>
+</div>
+
+{showDefaultUnit && (
+  <div className={styles.defaultUnitBox}>
+    <label>Default Unit</label>
+
+    <select
+      value={localStorage.getItem("defaultUnit") || "pcs"}
+      onChange={(e) => {
+        localStorage.setItem("defaultUnit", e.target.value);
+
+        setForm((prev) => ({
+          ...prev,
+          unit: e.target.value,
+        }));
+
+        showToast("Default unit updated", "success");
+      }}
+    >
+      <option value="pcs">Pcs</option>
+      <option value="kg">Kg</option>
+      <option value="g">Gram</option>
+      <option value="ltr">Litre</option>
+      <option value="ml">Ml</option>
+      <option value="box">Box</option>
+      <option value="packet">Packet</option>
+    </select>
+  </div>
+)}
 
           <div className={styles.grid}>
 

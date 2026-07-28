@@ -208,7 +208,6 @@ function CreateSupplier() {
                 onKeyDown={(e) =>
                   handleKeyDown(e, mobileRef)
                 }
-                required
               />
             </div>
 
@@ -225,7 +224,6 @@ function CreateSupplier() {
                 onKeyDown={(e) =>
                   handleKeyDown(e, gstRef)
                 }
-                required
               />
             </div>
 
@@ -257,7 +255,6 @@ function CreateSupplier() {
                   onKeyDown={(e) =>
                     handleKeyDown(e, emailRef)
                   }
-                  required
                 />
 
                 <button
@@ -304,7 +301,6 @@ function CreateSupplier() {
                 onKeyDown={(e) =>
                   handleKeyDown(e, cityRef)
                 }
-                required
               />
             </div>
 
@@ -321,7 +317,6 @@ function CreateSupplier() {
                 onKeyDown={(e) =>
                   handleKeyDown(e, stateRef)
                 }
-                required
               />
             </div>
 
@@ -338,7 +333,6 @@ function CreateSupplier() {
                 onKeyDown={(e) =>
                   handleKeyDown(e, pincodeRef)
                 }
-                required
               />
             </div>
 
@@ -355,7 +349,6 @@ function CreateSupplier() {
                 onKeyDown={(e) =>
                   handleKeyDown(e, submitRef)
                 }
-                required
               />
             </div>
 

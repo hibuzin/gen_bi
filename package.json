@@ -64,6 +64,10 @@
     "to": "backo"
   },
   {
+    "from": "backo/node_modules",
+    "to": "backo/node_modules"
+  },
+  {
     "from": "node-runtime",
     "to": "node-runtime"
   },

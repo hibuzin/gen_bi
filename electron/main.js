@@ -16,7 +16,7 @@ function startBackend() {
   : path.join(__dirname, "../backo");
 
   const nodePath = app.isPackaged
-    ? path.join(resourcesPath, "node-runtime", "node.exe")
+    ? path.join(process.resourcesPath, "node-runtime", "node.exe")
     : "node";
 
   console.log("====================================");

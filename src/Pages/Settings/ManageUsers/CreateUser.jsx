@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./CreateUser.module.css";
 import Toast from "../../../components/Toast";
+import { API } from "../../../constants/api";
 
 function CreateUser() {
   const navigate = useNavigate();
@@ -53,18 +54,14 @@ function CreateUser() {
       const token =
         localStorage.getItem("token");
 
-      const res = await fetch(
-        "http://192.168.31.181:5000/api/super-admin/create-user",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(form),
-        }
-      );
+      const res = await fetch(API.createSuperAdminUser, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+  body: JSON.stringify(form),
+});
 
       const data = await res.json();
 

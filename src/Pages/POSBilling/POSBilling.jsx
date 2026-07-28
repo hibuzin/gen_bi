@@ -54,6 +54,7 @@ function POSBilling() {
   const [showBalanceAlert, setShowBalanceAlert] = useState(false);
   const [pendingPopupPrint, setPendingPopupPrint] = useState(false);
   const [calculatedItems, setCalculatedItems] = useState([]);
+  const [isWalkInCustomer, setIsWalkInCustomer] = useState(false);
   const [chequeDetails, setChequeDetails] = useState({
     chequeNo: "",
     chequeDate: "",
@@ -205,10 +206,15 @@ function POSBilling() {
       setLoading(true);
       setBill(null);
 
-      let customerId = selectedCustomer?.id || null;
-
-      // existing customer illa, but phone + name type pannirundha -> new customer create pannidu
-      if (!customerId && customerPhone.trim() && customerName.trim()) {
+     let customerId = isWalkInCustomer
+  ? null
+  : selectedCustomer?.id || selectedCustomer?._id || null;
+      if (
+  !isWalkInCustomer &&
+  !customerId &&
+  customerPhone.trim() &&
+  customerName.trim()
+) {
         try {
 
           const custRes = await fetch(API.customers, {
@@ -263,9 +269,20 @@ function POSBilling() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          customerId: customerId ? Number(customerId) : undefined,
-          redeemPoints: Number(redeemPoints || 0),
-          items: billItems,
+  isWalkInCustomer,
+
+  customerId:
+    isWalkInCustomer
+      ? undefined
+      : customerId
+        ? Number(customerId)
+        : undefined,
+
+  redeemPoints: isWalkInCustomer
+    ? 0
+    : Number(redeemPoints || 0),
+
+  items: billItems,
           paymentStatus,
           paymentMethod,
           payments:
@@ -515,6 +532,8 @@ function POSBilling() {
         {/* ── Right Panel ── */}
         <POSRightPanel
           token={token}
+          isWalkInCustomer={isWalkInCustomer}
+          setIsWalkInCustomer={setIsWalkInCustomer}
           customerPhone={customerPhone}
           setCustomerPhone={setCustomerPhone}
           customerName={customerName}

@@ -209,8 +209,12 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
     } catch (err) {
       console.error(err);
     } finally {
-      localStorage.clear();
-      navigate("/login", { replace: true });
+      const defaultUnit = localStorage.getItem("defaultUnit") || "pcs";
+
+localStorage.clear();
+localStorage.setItem("defaultUnit", defaultUnit);
+
+navigate("/login", { replace: true });
     }
   };
 

@@ -10,6 +10,7 @@ import {
   FaEdit,
   FaTrash,
   FaRupeeSign,
+  FaSearch,
 } from "react-icons/fa";
 import Toast from "../../components/Toast";
 import styles from "./PurchaseList.module.css";
@@ -34,6 +35,8 @@ function PurchaseList() {
     left: -10,
   });
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
+const [searchLoading, setSearchLoading] = useState(false);
   const isOverdue = (dueDate) => {
     if (!dueDate) return false;
 
@@ -53,6 +56,14 @@ function PurchaseList() {
     fetchProducts();
     fetchSuppliers();
   }, []);
+
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    searchPurchases(searchText);
+  }, 400);
+
+  return () => clearTimeout(timer);
+}, [searchText]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -75,6 +86,84 @@ function PurchaseList() {
         handleClickOutside
       );
   }, []);
+
+  const searchPurchases = async (value) => {
+  const query = value.trim();
+
+  if (!query) {
+    fetchPurchases();
+    return;
+  }
+
+  try {
+    setSearchLoading(true);
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(
+      `https://pos-backend-6uh4.onrender.com/api/purchase/search?search=${encodeURIComponent(
+        query
+      )}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(
+        data.message || "Failed to search purchases"
+      );
+    }
+
+    const normalizedPurchases = (data.data || []).map(
+      (purchase) => ({
+        ...purchase,
+
+        supplier: {
+          id:
+            purchase.supplierId?._id ||
+            purchase.supplier?.id ||
+            purchase.supplierId ||
+            "",
+
+          name:
+            purchase.supplierId?.supplierName ||
+            purchase.supplier?.name ||
+            purchase.supplierName ||
+            "-",
+
+          mobile:
+            purchase.supplierId?.mobile ||
+            purchase.supplier?.mobile ||
+            "",
+
+          email:
+            purchase.supplierId?.email ||
+            purchase.supplier?.email ||
+            "",
+        },
+      })
+    );
+
+    setPurchases(normalizedPurchases);
+  } catch (err) {
+    console.error("Purchase search error:", err);
+
+    setPurchases([]);
+
+    setToast({
+      type: "error",
+      message: err.message || "Purchase search failed",
+    });
+  } finally {
+    setSearchLoading(false);
+  }
+};
 
   const fetchPurchases = async () => {
     try {
@@ -388,7 +477,30 @@ function PurchaseList() {
         </div>
 
       </div>
+{/* PURCHASE SEARCH */}
+<div className={styles.searchRow}>
+  <div className={styles.searchBox}>
+    <FaSearch className={styles.searchIcon} />
 
+    <input
+      type="text"
+      value={searchText}
+      onChange={(e) => setSearchText(e.target.value)}
+      placeholder="Search supplier, invoice, GRN, product..."
+      className={styles.searchInput}
+    />
+
+    {searchText && (
+      <button
+        type="button"
+        className={styles.clearSearchBtn}
+        onClick={() => setSearchText("")}
+      >
+        ×
+      </button>
+    )}
+  </div>
+</div>
       {/* TABLE */}
       <div
         className={styles.tableWrapper}
@@ -410,7 +522,7 @@ function PurchaseList() {
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {loading || searchLoading ? (
               <tr className={styles.loaderRow}>
                 <td colSpan="8">
                   <div className={styles.tableLoader}>
