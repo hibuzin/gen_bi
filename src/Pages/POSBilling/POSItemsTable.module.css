@@ -6,6 +6,19 @@
   overflow: hidden;
 }
 
+/* Chrome, Edge, Safari */
+.cellInput::-webkit-outer-spin-button,
+.cellInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+.cellInput[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .tableWrap {
   flex: 1;
   min-height: 0;
@@ -158,6 +171,14 @@
 .deleteBtn:hover {
   opacity: 1;
   background: #fef2f2;
+}
+
+.rowDropdownItemActive {
+  background: #f1f0fc;
+}
+
+.rowDropdownItemActive strong {
+  color: #4c3cce;
 }
 
 .rowSearchBox {

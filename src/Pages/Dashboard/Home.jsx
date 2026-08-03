@@ -24,15 +24,14 @@ import {
   FiTrendingUp,
   FiTrendingDown
 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [reportType, setReportType] = useState("today");
   const [salesData, setSalesData] = useState([]);
   const [transactions, setTransactions] = useState([]);
-
-
   const token = localStorage.getItem("token");
-
+  const navigate = useNavigate();
   const authHeaders = {
     "Content-Type": "application/json",
     Authorization: token ? `Bearer ${token}` : "",
@@ -68,23 +67,39 @@ export default function Home() {
     }
   };
 
+  const getTodayDate = () => {
+    const today = new Date();
+
+    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const year = today.getFullYear();
+
+    return `${day}/${month}/${year}`;
+  };
+
   const fetchTransactions = async () => {
     try {
-      const res = await fetch(
-        `${API.bill}?limit=5`,
-        { headers: authHeaders }
-      );
+      const res = await fetch(API.bill, {
+        headers: authHeaders,
+      });
 
       const json = await res.json();
 
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to fetch bills");
+      }
+
       const list = Array.isArray(json?.data) ? json.data : [];
 
-      setTransactions(
-        list
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // newest first
-          .slice(0, 5)
-      );
+      const todayDate = getTodayDate();
+
+      const todayBills = list
+        .filter((bill) => bill.invoiceDate === todayDate)
+        .sort((a, b) => Number(b.billCount || 0) - Number(a.billCount || 0));
+
+      setTransactions(todayBills);
     } catch (err) {
+      console.error("Today bill fetch error:", err);
       setTransactions([]);
     }
   };
@@ -153,7 +168,153 @@ export default function Home() {
           </div>
 
         </div>
+        <div className={styles.transactionSection}>
+          <div className={styles.transactionTitleRow}>
+            <div>
+              <h2>Today bills</h2>
+              <p>{transactions.length} bills</p>
+            </div>
+          </div>
 
+          <div className={styles.transactionTableWrapper}>
+            <table className={styles.transactionTable}>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Bill no</th>
+                  <th>Time</th>
+                  <th>Customer</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                  <th>Paid</th>
+                  <th>Balance</th>
+                  <th>Return</th>
+                  <th>Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan="11" className={styles.emptyCell}>
+                      No bills found for today
+                    </td>
+                  </tr>
+                ) : (
+                  transactions.map((bill, index) => {
+                    const paymentMethod =
+                      bill.payment?.paymentMethod ||
+                      bill.payment?.payments?.[0]?.method ||
+                      bill.paymentMethod ||
+                      "cash";
+
+                    const paymentStatus =
+                      bill.payment?.paymentStatus ||
+                      bill.paymentStatus ||
+                      "paid";
+
+                    const paidAmount = Number(
+                      bill.payment?.paidAmount ||
+                      bill.paidAmount ||
+                      0
+                    );
+
+                    const pendingAmount = Number(
+                      bill.payment?.pendingAmount ||
+                      bill.pendingAmount ||
+                      0
+                    );
+
+                    const returnAmount = Number(
+                      bill.payment?.returnAmount ||
+                      bill.returnAmount ||
+                      0
+                    );
+
+                    const totalAmount = Number(
+                      bill.summary?.grandTotal ||
+                      bill.totalAmount ||
+                      0
+                    );
+
+                    return (
+                      <tr
+                        key={bill.billId || bill._id}
+                        className={styles.tableRow}
+                        onClick={() =>
+                          navigate("/posbilling", {
+                            state: {
+                              editBill: bill,
+                            },
+                          })
+                        }
+                      >
+                        <td>{index + 1}</td>
+
+                        <td>
+                          <strong>{bill.invoiceNo || "-"}</strong>
+                        </td>
+
+                        <td>{bill.invoiceTime || "-"}</td>
+
+                        <td>
+                          <div className={styles.customerDetails}>
+                            <strong>
+                              {bill.customer?.name ||
+                                bill.customer?.customerName ||
+                                "Walk in Customer"}
+                            </strong>
+
+                            <span>
+                              {bill.customer?.mobile || "-"}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td>
+                          <span className={styles.paymentBadge}>
+                            {paymentMethod}
+                          </span>
+                        </td>
+
+                        <td>
+                          <span
+                            className={`${styles.statusBadge} ${paymentStatus === "paid"
+                              ? styles.paidStatus
+                              : paymentStatus === "partial"
+                                ? styles.partialStatus
+                                : styles.unpaidStatus
+                              }`}
+                          >
+                            {paymentStatus}
+                          </span>
+                        </td>
+
+                        <td>₹ {paidAmount.toFixed(2)}</td>
+
+                        <td>₹ {pendingAmount.toFixed(2)}</td>
+
+                        <td>₹ {returnAmount.toFixed(2)}</td>
+
+                        <td className={styles.totalAmount}>
+                          ₹ {totalAmount.toFixed(2)}
+                        </td>
+
+                        <td>
+                          <ExternalLink
+                            size={15}
+                            className={styles.openIcon}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

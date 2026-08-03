@@ -16,7 +16,8 @@ const {
     getBills,
     salescheck,
     cashierWiseSales,
-    getBillById
+    getBillById,
+    editBill
 } = require("../controllers/bill");
 
 
@@ -82,5 +83,12 @@ router.get("/:id",
     getBillById
 );
 
+
+
+router.put("/edit/:billId",
+    verifyToken,
+    authorize("super_admin", "admin", "cashier"),
+    editBill
+);
 
 module.exports = router;

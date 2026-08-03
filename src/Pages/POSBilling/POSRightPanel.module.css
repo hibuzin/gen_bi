@@ -215,3 +215,56 @@
   display: block;
   font-family: inherit;
 }
+
+.customerSummary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.customerSummaryItem {
+  min-width: 0;
+  padding: 9px 10px;
+  background: #f8f9fb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.customerSummaryItem span {
+  color: #7b8494;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.customerSummaryItem strong {
+  color: #24292f;
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customerSummaryItem:last-child strong {
+  color: #d32f2f;
+}
+
+.billDiscountInput {
+  width: 50px;
+  height: 25px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  text-align: right;
+  outline: none;
+  font-size: 13px;
+}
+
+.billDiscountInput:focus {
+  border-color: #7c6ee6;
+}

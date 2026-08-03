@@ -30,12 +30,12 @@ const auditLogSchema = new mongoose.Schema(
         },
 
         oldData: {
-            type: Object,
+            type: mongoose.Schema.Types.Mixed,
             default: null
         },
 
         newData: {
-            type: Object,
+            type: mongoose.Schema.Types.Mixed,
             default: null
         },
 
@@ -47,6 +47,7 @@ const auditLogSchema = new mongoose.Schema(
     },
     {
         timestamps: true
-    });
+    }
+);
 
 module.exports = mongoose.model("AuditLog", auditLogSchema);

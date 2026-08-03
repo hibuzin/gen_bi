@@ -4,7 +4,6 @@ import {
   useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import Select from "react-select";
 import {
   FaEllipsisV,
   FaEdit,
@@ -18,13 +17,8 @@ import { API } from "../../constants/api";
 
 function PurchaseList() {
   const [purchases, setPurchases] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
   const [toast, setToast] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editPurchase, setEditPurchase] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -36,7 +30,7 @@ function PurchaseList() {
   });
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
-const [searchLoading, setSearchLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const isOverdue = (dueDate) => {
     if (!dueDate) return false;
 
@@ -53,17 +47,15 @@ const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
     fetchPurchases();
-    fetchProducts();
-    fetchSuppliers();
   }, []);
 
   useEffect(() => {
-  const timer = setTimeout(() => {
-    searchPurchases(searchText);
-  }, 400);
+    const timer = setTimeout(() => {
+      searchPurchases(searchText);
+    }, 400);
 
-  return () => clearTimeout(timer);
-}, [searchText]);
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -88,82 +80,82 @@ const [searchLoading, setSearchLoading] = useState(false);
   }, []);
 
   const searchPurchases = async (value) => {
-  const query = value.trim();
+    const query = value.trim();
 
-  if (!query) {
-    fetchPurchases();
-    return;
-  }
-
-  try {
-    setSearchLoading(true);
-
-    const token = localStorage.getItem("token");
-
-    const res = await fetch(
-      `https://pos-backend-6uh4.onrender.com/api/purchase/search?search=${encodeURIComponent(
-        query
-      )}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      throw new Error(
-        data.message || "Failed to search purchases"
-      );
+    if (!query) {
+      fetchPurchases();
+      return;
     }
 
-    const normalizedPurchases = (data.data || []).map(
-      (purchase) => ({
-        ...purchase,
+    try {
+      setSearchLoading(true);
 
-        supplier: {
-          id:
-            purchase.supplierId?._id ||
-            purchase.supplier?.id ||
-            purchase.supplierId ||
-            "",
+      const token = localStorage.getItem("token");
 
-          name:
-            purchase.supplierId?.supplierName ||
-            purchase.supplier?.name ||
-            purchase.supplierName ||
-            "-",
+      const res = await fetch(
+        `https://pos-backend-6uh4.onrender.com/api/purchase/search?search=${encodeURIComponent(
+          query
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-          mobile:
-            purchase.supplierId?.mobile ||
-            purchase.supplier?.mobile ||
-            "",
+      const data = await res.json();
 
-          email:
-            purchase.supplierId?.email ||
-            purchase.supplier?.email ||
-            "",
-        },
-      })
-    );
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.message || "Failed to search purchases"
+        );
+      }
 
-    setPurchases(normalizedPurchases);
-  } catch (err) {
-    console.error("Purchase search error:", err);
+      const normalizedPurchases = (data.data || []).map(
+        (purchase) => ({
+          ...purchase,
 
-    setPurchases([]);
+          supplier: {
+            id:
+              purchase.supplierId?._id ||
+              purchase.supplier?.id ||
+              purchase.supplierId ||
+              "",
 
-    setToast({
-      type: "error",
-      message: err.message || "Purchase search failed",
-    });
-  } finally {
-    setSearchLoading(false);
-  }
-};
+            name:
+              purchase.supplierId?.supplierName ||
+              purchase.supplier?.name ||
+              purchase.supplierName ||
+              "-",
+
+            mobile:
+              purchase.supplierId?.mobile ||
+              purchase.supplier?.mobile ||
+              "",
+
+            email:
+              purchase.supplierId?.email ||
+              purchase.supplier?.email ||
+              "",
+          },
+        })
+      );
+
+      setPurchases(normalizedPurchases);
+    } catch (err) {
+      console.error("Purchase search error:", err);
+
+      setPurchases([]);
+
+      setToast({
+        type: "error",
+        message: err.message || "Purchase search failed",
+      });
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
   const fetchPurchases = async () => {
     try {
@@ -200,18 +192,6 @@ const [searchLoading, setSearchLoading] = useState(false);
     }
   };
 
-  const fetchProducts = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API.products}/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success) setProducts(data.data || []);
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
   const handleDelete = async () => {
     try {
@@ -238,100 +218,7 @@ const [searchLoading, setSearchLoading] = useState(false);
     }
   };
 
-  const openEditModal = (purchase) => {
-    setEditPurchase({
-      ...purchase,
-      supplierId: purchase.supplier?.id || purchase.supplierId || "",
-      items: purchase.items.map((item) => ({ ...item })),
-    });
-    setShowEditModal(true);
-    document.body.style.overflow = "hidden";
-  };
-
-  const closeEditModal = () => {
-    setShowEditModal(false);
-    document.body.style.overflow = "auto";
-  };
-
-  const getProductOptions = () =>
-    products.map((p) => ({ value: p._id, label: p.name, product: p }));
-
-  const getSupplierOptions = () =>
-    suppliers.map((s) => ({
-      value: s._id,
-      label: s.supplierName,
-      supplier: s,
-    }));
-
-  const getFlavorOptions = (productId) => {
-    const product = products.find((p) => p._id === productId);
-    if (!product) return [];
-    return (product.flavor || []).map((f) => ({ value: f, label: f }));
-  };
-
-  const getLiterOptions = (productId) => {
-    const product = products.find((p) => p._id === productId);
-    if (!product) return [];
-    const liters = product.liters || product.litters || [];
-    const mrps = product.mrps || [];
-    return liters.map((l, i) => ({
-      value: l,
-      label: l,
-      mrp: mrps[i] || 0,
-    }));
-  };
-
-  const getMrpOptions = (productId) => {
-    const product = products.find((p) => p._id === productId);
-    if (!product) return [];
-    return (product.mrps || []).map((m) => ({ value: m, label: `Rs. ${m}` }));
-  };
-
-  const updateItem = (index, field, value) => {
-    const updatedItems = [...editPurchase.items];
-    updatedItems[index][field] = value;
-    setEditPurchase({ ...editPurchase, items: updatedItems });
-  };
-
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-      const token = localStorage.getItem("token");
-      const payload = {
-        supplierId: editPurchase.supplierId,
-        invoiceNo: editPurchase.invoiceNo,
-        invoiceDate: editPurchase.invoiceDate,
-        items: editPurchase.items.map((item) => ({
-          productId: item.productId?._id || item.productId,
-          flavor: item.flavor,
-          liters: item.litters || item.liters,
-          mrp: Number(item.mrp),
-          qty: Number(item.qty),
-          costPrice: Number(item.costPrice),
-          sellingPrice: Number(item.sellingPrice),
-          barcode: item.barcode || "",
-        })),
-      };
-      const res = await fetch(`${API.purchase}/${editPurchase._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Update failed");
-      setToast({ type: "success", message: "Purchase updated successfully" });
-      fetchPurchases();
-      closeEditModal();
-    } catch (err) {
-      console.log(err);
-      setToast({ type: "error", message: err.message || "Update failed" });
-    } finally {
-      setSaving(false);
-    }
-  };
+ 
 
   const filteredPurchases = purchases.filter((p) => {
     const balance = Number(p.balanceAmount || 0);
@@ -477,30 +364,30 @@ const [searchLoading, setSearchLoading] = useState(false);
         </div>
 
       </div>
-{/* PURCHASE SEARCH */}
-<div className={styles.searchRow}>
-  <div className={styles.searchBox}>
-    <FaSearch className={styles.searchIcon} />
+      {/* PURCHASE SEARCH */}
+      <div className={styles.searchRow}>
+        <div className={styles.searchBox}>
+          <FaSearch className={styles.searchIcon} />
 
-    <input
-      type="text"
-      value={searchText}
-      onChange={(e) => setSearchText(e.target.value)}
-      placeholder="Search supplier, invoice, GRN, product..."
-      className={styles.searchInput}
-    />
+          <input
+            type="text"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="Search supplier, invoice, GRN, product..."
+            className={styles.searchInput}
+          />
 
-    {searchText && (
-      <button
-        type="button"
-        className={styles.clearSearchBtn}
-        onClick={() => setSearchText("")}
-      >
-        ×
-      </button>
-    )}
-  </div>
-</div>
+          {searchText && (
+            <button
+              type="button"
+              className={styles.clearSearchBtn}
+              onClick={() => setSearchText("")}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
       {/* TABLE */}
       <div
         className={styles.tableWrapper}
@@ -632,7 +519,13 @@ const [searchLoading, setSearchLoading] = useState(false);
                           <button
                             className={styles.editMenuItem}
                             onClick={() => {
-                              openEditModal(p);
+                              navigate("/create-purchase", {
+                                state: {
+                                  mode: "edit",
+                                  purchaseId: p._id,
+                                },
+                              });
+
                               setOpenMenu(null);
                             }}
                           >
@@ -682,203 +575,7 @@ const [searchLoading, setSearchLoading] = useState(false);
         </div>
       )}
 
-      {/* EDIT MODAL */}
-      {showEditModal && editPurchase && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-
-            {/* HEADER */}
-            <div className={styles.modalHeader}>
-              <h3>Edit Purchase</h3>
-              <button className={styles.closeBtn} onClick={closeEditModal}>x</button>
-            </div>
-
-            {/* BODY */}
-            <div className={styles.modalBody}>
-
-              {/*  Purchase-level fields OUTSIDE the items loop */}
-              <div className={styles.editCard}>
-                <div className={styles.modalGrid}>
-
-                  {/* SUPPLIER */}
-                  <div className={styles.field}>
-                    <label>Supplier</label>
-                    <Select
-                      options={getSupplierOptions()}
-                      value={
-                        getSupplierOptions().find(
-                          (s) => s.value === editPurchase.supplierId
-                        ) || null
-                      }
-                      onChange={(selected) =>
-                        setEditPurchase({ ...editPurchase, supplierId: selected?.value })
-                      }
-                      placeholder="Select Supplier"
-                    />
-                  </div>
-
-                  {/* INVOICE */}
-                  <div className={styles.field}>
-                    <label>Invoice No</label>
-                    <input
-                      type="text"
-                      value={editPurchase.invoiceNo || ""}
-                      onChange={(e) =>
-                        setEditPurchase({ ...editPurchase, invoiceNo: e.target.value })
-                      }
-                    />
-                  </div>
-
-
-
-                  {/* DATE */}
-                  <div className={styles.field}>
-                    <label>Purchase Date</label>
-                    <input
-                      type="date"
-                      value={
-                        editPurchase.invoiceDate
-                          ? editPurchase.invoiceDate.split("T")[0]
-                          : ""
-                      }
-                      onChange={(e) =>
-                        setEditPurchase({ ...editPurchase, invoiceDate: e.target.value })
-                      }
-                    />
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Items loop — only item-specific fields here */}
-              {editPurchase.items?.map((item, index) => (
-                <div key={index} className={styles.editCard}>
-                  <h4 style={{ marginBottom: "8px" }}>Item {index + 1}</h4>
-                  <div className={styles.modalGrid}>
-
-                    {/* PRODUCT */}
-                    <div className={styles.field}>
-                      <label>Product</label>
-                      <Select
-                        options={getProductOptions()}
-                        value={
-                          getProductOptions().find(
-                            (p) => p.value === (item.productId?._id || item.productId)
-                          ) || null
-                        }
-                        onChange={(selected) => {
-                          const product = selected?.product;
-                          updateItem(index, "productId", product);
-                          updateItem(index, "flavor", product?.flavor?.[0] || "");
-                          updateItem(index, "litters", product?.liters?.[0] || product?.litters?.[0] || "");
-                          updateItem(index, "mrp", product?.mrps?.[0] || "");
-                        }}
-                      />
-                    </div>
-
-                    {/* FLAVOR */}
-                    <div className={styles.field}>
-                      <label>Flavor</label>
-                      <Select
-                        options={getFlavorOptions(item.productId?._id || item.productId)}
-                        value={
-                          getFlavorOptions(item.productId?._id || item.productId).find(
-                            (f) => f.value === item.flavor
-                          ) || null
-                        }
-                        onChange={(selected) => updateItem(index, "flavor", selected?.value)}
-                      />
-                    </div>
-
-                    {/* LITERS */}
-                    <div className={styles.field}>
-                      <label>Liters</label>
-                      <Select
-                        options={getLiterOptions(item.productId?._id || item.productId)}
-                        value={
-                          getLiterOptions(item.productId?._id || item.productId).find(
-                            (l) => l.value === (item.litters || item.liters)
-                          ) || null
-                        }
-                        onChange={(selected) => {
-                          updateItem(index, "litters", selected?.value);
-                          updateItem(index, "mrp", selected?.mrp);
-                        }}
-                      />
-                    </div>
-
-                    {/* MRP */}
-                    <div className={styles.field}>
-                      <label>MRP</label>
-                      <Select
-                        options={getMrpOptions(item.productId?._id || item.productId)}
-                        value={
-                          getMrpOptions(item.productId?._id || item.productId).find(
-                            (m) => m.value === item.mrp || m.value === Number(item.mrp)
-                          ) || null
-                        }
-                        onChange={(selected) => updateItem(index, "mrp", selected?.value)}
-                        placeholder="Select MRP"
-                      />
-                    </div>
-
-                    {/* BARCODE —  now per-item as per GET response */}
-                    <div className={styles.field}>
-                      <label>Barcode</label>
-                      <input
-                        type="text"
-                        value={item.barcode || ""}
-                        onChange={(e) => updateItem(index, "barcode", e.target.value)}
-                      />
-                    </div>
-
-                    {/* QTY */}
-                    <div className={styles.field}>
-                      <label>Quantity</label>
-                      <input
-                        type="number"
-                        value={item.qty}
-                        onChange={(e) => updateItem(index, "qty", e.target.value)}
-                      />
-                    </div>
-
-                    {/* COST PRICE */}
-                    <div className={styles.field}>
-                      <label>Cost Price</label>
-                      <input
-                        type="number"
-                        value={item.costPrice}
-                        onChange={(e) => updateItem(index, "costPrice", e.target.value)}
-                      />
-                    </div>
-
-                    {/* SELLING PRICE */}
-                    <div className={styles.field}>
-                      <label>Selling Price</label>
-                      <input
-                        type="number"
-                        value={item.sellingPrice}
-                        onChange={(e) => updateItem(index, "sellingPrice", e.target.value)}
-                      />
-                    </div>
-
-                  </div>
-                </div>
-              ))}
-
-              {/* SAVE */}
-              <button
-                className={styles.submitBtn}
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }

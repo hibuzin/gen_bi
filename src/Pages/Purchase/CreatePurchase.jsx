@@ -144,6 +144,9 @@ function CreatePurchase() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const editPurchaseId = location.state?.purchaseId || "";
+  const isEditMode =
+    location.state?.mode === "edit" && Boolean(editPurchaseId);
   const supplierId = location.state?.supplierId;
   const token = localStorage.getItem("token");
 
@@ -167,10 +170,61 @@ function CreatePurchase() {
     Number(purchaseTotals.totalAmount || 0) - Number(form.paidAmount || 0);
 
 
-  useEffect(() => {
-    fetchSuppliers();
-    fetchProducts();
-  }, []);
+useEffect(() => {
+  const loadPageData = async () => {
+    await Promise.all([
+      fetchSuppliers(),
+      fetchProducts(),
+    ]);
+
+    if (isEditMode) {
+      await fetchPurchaseForEdit();
+    }
+  };
+
+  loadPageData();
+}, [editPurchaseId]);
+
+useEffect(() => {
+  if (!isEditMode || !form.supplierId || suppliers.length === 0) {
+    return;
+  }
+
+  const supplier = suppliers.find(
+    (item) =>
+      String(item._id || item.id) ===
+      String(form.supplierId)
+  );
+
+  if (!supplier) return;
+
+  setSupplierSearch(
+    supplier.supplierName ||
+    supplier.name ||
+    ""
+  );
+
+  setSupplierDetails({
+    number:
+      supplier.phone ||
+      supplier.mobile ||
+      supplier.supplierPhone ||
+      "",
+
+    address: supplier.address || "",
+
+    gstNumber: supplier.gstNumber || "",
+
+    city: supplier.city || "",
+    state: supplier.state || "",
+    pincode: supplier.pincode || "",
+  });
+}, [
+  isEditMode,
+  form.supplierId,
+  suppliers,
+]);
+
 
 
   const openAddItemModal = async () => {
@@ -185,6 +239,393 @@ function CreatePurchase() {
     setToast({ message, type });
     setTimeout(() => setToast({ message: "", type: "" }), 2500);
   };
+
+  // edite purchase
+  const formatDateForInput = (dateValue) => {
+  if (!dateValue) return "";
+
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue;
+  }
+
+  // DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY
+  const manualMatch = String(dateValue).match(
+    /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/
+  );
+
+  if (manualMatch) {
+    const [, day, month, year] = manualMatch;
+
+    return `${year}-${String(month).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
+  }
+
+  const parsedDate = new Date(dateValue);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "";
+  }
+
+  const year = parsedDate.getFullYear();
+  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(parsedDate.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const fetchPurchaseForEdit = async () => {
+  if (!editPurchaseId) return;
+
+  try {
+    setLoading(true);
+
+    const res = await fetch(
+      `${API.purchase}/${editPurchaseId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(
+        data.message || "Failed to load purchase details"
+      );
+    }
+
+    const purchase = data.data;
+
+    const resolvedSupplierId =
+      purchase.supplierId?._id ||
+      purchase.supplierId ||
+      purchase.supplier?.id ||
+      "";
+
+    const supplierName =
+      purchase.supplierId?.supplierName ||
+      purchase.supplier?.name ||
+      purchase.supplierName ||
+      "";
+
+    setForm((prev) => ({
+      ...prev,
+
+      supplierId: String(resolvedSupplierId || ""),
+
+      invoiceNo: purchase.invoiceNo || "",
+
+      invoiceDate:
+        formatDateForInput(purchase.invoiceDate) || today,
+
+      grnDate:
+        formatDateForInput(purchase.grnDate) || today,
+
+      invoiceAmount:
+        purchase.invoiceAmount ?? purchase.totalAmount ?? "",
+
+      dueDate:
+        formatDateForInput(
+          purchase.DueDate || purchase.dueDate
+        ) || addDays(today, 7),
+
+      supplierBillAmount:
+        purchase.supplierBillAmount ?? "",
+
+      billDiscountPercent:
+        purchase.billDiscountPercent ?? "",
+
+      freightCharge:
+        purchase.freightCharge ?? "",
+
+      packagingCharge:
+        purchase.packagingCharge ?? "",
+
+      paidAmount:
+        purchase.paidAmount ?? "",
+
+      paymentType:
+        purchase.paymentType ||
+        purchase.payment?.method ||
+        "cash",
+
+      notes: purchase.notes || "",
+    }));
+
+    setSupplierSearch(supplierName);
+
+    setSupplierDetails({
+      number:
+        purchase.supplierId?.mobile ||
+        purchase.supplier?.mobile ||
+        "",
+
+      address:
+        purchase.supplierId?.address ||
+        purchase.supplier?.address ||
+        "",
+
+      gstNumber:
+        purchase.supplierId?.gstNumber ||
+        purchase.supplier?.gstNumber ||
+        "",
+
+      city:
+        purchase.supplierId?.city ||
+        purchase.supplier?.city ||
+        "",
+
+      state:
+        purchase.supplierId?.state ||
+        purchase.supplier?.state ||
+        "",
+
+      pincode:
+        purchase.supplierId?.pincode ||
+        purchase.supplier?.pincode ||
+        "",
+    });
+
+    const existingItems = Array.isArray(purchase.items)
+      ? purchase.items.map((item) => ({
+          ...emptyItem,
+
+          productId:
+            item.productId?._id ||
+            item.productId ||
+            "",
+
+          productName:
+            item.productName ||
+            item.productId?.name ||
+            "",
+
+          itemCode:
+            item.itemCode ||
+            item.barcode ||
+            "",
+
+          barcode:
+            item.barcode ||
+            item.itemCode ||
+            "",
+
+          hsnCode:
+            item.hsnCode ||
+            "",
+
+          categoryId:
+            item.categoryId?._id ||
+            item.categoryId ||
+            "",
+
+          gstRate: Number(
+            item.taxPercentage ??
+            item.gstRate ??
+            item.tax ??
+            0
+          ),
+
+          tax: Number(
+            item.taxPercentage ??
+            item.gstRate ??
+            item.tax ??
+            0
+          ),
+
+          qty: Number(item.qty || 0),
+          freeQty: Number(item.freeQty || 0),
+
+          netcost: Number(
+            item.netcost ??
+            item.costPrice ??
+            item.Rate ??
+            0
+          ),
+
+          originalNetcost: Number(
+            item.netcost ??
+            item.costPrice ??
+            item.Rate ??
+            0
+          ),
+
+          costPrice: Number(
+            item.netcost ??
+            item.costPrice ??
+            item.Rate ??
+            0
+          ),
+
+          purchasePrice: Number(
+            item.netcost ??
+            item.costPrice ??
+            item.Rate ??
+            0
+          ),
+
+          sellingPrice: Number(
+            item.sellingPrice || 0
+          ),
+
+          mrp: Number(item.mrp || 0),
+
+          unit: item.unit || "pcs",
+
+          unitValue: Number(
+            item.unitValue || 1
+          ),
+
+          qtyType:
+            item.qtyType || "unit",
+
+          isGstIncluded:
+            item.isGstIncluded !== false,
+
+          discountPercent: Number(
+            item.discountPercent || 0
+          ),
+
+          discountAmount: Number(
+            item.discountAmount || 0
+          ),
+
+          amount: Number(item.amount || 0),
+
+          totalCostWithGST: Number(
+            item.totalCostWithGST ||
+            item.netAmount ||
+            0
+          ),
+
+          taxAmount: Number(
+            item.taxAmount || 0
+          ),
+
+          rate: Number(
+            item.Rate ??
+            item.rate ??
+            0
+          ),
+
+          netAmount: Number(
+            item.netAmount || 0
+          ),
+
+          totalStockQty: Number(
+            item.totalStockQty ||
+            Number(item.qty || 0) +
+              Number(item.freeQty || 0)
+          ),
+
+          receivedQty: Number(
+            item.receivedQty ||
+            item.totalStockQty ||
+            Number(item.qty || 0) +
+              Number(item.freeQty || 0)
+          ),
+
+          pendingQty: Number(
+            item.pendingQty || 0
+          ),
+
+          profitAmount: Number(
+            item.profitAmount || 0
+          ),
+
+          profitPercent: Number(
+            item.profitPercent || 0
+          ),
+
+          roiPercent: Number(
+            item.roiPercent || 0
+          ),
+        }))
+      : [];
+
+    const emptyRowsCount = Math.max(
+      300 - existingItems.length,
+      0
+    );
+
+    const finalRows = [
+      ...existingItems,
+      ...Array.from(
+        { length: emptyRowsCount },
+        () => ({ ...emptyItem })
+      ),
+    ];
+
+    setBillItems(finalRows);
+
+    setPurchaseTotals({
+      totalAmount: Number(
+        purchase.totalAmount ||
+        purchase.grnAmount ||
+        0
+      ),
+
+      totalGrossAmount: Number(
+        purchase.totalGrossAmount || 0
+      ),
+
+      totalTaxAmount: Number(
+        purchase.totalTaxAmount || 0
+      ),
+
+      cgst: Number(
+        purchase.cgst ||
+        Number(purchase.totalTaxAmount || 0) / 2
+      ),
+
+      sgst: Number(
+        purchase.sgst ||
+        Number(purchase.totalTaxAmount || 0) / 2
+      ),
+
+      itemsTotal: Number(
+        purchase.grnAmount ||
+        purchase.totalAmount ||
+        0
+      ),
+
+      freightCharge: Number(
+        purchase.freightCharge || 0
+      ),
+
+      packagingCharge: Number(
+        purchase.packagingCharge || 0
+      ),
+
+      billDiscountAmount: Number(
+        purchase.billDiscountAmount || 0
+      ),
+
+      supplierBillAmount: Number(
+        purchase.supplierBillAmount || 0
+      ),
+
+      balanceAmount: Number(
+        purchase.balanceAmount || 0
+      ),
+    });
+  } catch (error) {
+    console.error("Purchase edit load error:", error);
+
+    showToast(
+      error.message || "Failed to load purchase",
+      "error"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchSuppliers = async () => {
     try {
@@ -1360,67 +1801,137 @@ function CreatePurchase() {
 
 
       const payload = {
-        supplierId: resolvedSupplierId,
-        invoiceDate: formatDateToDDMMYYYY(form.invoiceDate),
-        grnDate: formatDateToDDMMYYYY(form.grnDate),
-        invoiceNo: form.invoiceNo,
-        invoiceAmount: Number(form.invoiceAmount || 0),
-        DueDate: formatDateToDDMMYYYY(form.dueDate),
-        supplierBillAmount: String(form.supplierBillAmount || 0),
-        billDiscountPercent: Number(form.billDiscountPercent || 0),
-        freightCharge: Number(form.freightCharge || 0),
-        packagingCharge: Number(form.packagingCharge || 0),
-        paymentType: form.paymentType,
-        details:
-          form.paymentType === "bank"
-            ? {
-              bankName: form.bankName,
-              transactionId: form.transactionId,
-            }
-            : form.paymentType === "upi"
-              ? {
-                upiId: form.upiId,
-                transactionId: form.upiTransactionId,
-              }
-              : form.paymentType === "card"
-                ? {
-                  cardType: form.cardType,
-                  cardLast4: form.cardLast4,
-                }
-                : {},
-        paidAmount: String(form.paidAmount || 0),
+  supplierId: resolvedSupplierId,
 
-        items: resolvedItems.map((item) => ({
-          productId: item.productId,
-          freeQty: Number(item.freeQty || 0),
-          qty: Number(item.qty || 0),
-          unitValue: Number(item.unitValue || 1),
-          netcost: Number(item.originalNetcost || item.netcost || 0),
-          mrp: Number(item.mrp || 0),
-          sellingPrice: Number(item.sellingPrice || 0),
-        })),
-      };
+  invoiceNo: form.invoiceNo,
 
-      const res = await fetch(API.createPurchase, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+  invoiceDate: form.invoiceDate,
+
+  invoiceAmount: Number(
+    form.invoiceAmount || 0
+  ),
+
+  grnDate: formatDateToDDMMYYYY(
+    form.grnDate
+  ),
+
+  supplierBillAmount: Number(
+    form.supplierBillAmount ||
+    purchaseTotals.supplierBillAmount ||
+    0
+  ),
+
+  paidAmount: Number(
+    form.paidAmount || 0
+  ),
+
+  freightCharge: Number(
+    form.freightCharge || 0
+  ),
+
+  packagingCharge: Number(
+    form.packagingCharge || 0
+  ),
+
+  billDiscountPercent: Number(
+    form.billDiscountPercent || 0
+  ),
+
+  billDiscountAmount: Number(
+    purchaseTotals.billDiscountAmount || 0
+  ),
+
+  items: resolvedItems.map((item) => ({
+    productId:
+      item.productId?._id ||
+      item.productId,
+
+    qty: Number(item.qty || 0),
+
+    freeQty: Number(
+      item.freeQty || 0
+    ),
+
+    netcost: Number(
+      item.originalNetcost ||
+      item.netcost ||
+      item.costPrice ||
+      0
+    ),
+
+    sellingPrice: Number(
+      item.sellingPrice || 0
+    ),
+
+    mrp: Number(item.mrp || 0),
+
+    barcode:
+      item.barcode ||
+      item.itemCode ||
+      "",
+
+    unitValue: Number(
+      item.unitValue || 1
+    ),
+
+    qtyType:
+      item.qtyType || "unit",
+
+    isGstIncluded:
+      item.isGstIncluded !== false,
+  })),
+};
+
+      const requestUrl = isEditMode
+  ? `${API.purchase}/${editPurchaseId}`
+  : API.createPurchase;
+
+const requestMethod = isEditMode
+  ? "PUT"
+  : "POST";
+
+console.log(
+  isEditMode
+    ? "PURCHASE UPDATE PAYLOAD:"
+    : "PURCHASE CREATE PAYLOAD:",
+  payload
+);
+
+const res = await fetch(requestUrl, {
+  method: requestMethod,
+
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  },
+
+  body: JSON.stringify(payload),
+});
+        
 
       const data = await res.json();
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || "Purchase failed");
-      }
+if (!res.ok || !data.success) {
+  throw new Error(
+    data.message ||
+    (isEditMode
+      ? "Purchase update failed"
+      : "Purchase creation failed")
+  );
+}
 
-      showToast("Purchase created successfully", "success");
+showToast(
+  isEditMode
+    ? "Purchase updated successfully"
+    : "Purchase created successfully",
+  "success"
+);
 
-      setTimeout(() => {
-        navigate("/purchase");
-      }, 200);
+setTimeout(() => {
+  navigate("/purchase", {
+    replace: true,
+  });
+}, 300);
 
       const today = new Date().toISOString().split("T")[0];
 
@@ -1618,18 +2129,29 @@ function CreatePurchase() {
                 <FiArrowLeft />
               </button>
 
-              <h2>Create purchase invoice</h2>
+              <h2>
+  {isEditMode
+    ? "Edit purchase invoice"
+    : "Create purchase invoice"}
+</h2>
             </div>
           </div>
           <div className={styles.topRight}>
             <button
-              className={styles.btnPrimary}
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              <FiSave size={14} />
-              {loading ? "Saving..." : "Save"}
-            </button>
+  className={styles.btnPrimary}
+  onClick={handleSubmit}
+  disabled={loading}
+>
+  <FiSave size={14} />
+
+  {loading
+    ? isEditMode
+      ? "Updating..."
+      : "Saving..."
+    : isEditMode
+      ? "Update"
+      : "Save"}
+</button>
           </div>
         </div>
 
@@ -1661,32 +2183,23 @@ function CreatePurchase() {
                     placeholder="Search supplier"
                     onFocus={() => setShowSupplierList(true)}
                     onChange={(e) => {
-                      setSupplierSearch(e.target.value);
-                      setShowSupplierList(true);
-                      setSupplierDetails({
-                        number:
-                          s.phone ||
-                          s.mobile ||
-                          s.supplierPhone ||
-                          "",
+  setSupplierSearch(e.target.value);
+  setShowSupplierList(true);
 
-                        address:
-                          s.address || "",
+  setSupplierDetails({
+    number: "",
+    address: "",
+    gstNumber: "",
+    city: "",
+    state: "",
+    pincode: "",
+  });
 
-                        gstNumber:
-                          s.gstNumber || "",
-
-                        city:
-                          s.city || "",
-
-                        state:
-                          s.state || "",
-
-                        pincode:
-                          s.pincode || "",
-                      });
-                      setForm((prev) => ({ ...prev, supplierId: "" }));
-                    }}
+  setForm((prev) => ({
+    ...prev,
+    supplierId: "",
+  }));
+}}
                   />
 
                   {showSupplierList && supplierSearch && (
@@ -1697,24 +2210,35 @@ function CreatePurchase() {
                             key={s._id || s.id}
                             className={styles.supplierOption}
                             onClick={() => {
-                              setSupplierSearch(s.supplierName || s.name || "");
+  setSupplierSearch(
+    s.supplierName ||
+    s.name ||
+    ""
+  );
 
-                              setSupplierDetails({
-                                number: "",
-                                address: "",
-                                gstNumber: "",
-                                city: "",
-                                state: "",
-                                pincode: "",
-                              });
+  setSupplierDetails({
+    number:
+      s.phone ||
+      s.mobile ||
+      s.supplierPhone ||
+      "",
 
-                              setForm((prev) => ({
-                                ...prev,
-                                supplierId: s._id || s.id,
-                              }));
+    address: s.address || "",
 
-                              setShowSupplierList(false);
-                            }}
+    gstNumber: s.gstNumber || "",
+
+    city: s.city || "",
+    state: s.state || "",
+    pincode: s.pincode || "",
+  });
+
+  setForm((prev) => ({
+    ...prev,
+    supplierId: s._id || s.id,
+  }));
+
+  setShowSupplierList(false);
+}}
                           >
                             <div className={styles.supplierName}>
                               {s.supplierName || s.name}

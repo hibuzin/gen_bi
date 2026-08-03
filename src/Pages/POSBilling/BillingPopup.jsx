@@ -119,6 +119,18 @@ function BillingPopup({
                 event.preventDefault();
                 handleConfirm();
             }
+
+            if (event.key === "F8") {
+                event.preventDefault();
+                handleConfirm();
+                return;
+            }
+
+            if (event.key === "Escape") {
+                event.preventDefault();
+                onClose();
+                return;
+            }
         };
 
         window.addEventListener("keydown", handleKeyDown);
@@ -483,9 +495,23 @@ function BillingPopup({
                             ))}
                         </div>
 
-                        <div className={styles.tenderReceived}>
-                            <span>Tender Received</span>
-                            <strong>₹ {totalReceived.toFixed(2)}</strong>
+                        <div className={styles.tenderSummary}>
+                            <div className={styles.summaryRow}>
+                                <span>Bill Amount</span>
+                                <strong>₹ {grandTotal.toFixed(2)}</strong>
+                            </div>
+
+                            <div className={styles.summaryRow}>
+                                <span>Tender Received</span>
+                                <strong>₹ {totalReceived.toFixed(2)}</strong>
+                            </div>
+
+                            <div className={`${styles.summaryRow} ${styles.returnRow}`}>
+                                <span>Return Amount</span>
+                                <strong>
+                                    ₹ {balanceAmount.toFixed(2)}
+                                </strong>
+                            </div>
                         </div>
 
                     </section>

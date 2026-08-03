@@ -2,7 +2,7 @@ const AuditLog = require("../models/audit_log");
 const { attachHierarchy } = require("../utils/hierarchy");
 
 exports.getAuditLogs = async (req, res) => {
-    try {
+        try {
         const hierarchy = attachHierarchy(req.user);
 
         const {
@@ -10,55 +10,60 @@ exports.getAuditLogs = async (req, res) => {
             action,
             userId,
             fromDate,
-            toDate,
-            page = 1,
-            limit = 20
+            toDate
         } = req.query;
 
         const filter = {
             superAdminId: hierarchy.superAdminId
         };
 
-        if (module) filter.module = module;
-        if (action) filter.action = action;
-        if (userId) filter.userId = userId;
+        if (module) {
+            filter.module = module;
+        }
+
+        if (action) {
+            filter.action = action;
+        }
+
+        if (userId) {
+            filter.userId = userId;
+        }
 
         if (fromDate || toDate) {
             filter.createdAt = {};
 
             if (fromDate) {
-                filter.createdAt.$gte = new Date(fromDate);
+                const startDate = new Date(fromDate);
+                startDate.setHours(0, 0, 0, 0);
+
+                filter.createdAt.$gte = startDate;
             }
 
             if (toDate) {
-                filter.createdAt.$lte = new Date(toDate);
+                const endDate = new Date(toDate);
+                endDate.setHours(23, 59, 59, 999);
+
+                filter.createdAt.$lte = endDate;
             }
         }
-
-        const skip = (Number(page) - 1) * Number(limit);
 
         const logs = await AuditLog.find(filter)
             .populate("userId", "name email role")
             .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(Number(limit));
+            .lean();
 
-        const total = await AuditLog.countDocuments(filter);
-
-        res.json({
+        return res.status(200).json({
             success: true,
             count: logs.length,
-            total,
-            page: Number(page),
-            totalPages: Math.ceil(total / Number(limit)),
             data: logs
         });
+    } catch (error) {
+        console.error("GET AUDIT LOGS ERROR:", error);
 
-    } catch (err) {
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: "Server error",
-            error: err.message
+            error: error.message
         });
     }
 };

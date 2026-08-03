@@ -3,73 +3,76 @@ import styles from "./POSItemsTable.module.css";
 import { API } from "../../constants/api";
 
 function POSItemsTable({
-    token,
-    scanCode,
-    setScanCode,
-    scannedItems,
-    setScannedItems,
-    codes,
-    setCodes,
-    stockList,
-    calculatedItems,
-    setCalculatedItems,
-    setPreviewSummary,
-    showToast,
+  token,
+  scanCode,
+  setScanCode,
+  scannedItems,
+  setScannedItems,
+  codes,
+  setCodes,
+  stockList,
+  calculatedItems,
+  setCalculatedItems,
+  setPreviewSummary,
+  showToast,
 }) {
-    const itemInputRefs = useRef([]);
-    const scanInputRef = useRef(null);
-    const [rowSearches, setRowSearches] = useState({});
-    const [rowSearchResults, setRowSearchResults] = useState({});
-    const [activeRowIndex, setActiveRowIndex] = useState(null);
-    const extraRows = 20;
-    const displayRows = [
-        ...scannedItems,
-        ...Array(extraRows).fill(null),
-    ];
+  const itemInputRefs = useRef([]);
+  const qtyInputRefs = useRef([]);
+  const scanInputRef = useRef(null);
+  const [rowSearches, setRowSearches] = useState({});
+  const [rowSearchResults, setRowSearchResults] = useState({});
+  const [activeRowIndex, setActiveRowIndex] = useState(null);
+  const activeFocusedRowRef = useRef(0);
+  const [highlightedIndexes, setHighlightedIndexes] = useState({});
+  const extraRows = 20;
+  const displayRows = [
+    ...scannedItems,
+    ...Array(extraRows).fill(null),
+  ];
 
-    // UNIT
-    const getUnit = (item) => {
-        return item?.unit ? item.unit.toUpperCase() : "";
+  // UNIT
+  const getUnit = (item) => {
+    return item?.unit ? item.unit.toUpperCase() : "";
+  };
+
+  // EFFECTIVE SELLING PRICE
+  const getEffectivePrice = (item) => {
+    const qty = item.qty || 1;
+    const slabs = item.priceLevel?.slabs;
+    if (item.priceLevel?.pricingType === "slab" && Array.isArray(slabs)) {
+      const matched = slabs.find(
+        (s) => qty >= s.minQty && (s.maxQty === null || qty <= s.maxQty)
+      );
+      if (matched && matched.price > 0) return matched.price;
+    }
+    return item.sellingPrice || item.mrp || 0;
+  };
+
+  // STOCK INFO
+  const getStockInfo = (item) => {
+    const stockItem = stockList.find(
+      (s) =>
+        String(s.barcode) === String(item.barcode) ||
+        String(s.productId) === String(item.productId)
+    );
+
+    return {
+      stock: stockItem?.currentStock ?? 0,
+      text: stockItem?.currentStock ?? 0,
+      status: stockItem?.status || "",
+      unit: stockItem?.unit || "",
     };
+  };
 
-    // EFFECTIVE SELLING PRICE
-    const getEffectivePrice = (item) => {
-        const qty = item.qty || 1;
-        const slabs = item.priceLevel?.slabs;
-        if (item.priceLevel?.pricingType === "slab" && Array.isArray(slabs)) {
-            const matched = slabs.find(
-                (s) => qty >= s.minQty && (s.maxQty === null || qty <= s.maxQty)
-            );
-            if (matched && matched.price > 0) return matched.price;
-        }
-        return item.sellingPrice || item.mrp || 0;
-    };
+  // LOW STOCK WARNING
+  const checkLowStock = (stockInfo, productName) => {
+    if (stockInfo.status?.toLowerCase().includes("low")) {
+      showToast(`Low stock: ${productName}`, "error");
+    }
+  };
 
-    // STOCK INFO
-    const getStockInfo = (item) => {
-        const stockItem = stockList.find(
-            (s) =>
-                String(s.barcode) === String(item.barcode) ||
-                String(s.productId) === String(item.productId)
-        );
-
-        return {
-            stock: stockItem?.currentStock ?? 0,
-            text: stockItem?.currentStock ?? 0,
-            status: stockItem?.status || "",
-            unit: stockItem?.unit || "",
-        };
-    };
-
-    // LOW STOCK WARNING
-    const checkLowStock = (stockInfo, productName) => {
-        if (stockInfo.status?.toLowerCase().includes("low")) {
-            showToast(`Low stock: ${productName}`, "error");
-        }
-    };
-
-    // BARCODE / ITEM CODE ADD
-    const addProductToRow = async (rowIndex, value) => {
+  // BARCODE / ITEM CODE ADD
+  const addProductToRow = async (rowIndex, value) => {
     if (!value.trim()) return;
 
     try {
@@ -108,15 +111,20 @@ function POSItemsTable({
       }));
 
       setTimeout(() => {
-        itemInputRefs.current[rowIndex + 1]?.focus();
+        const qtyInput = qtyInputRefs.current[rowIndex];
+
+        if (qtyInput) {
+          qtyInput.focus();
+          qtyInput.select();
+        }
       }, 100);
     } catch (err) {
       showToast(err.message, "error");
     }
   };
 
-    // PRODUCT SEARCH
-    const searchProductsForRow = async (rowIndex, value) => {
+  // PRODUCT SEARCH
+  const searchProductsForRow = async (rowIndex, value) => {
     setRowSearches((prev) => ({
       ...prev,
       [rowIndex]: value,
@@ -129,32 +137,48 @@ function POSItemsTable({
         ...prev,
         [rowIndex]: [],
       }));
+
+      setHighlightedIndexes((prev) => ({
+        ...prev,
+        [rowIndex]: -1,
+      }));
+
       return;
     }
 
     try {
-      const res = await fetch(`${API.bill}/search-product?search=${value}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${API.searchProduct}?search=${encodeURIComponent(value.trim())}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await res.json();
 
-      if (data.success) {
-        setRowSearchResults((prev) => ({
-          ...prev,
-          [rowIndex]: data.data || [],
-        }));
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Product search failed");
       }
+
+      setRowSearchResults((prev) => ({
+        ...prev,
+        [rowIndex]: Array.isArray(data.data) ? data.data : [],
+      }));
     } catch (err) {
-      console.log(err);
+      console.log("Product search error:", err);
+
+      setRowSearchResults((prev) => ({
+        ...prev,
+        [rowIndex]: [],
+      }));
     }
   };
 
-    // SELECT SEARCH RESULT
-    const selectRowProduct = (rowIndex, product) => {
+  // SELECT SEARCH RESULT
+  const selectRowProduct = (rowIndex, product) => {
     const stockInfo = getStockInfo(product);
     checkLowStock(stockInfo, product.productName);
 
@@ -164,6 +188,7 @@ function POSItemsTable({
       updated[rowIndex] = {
         productId: product.productId,
         productName: product.productName,
+        itemCode: product.itemCode,
         brand: product.brand,
         barcode: product.barcode,
         mrp: product.mrp || 0,
@@ -195,49 +220,64 @@ function POSItemsTable({
       [rowIndex]: [],
     }));
 
+    activeFocusedRowRef.current = rowIndex;
+
     setTimeout(() => {
-      itemInputRefs.current[rowIndex + 1]?.focus();
+      const qtyInput = qtyInputRefs.current[rowIndex];
+
+      if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+      }
     }, 100);
   };
 
-    // QUANTITY
-    const updateQty = (barcode, val) => {
-    const onlyNumber = val.replace(/\D/g, "");
+  // QUANTITY
+  const updateQty = (rowIndex, value) => {
+    const onlyNumber = value.replace(/[^0-9.]/g, "");
 
-    let updatedProductName = null;
-    let isLowStock = false;
-
-    setScannedItems((prev) =>
-      prev.map((it) => {
-        if (String(it.barcode) !== String(barcode)) return it;
-
-        if (it.stockStatus?.toLowerCase().includes("low")) {   // 👈 fix here
-          isLowStock = true;
-          updatedProductName = it.productName;
+    setScannedItems((prev) => {
+      const updatedItems = prev.map((item, index) => {
+        // Cursor இருக்கும் row மட்டும் update
+        if (index !== rowIndex) {
+          return item;
         }
 
-        return { ...it, qty: onlyNumber };
-      })
-    );
+        if (item.stockStatus?.toLowerCase().includes("low")) {
+          showToast(`Low stock: ${item.productName}`, "error");
+        }
 
-    if (isLowStock) {
-      showToast(`Low stock: ${updatedProductName}`, "error");
-    }
+        return {
+          ...item,
+          qty: onlyNumber,
+        };
+      });
 
-    setCodes((prev) => {
-      const qty = Number(onlyNumber || 0);
-      const filtered = prev.filter((c) => String(c) !== String(barcode));
-      return qty > 0 ? [...filtered, ...Array(qty).fill(barcode)] : filtered;
+      // All rows qty அடிப்படையில் codes rebuild
+      const updatedCodes = updatedItems.flatMap((item) => {
+        const qty = Number(item.qty || 0);
+        const barcode = item.barcode || item.itemCode;
+
+        if (!barcode || qty <= 0) {
+          return [];
+        }
+
+        return Array(Math.floor(qty)).fill(barcode);
+      });
+
+      setCodes(updatedCodes);
+
+      return updatedItems;
     });
   };
 
   // Dis amount
-  const updateDiscountAmount = (barcode, value) => {
+  const updateDiscountAmount = (rowIndex, value) => {
     const cleanedValue = value.replace(/[^0-9.]/g, "");
 
     setScannedItems((prev) =>
-      prev.map((item) => {
-        if (String(item.barcode) !== String(barcode)) {
+      prev.map((item, index) => {
+        if (index !== rowIndex) {
           return item;
         }
 
@@ -273,12 +313,12 @@ function POSItemsTable({
   };
 
   // Dis percent
-  const updateDiscountPercent = (barcode, value) => {
+  const updateDiscountPercent = (rowIndex, value) => {
     const cleanedValue = value.replace(/[^0-9.]/g, "");
 
     setScannedItems((prev) =>
-      prev.map((item) => {
-        if (String(item.barcode) !== String(barcode)) {
+      prev.map((item, index) => {
+        if (index !== rowIndex) {
           return item;
         }
 
@@ -310,13 +350,16 @@ function POSItemsTable({
       })
     );
   };
+  // REMOVE ITEM
+  const removeItemByIndex = (rowIndex) => {
+    let removedBarcode = null;
 
-    // REMOVE ITEM
-   const removeItem = (barcode) => {
     setScannedItems((prev) => {
-      const updatedItems = prev.filter(
-        (item) => String(item.barcode) !== String(barcode)
-      );
+      if (!prev[rowIndex]) return prev;
+
+      removedBarcode = prev[rowIndex].barcode;
+
+      const updatedItems = prev.filter((_, index) => index !== rowIndex);
 
       if (updatedItems.length === 0) {
         setPreviewSummary({
@@ -334,15 +377,74 @@ function POSItemsTable({
       return updatedItems;
     });
 
-    setCodes((prev) =>
-      prev.filter((code) => String(code) !== String(barcode))
-    );
+    if (removedBarcode) {
+      setCodes((prev) => {
+        const removeIndex = prev.findIndex(
+          (code) => String(code) === String(removedBarcode)
+        );
+
+        if (removeIndex === -1) return prev;
+
+        const updatedCodes = [...prev];
+        updatedCodes.splice(removeIndex, 1);
+
+        return updatedCodes;
+      });
+    }
+
+    setRowSearches((prev) => {
+      const updated = {};
+
+      Object.entries(prev).forEach(([key, value]) => {
+        const index = Number(key);
+
+        if (index < rowIndex) {
+          updated[index] = value;
+        } else if (index > rowIndex) {
+          updated[index - 1] = value;
+        }
+      });
+
+      return updated;
+    });
+
+    setRowSearchResults((prev) => {
+      const updated = {};
+
+      Object.entries(prev).forEach(([key, value]) => {
+        const index = Number(key);
+
+        if (index < rowIndex) {
+          updated[index] = value;
+        } else if (index > rowIndex) {
+          updated[index - 1] = value;
+        }
+      });
+
+      return updated;
+    });
 
     showToast("Item removed", "success");
+
+    const nextFocusIndex = Math.min(
+      rowIndex,
+      Math.max(scannedItems.length - 1, 0)
+    );
+
+    activeFocusedRowRef.current = nextFocusIndex;
+
+    setTimeout(() => {
+      if (qtyInputRefs.current[nextFocusIndex]) {
+        qtyInputRefs.current[nextFocusIndex].focus();
+        qtyInputRefs.current[nextFocusIndex].select();
+      } else {
+        itemInputRefs.current[nextFocusIndex]?.focus();
+      }
+    }, 100);
   };
 
-    // SCANNER FOCUS
-     useEffect(() => {
+  // SCANNER FOCUS
+  useEffect(() => {
     scanInputRef.current?.focus();
 
     const handleClick = (e) => {
@@ -365,216 +467,342 @@ function POSItemsTable({
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
-    // FIRST ITEM INPUT FOCUS
-    useEffect(() => {
-        setTimeout(() => {
-            itemInputRefs.current[0]?.focus();
-        }, 100);
-    }, []);
+  // FIRST ITEM INPUT FOCUS
+  useEffect(() => {
+    if (scannedItems.length === 0) {
+      setRowSearches({});
+      setRowSearchResults({});
+      setActiveRowIndex(0);
 
-    return (
-        <div className={styles.leftPanel}>
+      setTimeout(() => {
+        itemInputRefs.current[0]?.focus();
+      }, 150);
+    }
+  }, [scannedItems.length]);
+
+  useEffect(() => {
+    const handleDeleteShortcut = (e) => {
+      if (!e.ctrlKey || e.key.toLowerCase() !== "d") return;
+
+      e.preventDefault();
+
+      const rowIndex = activeFocusedRowRef.current;
+
+      if (
+        rowIndex < 0 ||
+        rowIndex >= scannedItems.length ||
+        !scannedItems[rowIndex]
+      ) {
+        return;
+      }
+
+      removeItemByIndex(rowIndex);
+    };
+
+    document.addEventListener("keydown", handleDeleteShortcut);
+
+    return () => {
+      document.removeEventListener("keydown", handleDeleteShortcut);
+    };
+  }, [scannedItems]);
+
+  return (
+    <div className={styles.leftPanel}>
 
 
-            <input
-                ref={scanInputRef}
-                className={styles.hiddenScanInput}
-                value={scanCode}
-                onChange={(e) => setScanCode(e.target.value)}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                        e.preventDefault();
-                        const nextEmptyIndex = scannedItems.length;
-                        addProductToRow(nextEmptyIndex, scanCode);
-                        setScanCode("");
-                    }
-                }}
-                autoComplete="off"
-            />
-            {/* Table */}
-            <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Item code</th>
-                            <th>Items</th>
-                            <th>Mrp</th>
-                            <th>Sp (₹)</th>
-                            <th>Dis (₹)</th>
-                            <th>Dis (%)</th>
-                            <th>Stock</th>
-                            <th>Quantity</th>
-                            <th>Amount (₹)</th>
-                        </tr>
-                    </thead>
+      <input
+        ref={scanInputRef}
+        className={styles.hiddenScanInput}
+        value={scanCode}
+        onChange={(e) => setScanCode(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
 
-                    <tbody>
-                        {displayRows.map((item, idx) => {
-                            const calculatedItem = item
-                                ? calculatedItems[idx] ||
-                                calculatedItems.find(
-                                    (calc) =>
-                                        String(calc.productId) === String(item.productId) &&
-                                        Number(calc.qty) === Number(item.qty)
-                                )
-                                : null;
+            const nextEmptyIndex = scannedItems.length;
 
-                            return (
-                                <tr key={item?.barcode || `empty-${idx}`}>
-                                    <td>{idx + 1}</td>
+            addProductToRow(nextEmptyIndex, scanCode);
+            setScanCode("");
+          }
+        }}
+        autoComplete="off"
+      />
+      {/* Table */}
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Item code</th>
+              <th>Items</th>
+              <th>Quantity</th>
+              <th>Mrp</th>
+              <th>Sp (₹)</th>
+              <th>Stock</th>
+              <th>Dis (₹)</th>
+              <th>Dis (%)</th>
+              <th>Amount (₹)</th>
+            </tr>
+          </thead>
 
-                                    <td>
-                                        {item ? (
-                                            item.barcode
-                                        ) : (
-                                            <div className={styles.rowSearchBox}>
-                                                <input
-                                                    ref={(el) => (itemInputRefs.current[idx] = el)}
-                                                    className={styles.cellInput}
-                                                    type="text"
-                                                    value={rowSearches[idx] || ""}
-                                                    onFocus={() => setActiveRowIndex(idx)}
-                                                    onChange={(e) => searchProductsForRow(idx, e.target.value)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === "Enter") {
-                                                            const firstItem = rowSearchResults[idx]?.[0];
-                                                            if (firstItem) {
-                                                                selectRowProduct(idx, firstItem);
-                                                            }
-                                                        }
-                                                    }}
-                                                />
+          <tbody>
+            {displayRows.map((item, idx) => {
+              const calculatedItem = item
+                ? calculatedItems[idx] ||
+                calculatedItems.find(
+                  (calc) =>
+                    String(calc.productId) === String(item.productId) &&
+                    Number(calc.qty) === Number(item.qty)
+                )
+                : null;
 
-                                                {activeRowIndex === idx && rowSearchResults[idx]?.length > 0 && (
-                                                    <div className={styles.rowDropdown}>
-                                                        {rowSearchResults[idx].map((product) => (
-                                                            <div
-                                                                key={`${product.productId}-${product.barcode}`}
-                                                                className={styles.rowDropdownItem}
-                                                                onMouseDown={() => selectRowProduct(idx, product)}
-                                                            >
-                                                                <div>
-                                                                    <strong>{product.productName}</strong>
-                                                                    <p>Stock: {getStockInfo(product).text} {getStockInfo(product).unit}</p>
-                                                                </div>
-                                                                <span>₹{product.sellingPrice || product.mrp || 0}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </td>
+              return (
+                <tr key={idx}>
+                  <td>{idx + 1}</td>
 
-                                    <td>
-                                        {item ? (
-                                            <>
-                                                {item.productName}
-                                                {item.flavor && (
-                                                    <span className={styles.itemSub}> · {item.flavor}</span>
-                                                )}
-                                            </>
-                                        ) : (
-                                            ""
-                                        )}
-                                    </td>
+                  <td>
+                    {item ? (
+                      item.itemCode
+                    ) : (
+                      <div className={styles.rowSearchBox}>
+                        <input
+                          ref={(el) => (itemInputRefs.current[idx] = el)}
+                          className={styles.cellInput}
+                          type="text"
+                          value={rowSearches[idx] || ""}
+                          onFocus={() => {
+                            setActiveRowIndex(idx);
+                            activeFocusedRowRef.current = idx;
+                          }}
+                          onChange={(e) =>
+                            searchProductsForRow(idx, e.target.value)
+                          }
+                          onKeyDown={(e) => {
+                            const results = rowSearchResults[idx] || [];
+                            const currentIndex = highlightedIndexes[idx] ?? 0;
 
-                                    <td>{item ? `₹${item.mrp || 0}` : ""}</td>
+                            if (e.key === "ArrowDown") {
+                              e.preventDefault();
 
-                                    <td>
-                                        {item
-                                            ? `₹${Number(item.sellingPrice || 0).toFixed(2)}`
-                                            : ""}
-                                    </td>
+                              if (results.length === 0) return;
 
-                                    <td>
-                                        {item ? (
-                                            <input
-                                                className={styles.cellInput}
-                                                type="text"
-                                                inputMode="decimal"
-                                                value={item.discountAmount ?? ""}
-                                                placeholder="0"
-                                                onChange={(e) =>
-                                                    updateDiscountAmount(item.barcode, e.target.value)
-                                                }
-                                            />
-                                        ) : (
-                                            ""
-                                        )}
-                                    </td>
+                              setHighlightedIndexes((prev) => ({
+                                ...prev,
+                                [idx]:
+                                  currentIndex < results.length - 1
+                                    ? currentIndex + 1
+                                    : 0,
+                              }));
 
-                                    <td>
-                                        {item ? (
-                                            <input
-                                                className={styles.cellInput}
-                                                type="text"
-                                                inputMode="decimal"
-                                                value={item.discountPercent ?? ""}
-                                                placeholder="0"
-                                                onChange={(e) =>
-                                                    updateDiscountPercent(
-                                                        item.barcode,
-                                                        e.target.value
-                                                    )
-                                                }
-                                            />
-                                        ) : (
-                                            ""
-                                        )}
-                                    </td>
+                              return;
+                            }
 
-                                    <td>
-                                        {item?.stock != null
-                                            ? `${Number(item.stock).toFixed(2)} ${getUnit(item)}`
-                                            : ""}
-                                    </td>
+                            if (e.key === "ArrowUp") {
+                              e.preventDefault();
 
-                                    <td>
-                                        {item ? (
-                                            <div className={styles.qtyCell}>
-                                                <input
-                                                    className={styles.cellInput}
-                                                    type="text"
-                                                    value={item.qty}
-                                                    onChange={(e) => updateQty(item.barcode, e.target.value)}
-                                                />
-                                                <span>{getUnit(item)}</span>
-                                            </div>
-                                        ) : (
-                                            ""
-                                        )}
-                                    </td>
+                              if (results.length === 0) return;
 
-                                    <td>
-                                        {item ? (
-                                            <div className={styles.amtCell}>
-                                                ₹{Number(
-                                                    calculatedItem?.finalPrice ??
-                                                    calculatedItem?.totalAmount ??
-                                                    getEffectivePrice(item) * Number(item.qty || 1)
-                                                ).toFixed(2)}
+                              setHighlightedIndexes((prev) => ({
+                                ...prev,
+                                [idx]:
+                                  currentIndex > 0
+                                    ? currentIndex - 1
+                                    : results.length - 1,
+                              }));
 
-                                                <button
-                                                    className={styles.deleteBtn}
-                                                    onClick={() => removeItem(item.barcode)}
-                                                >
-                                                    🗑
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            ""
-                                        )}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
+                              return;
+                            }
+
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+
+                              const selectedProduct =
+                                results[currentIndex] || results[0];
+
+                              if (selectedProduct) {
+                                selectRowProduct(idx, selectedProduct);
+                              }
+
+                              return;
+                            }
+
+                            if (e.key === "Escape") {
+                              e.preventDefault();
+
+                              setRowSearchResults((prev) => ({
+                                ...prev,
+                                [idx]: [],
+                              }));
+
+                              setHighlightedIndexes((prev) => ({
+                                ...prev,
+                                [idx]: -1,
+                              }));
+                            }
+                          }}
+                        />
+
+                        {activeRowIndex === idx &&
+                          rowSearchResults[idx]?.length > 0 && (
+                            <div className={styles.rowDropdown}>
+                              {rowSearchResults[idx].map((product, productIndex) => (
+                                <div
+                                  key={`${product.productId}-${product.itemCode}`}
+                                  className={`${styles.rowDropdownItem} ${highlightedIndexes[idx] === productIndex
+                                    ? styles.rowDropdownItemActive
+                                    : ""
+                                    }`}
+                                  onMouseDown={() =>
+                                    selectRowProduct(idx, product)
+                                  }
+                                >
+                                  <div>
+                                    <strong>{product.productName}</strong>
+
+                                    <p>
+                                      Stock: {product.stock || 0}{" "}
+                                      {product.unit || ""}
+                                    </p>
+                                  </div>
+
+                                  <span>
+                                    ₹{product.sellingPrice || product.mrp || 0}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    )}
+                  </td>
+
+                  <td>
+                    {item ? (
+                      <>
+                        {item.productName}
+                        {item.flavor && (
+                          <span className={styles.itemSub}> · {item.flavor}</span>
+                        )}
+                      </>
+                    ) : (
+                      ""
+                    )}
+                  </td>
+                  <td>
+                    {item ? (
+                      <div className={styles.qtyCell}>
+                        <input
+                          ref={(el) => {
+                            qtyInputRefs.current[idx] = el;
+                          }}
+                          className={styles.cellInput}
+                          type="text"
+                          inputMode="decimal"
+                          value={item.qty}
+                          onFocus={() => {
+                            activeFocusedRowRef.current = idx;
+                          }}
+                          onChange={(e) => {
+                            updateQty(idx, e.target.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+
+                              const nextRowIndex = idx + 1;
+
+                              activeFocusedRowRef.current = nextRowIndex;
+
+                              setTimeout(() => {
+                                itemInputRefs.current[nextRowIndex]?.focus();
+                              }, 50);
+                            }
+                          }}
+                        />
+                        <span>{getUnit(item)}</span>
+                      </div>
+                    ) : (
+                      ""
+                    )}
+                  </td>
+                  <td>{item ? `₹${item.mrp || 0}` : ""}</td>
+
+                  <td>
+                    {item
+                      ? `₹${Number(item.sellingPrice || 0).toFixed(2)}`
+                      : ""}
+                  </td>
+                  <td>
+                    {item?.stock != null
+                      ? `${Number(item.stock).toFixed(2)} ${getUnit(item)}`
+                      : ""}
+                  </td>
+                  <td>
+                    {item ? (
+                      <input
+                        className={styles.cellInput}
+                        type="text"
+                        inputMode="decimal"
+                        value={item.discountAmount ?? ""}
+                        placeholder="0"
+                       onChange={(e) =>
+  updateDiscountAmount(idx, e.target.value)
+}
+                      />
+                    ) : (
+                      ""
+                    )}
+                  </td>
+
+                  <td>
+                    {item ? (
+                      <input
+                        className={styles.cellInput}
+                        type="text"
+                        inputMode="decimal"
+                        value={item.discountPercent ?? ""}
+                        placeholder="0"
+                        onChange={(e) =>
+  updateDiscountPercent(
+    idx,
+    e.target.value
+  )
+}
+                      />
+                    ) : (
+                      ""
+                    )}
+                  </td>
+
+                  <td>
+                    {item ? (
+                      <div className={styles.amtCell}>
+                        ₹{Number(
+                          calculatedItem?.finalPrice ??
+                          calculatedItem?.totalAmount ??
+                          getEffectivePrice(item) * Number(item.qty || 1)
+                        ).toFixed(2)}
+
+                        <button
+                          type="button"
+                          className={styles.deleteBtn}
+                          onClick={() => removeItemByIndex(idx)}
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    ) : (
+                      ""
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 export default POSItemsTable;

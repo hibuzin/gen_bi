@@ -44,7 +44,7 @@ function Item() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteItem, setDeleteItem] = useState(null);
   const [categorySearch, setCategorySearch] = useState("");
-
+  const [updateLoading, setUpdateLoading] = useState(false);
   const [editCategory, setEditCategory] = useState(null);
 
   const [editCategoryData, setEditCategoryData] = useState({
@@ -106,21 +106,13 @@ function Item() {
 
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => prev + 1);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   const showToast = (type, message) => {
-  setToast({ type, message });
+    setToast({ type, message });
 
-  setTimeout(() => {
-    setToast(null);
-  }, 2500);
-};
+    setTimeout(() => {
+      setToast(null);
+    }, 2500);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -358,36 +350,106 @@ function Item() {
   };
 
   // OPEN EDIT
+const openEdit = async (item) => {
+  try {
+    setOpenMenu(null);
 
-  const openEdit = (item) => {
-    console.log(item);
+    const itemId = item._id || item.productId;
+    const token = localStorage.getItem("token");
+
+    // Full product details fetch
+    const res = await fetch(
+      `${API.products}/${itemId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    const fullItem =
+      data.success && data.data
+        ? data.data
+        : item;
+
+    const categoryId =
+      fullItem.categoryId?._id ||
+      fullItem.categoryId ||
+      fullItem.category?._id ||
+      fullItem.category ||
+      "";
+
     setEditProduct({
-      ...item,
+      ...fullItem,
 
-      flavor:
-        item.flavor?.join(", ") || "",
+      _id: itemId,
 
-      liters:
-        item.litters?.join(", ") || "",
+      name:
+        fullItem.name ||
+        fullItem.productName ||
+        "",
 
-      mrps:
-        item.mrps?.join(", ") || "",
+      categoryId:
+        typeof categoryId === "object"
+          ? categoryId._id || ""
+          : categoryId,
+
+      description:
+        fullItem.description || "",
+
+      hsnCode:
+        fullItem.hsnCode || "",
+
+      gstRate:
+        fullItem.gstRate ??
+        fullItem.taxPercentage ??
+        "",
+
+      lowStockQty:
+        fullItem.lowStockQty ?? "",
+
+      mrp:
+        fullItem.mrp ?? "",
+
+      costPrice:
+        fullItem.costPrice ??
+        fullItem.purchasePrice ??
+        fullItem.netcost ??
+        "",
+
+      sellingPrice:
+        fullItem.sellingPrice ?? "",
+
+      barcode:
+        fullItem.barcode ||
+        fullItem.barcodeNumber ||
+        fullItem.primaryBarcode ||
+        "",
     });
 
     setShowModal(true);
+    document.body.style.overflow = "hidden";
+  } catch (error) {
+    console.error("Edit product fetch error:", error);
 
-    document.body.style.overflow =
-      "hidden";
-  };
+    showToast(
+      "error",
+      "Unable to load item details"
+    );
+  }
+};
 
-  // CLOSE EDIT
+const closeModal = () => {
+  if (updateLoading) return;
 
-  const closeModal = () => {
-    setShowModal(false);
+  setShowModal(false);
+  setEditProduct(null);
 
-    document.body.style.overflow =
-      "auto";
-  };
+  document.body.style.overflow = "auto";
+};
 
   // CHANGE
 
@@ -402,62 +464,143 @@ function Item() {
 
   // UPDATE
   const handleUpdate = async () => {
-    try {
-      const token = localStorage.getItem("token");
+    if (!editProduct?._id || updateLoading) return;
 
-      const payload = {
-        name: editProduct.name,
-        categoryId: editProduct.categoryId?._id || editProduct.categoryId,
-        description: editProduct.description,
-        hsnCode: editProduct.hsnCode,
-        lowStockQty: Number(editProduct.lowStockQty),
-        gstRate: Number(editProduct.gstRate),
-        mrp: Number(editProduct.mrp),
-        costPrice: Number(editProduct.costPrice),
-        sellingPrice: Number(editProduct.sellingPrice),
-        barcode: editProduct.barcode,
-      };
+    if (!editProduct.name?.trim()) {
+      showToast("error", "Item name is required");
+      return;
+    }
+
+    const numberValue = (value) => {
+      if (
+        value === "" ||
+        value === null ||
+        value === undefined
+      ) {
+        return 0;
+      }
+
+      return Number(value);
+    };
+
+    const payload = {
+      name: editProduct.name.trim(),
+
+      categoryId:
+        editProduct.categoryId?._id ||
+        editProduct.categoryId ||
+        null,
+
+      description:
+        editProduct.description?.trim() || "",
+
+      hsnCode:
+        editProduct.hsnCode?.trim() || "",
+
+      lowStockQty:
+        numberValue(editProduct.lowStockQty),
+
+      gstRate:
+        numberValue(editProduct.gstRate),
+
+      mrp:
+        numberValue(editProduct.mrp),
+
+      costPrice:
+        numberValue(editProduct.costPrice),
+
+      sellingPrice:
+        numberValue(editProduct.sellingPrice),
+
+      barcode:
+        editProduct.barcode?.trim() || "",
+    };
+
+    try {
+      setUpdateLoading(true);
+
+      const token = localStorage.getItem("token");
 
       const res = await fetch(
         `${API.products}/${editProduct._id}`,
         {
           method: "PUT",
+
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+
           body: JSON.stringify(payload),
         }
       );
 
       const data = await res.json();
 
-      if (data.success) {
-        setProduct((prev) =>
-          prev.map((item) =>
-            item._id === editProduct._id ? data.data : item
-          )
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.message || "Item update failed"
+        );
+      }
+
+      const selectedCategoryData =
+        categories.find(
+          (category) =>
+            category._id === payload.categoryId
         );
 
-        setToast({
-          type: "success",
-          message: data.message,
-        });
+      setProduct((prev) =>
+        prev.map((item) => {
+          const itemId =
+            item._id || item.productId;
 
-        closeModal();
-      } else {
-        setToast({
-          type: "error",
-          message: data.message,
-        });
-      }
+          if (itemId !== editProduct._id) {
+            return item;
+          }
+
+          return {
+            ...item,
+            ...(data.data || {}),
+            ...payload,
+
+            _id:
+              item._id || editProduct._id,
+
+            productId:
+              item.productId ||
+              editProduct._id,
+
+            productName:
+              payload.name,
+
+            categoryId:
+              selectedCategoryData ||
+              payload.categoryId,
+          };
+        })
+      );
+
+      setShowModal(false);
+      setEditProduct(null);
+
+      document.body.style.overflow = "auto";
+
+      showToast(
+        "success",
+        data.message ||
+        "Item updated successfully"
+      );
+
+      fetchStockValue();
     } catch (err) {
-      console.log(err);
+      console.error(err);
 
-      setToast({
-        type: "error",
-        message: "Server Error",
-      });
+      showToast(
+        "error",
+        err.message || "Server error"
+      );
+    } finally {
+      setUpdateLoading(false);
     }
   };
 
@@ -532,9 +675,9 @@ function Item() {
         showToast("success", "Category deleted successfully");
       }
     } catch (err) {
-  console.error(err);
-  showToast("error", "Failed to delete category");
-}
+      console.error(err);
+      showToast("error", "Failed to delete category");
+    }
   };
 
   const filteredProducts = product.filter((item) => {
@@ -676,15 +819,15 @@ function Item() {
               </span>
             )}
 
-           <span
-  className={styles.dropdownIcon}
-  onClick={(e) => {
-    e.stopPropagation();
-    setShowCategoryDropdown(prev => !prev);
-  }}
->
-  {showCategoryDropdown ? <FiChevronUp /> : <FiChevronDown />}
-</span>
+            <span
+              className={styles.dropdownIcon}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCategoryDropdown(prev => !prev);
+              }}
+            >
+              {showCategoryDropdown ? <FiChevronUp /> : <FiChevronDown />}
+            </span>
           </div>
 
           {showCategoryDropdown && (
@@ -750,7 +893,7 @@ function Item() {
             </div>
           )}
         </div>
-{/*
+        {/*
         <button
           className={styles.bulkBtn}
           onClick={() => navigate("/bulk-action")}
@@ -766,170 +909,149 @@ function Item() {
           <span>Create items</span>
         </button>
       </div>
-        <div
-          className={styles.tableWrapper}
-          onScroll={() => setOpenMenu(null)}
-          onWheel={() => setOpenMenu(null)}
-          onTouchMove={() => setOpenMenu(null)}
-        >
-          <table className={styles.table}>
-            <thead>
+      <div
+        className={styles.tableWrapper}
+        onScroll={() => setOpenMenu(null)}
+        onWheel={() => setOpenMenu(null)}
+        onTouchMove={() => setOpenMenu(null)}
+      >
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Item code</th>
+              <th>Name</th>
+              <th>Stock</th>
+              <th>Selling price</th>
+              <th>Purchase price</th>
+              <th>Mrp</th>
+              <th>Hsn code</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {loading ? (
               <tr>
-                <th>No</th>
-                <th>Item code</th>
-                <th>Name</th>
-                <th>Stock</th>
-                <th>Selling price</th>
-                <th>Purchase price</th>
-                <th>Mrp</th>
-                <th>Hsn code</th>
-                <th></th>
+                <td colSpan="9">
+                  <div className={styles.tableLoader}>
+                    <div className={styles.spinner}></div>
+                    <p>Loading items...</p>
+                  </div>
+                </td>
               </tr>
-            </thead>
+            ) : filteredProducts.length === 0 ? (
+              <tr>
+                <td colSpan="9">
+                  <div className={styles.emptyState}>
+                    No items found
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredProducts.map((p, index) => {
+                const itemId = p._id || p.productId;
 
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="9">
-                    <div className={styles.tableLoader}>
-                      <div className={styles.spinner}></div>
-                      <p>Loading items...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredProducts.length === 0 ? (
-                <tr>
-                  <td colSpan="9">
-                    <div className={styles.emptyState}>
-                      No items found
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredProducts.map((p, index) => {
-                  const itemId = p._id || p.productId;
+                return (
+                  <tr
+                    key={itemId}
+                    onClick={() => navigate(`/item/${itemId}`)}
+                  >
+                    <td>{index + 1}</td>
 
-                  return (
-                    <tr
-                      key={itemId}
-                      onClick={() => navigate(`/item/${itemId}`)}
-                    >
-                      <td>{index + 1}</td>
+                    <td>{p.itemCode || "—"}</td>
 
-                      <td>{p.itemCode || "—"}</td>
+                    <td className={styles.nameCell}>
+                      {p.name || p.productName}
+                    </td>
 
-                      <td className={styles.nameCell}>
-                        {p.name || p.productName}
-                      </td>
+                    <td>{p.availableQty || p.stock || 0}</td>
 
-                      <td>{p.availableQty || p.stock || 0}</td>
+                    <td>₹ {p.sellingPrice || 0}</td>
 
-                      <td>₹ {p.sellingPrice || 0}</td>
+                    <td>₹ {p.costPrice || 0}</td>
 
-                      <td>₹ {p.costPrice || 0}</td>
+                    <td>₹ {p.mrp || 0}</td>
 
-                      <td>₹ {p.mrp || 0}</td>
+                    <td>{p.hsnCode || "—"}</td>
 
-                      <td>{p.hsnCode || "—"}</td>
+                    <td>
+                      <div
+                        ref={openMenu === itemId ? menuRef : null}
+                        className={styles.menuWrapper}
+                      >
+                        <button
+                          className={styles.menuBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
 
-                      <td>
-                        <div
-                          ref={openMenu === itemId ? menuRef : null}
-                          className={styles.menuWrapper}
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const menuHeight = 90;
+                            const spaceBelow = window.innerHeight - rect.bottom;
+
+                            setMenuPosition({
+                              top:
+                                spaceBelow < menuHeight
+                                  ? rect.top - menuHeight - 6
+                                  : rect.bottom + 6,
+                              left: rect.right - 140,
+                            });
+
+                            setOpenMenu(openMenu === itemId ? null : itemId);
+                          }}
+                          type="button"
                         >
-                          <button
-                            className={styles.menuBtn}
-                            onClick={(e) => {
-                              e.stopPropagation();
+                          <FaEllipsisV />
+                        </button>
 
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const menuHeight = 90;
-                              const spaceBelow = window.innerHeight - rect.bottom;
-
-                              setMenuPosition({
-                                top:
-                                  spaceBelow < menuHeight
-                                    ? rect.top - menuHeight - 6
-                                    : rect.bottom + 6,
-                                left: rect.right - 140,
-                              });
-
-                              setOpenMenu(openMenu === itemId ? null : itemId);
+                        {openMenu === itemId && (
+                          <div
+                            className={styles.dropdownMenu}
+                            style={{
+                              top: `${menuPosition.top}px`,
+                              left: `${menuPosition.left}px`,
                             }}
-                            type="button"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <FaEllipsisV />
-                          </button>
+                            <button
+                              className={styles.editMenuItem}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
 
-                          {openMenu === itemId && (
-                            <div
-                              className={styles.dropdownMenu}
-                              style={{
-                                top: `${menuPosition.top}px`,
-                                left: `${menuPosition.left}px`,
+                                openEdit(p);
+
+                                setOpenMenu(null);
                               }}
-                              onClick={(e) => e.stopPropagation()}
                             >
-                              <button
-                                className={styles.editMenuItem}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                              <FaEdit />
+                              Edit
+                            </button>
 
-                                  openEdit({
-                                    ...p,
-                                    _id: itemId,
+                            <button
+                              className={styles.deleteMenuItem}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteProductId(itemId);
+                                setOpenMenu(null);
+                              }}
+                            >
+                              <FaTrash />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
-                                    name: p.name || p.productName || "",
-                                    barcode: p.barcode || p.itemCode || "",
-                                    hsnCode: p.hsnCode || "",
-                                    description: p.description || "",
-
-                                    gstRate: p.gstRate ?? p.taxPercentage ?? "",
-                                    lowStockQty: p.lowStockQty ?? "",
-
-                                    mrp: p.mrp ?? "",
-                                    costPrice: p.costPrice ?? p.purchasePrice ?? p.netcost ?? "",
-                                    sellingPrice: p.sellingPrice ?? "",
-
-                                    categoryId:
-                                      p.categoryId?._id ||
-                                      p.categoryId ||
-                                      p.category ||
-                                      "",
-                                  });
-
-                                  setOpenMenu(null);
-                                }}
-                              >
-                                <FaEdit />
-                                Edit
-                              </button>
-
-                              <button
-                                className={styles.deleteMenuItem}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteProductId(itemId);
-                                  setOpenMenu(null);
-                                }}
-                              >
-                                <FaTrash />
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      
       {/* MODAL */}
 
       {showModal && editProduct && (
@@ -976,27 +1098,23 @@ function Item() {
                 </label>
 
                 <select
-                  name="categoryId"
-                  value={
-                    editProduct.categoryId
-                      ?._id ||
-                    editProduct.categoryId
-                  }
-                  onChange={
-                    handleChange
-                  }
-                >
-                  {categories.map(
-                    (cat) => (
-                      <option
-                        key={cat._id}
-                        value={cat._id}
-                      >
-                        {cat.name}
-                      </option>
-                    )
-                  )}
-                </select>
+  name="categoryId"
+  value={editProduct.categoryId || ""}
+  onChange={handleChange}
+>
+  <option value="">
+    Select category
+  </option>
+
+  {categories.map((cat) => (
+    <option
+      key={cat._id}
+      value={cat._id}
+    >
+      {cat.name}
+    </option>
+  ))}
+</select>
               </div>
 
               <div className={styles.field}>
@@ -1024,7 +1142,7 @@ function Item() {
                 <input
                   type="number"
                   name="gstRate"
-                  value={editProduct.gstRate || ""}
+                  value={editProduct.gstRate ?? ""}
                   onChange={handleChange}
                 />
               </div>
@@ -1034,7 +1152,7 @@ function Item() {
                 <input
                   type="number"
                   name="lowStockQty"
-                  value={editProduct.lowStockQty || ""}
+                  value={editProduct.lowStockQty ?? ""}
                   onChange={handleChange}
                 />
               </div>
@@ -1044,7 +1162,7 @@ function Item() {
                 <input
                   type="number"
                   name="mrp"
-                  value={editProduct.mrp || ""}
+                  value={editProduct.mrp ?? ""}
                   onChange={handleChange}
                 />
               </div>
@@ -1054,7 +1172,7 @@ function Item() {
                 <input
                   type="number"
                   name="costPrice"
-                  value={editProduct.costPrice || ""}
+                  value={editProduct.costPrice ?? ""}
                   onChange={handleChange}
                 />
               </div>
@@ -1064,7 +1182,7 @@ function Item() {
                 <input
                   type="number"
                   name="sellingPrice"
-                  value={editProduct.sellingPrice || ""}
+                  value={editProduct.sellingPrice ?? ""}
                   onChange={handleChange}
                 />
               </div>
@@ -1074,7 +1192,7 @@ function Item() {
                 <input
                   type="text"
                   name="barcode"
-                  value={editProduct.barcode || ""}
+                  value={editProduct.barcode ?? ""}
                   onChange={handleChange}
                 />
               </div>
@@ -1096,12 +1214,14 @@ function Item() {
                 </button>
 
                 <button
-                  className={
-                    styles.saveBtn
-                  }
+                  type="button"
+                  className={styles.saveBtn}
                   onClick={handleUpdate}
+                  disabled={updateLoading}
                 >
-                  Save changes
+                  {updateLoading
+                    ? "Saving..."
+                    : "Save changes"}
                 </button>
               </div>
             </div>

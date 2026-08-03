@@ -5,19 +5,62 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: clamp(8px, 1.5vw, 20px);
   background: rgba(155, 154, 159, 0.18);
+  overflow: auto;
+}
+
+.tenderSummary {
+  padding: 8px 10px;
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.summaryRow:not(:last-child) {
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.summaryRow span {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.summaryRow strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.returnRow {
+  margin-top: 4px;
+}
+
+.returnRow strong {
+  color: #16a34a;
+  font-size: 18px;
 }
 
 .tenderModal {
-  width: min(900px, 96vw);
-  height: min(610px, 92vh);
+  width: min(900px, calc(100vw - 24px));
+  height: min(610px, calc(100vh - 24px));
+  max-height: calc(100vh - 24px);
+
   display: flex;
   flex-direction: column;
+
   background: #ffffff;
   border: 1px solid #e5e7eb;
   box-shadow: 0 18px 50px rgba(76, 60, 206, 0.18);
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -55,9 +98,14 @@
 .leftSection {
   position: relative;
   min-width: 0;
+  min-height: 0;
+
   display: flex;
   flex-direction: column;
-  padding: 32px 28px 22px;
+
+  padding: clamp(14px, 2vw, 32px) clamp(14px, 2vw, 28px)
+    clamp(14px, 1.5vw, 22px);
+
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
   overflow-y: auto;
@@ -185,13 +233,16 @@
 
 .rightSection {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #f8fafc;
+  overflow: hidden;
 }
 
 .paymentOptions {
   flex: 1;
+  min-height: 0;
   background: #ffffff;
   overflow-y: auto;
 }
@@ -228,20 +279,6 @@
 
 .paymentOption strong {
   font-size: 14px;
-}
-
-.tenderReceived {
-  min-height: 92px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 13px;
-  color: #ffffff;
-  background: #5b4dc7;
-  font-size: 14px;
-  font-weight: 700;
-  border-bottom: 3px solid #dfe5e9;
 }
 
 .tenderReceived strong {

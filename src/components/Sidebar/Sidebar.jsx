@@ -176,10 +176,13 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
     },
 
     {
-      name: lang === "ta" ? "ஜிஎஸ்டி" : "Gst",
-      path: "/gst",
-      icon: <FaChartBar />,
-      onlyRole: "super_admin"
+      name: lang === "ta" ? "விற்பனை" : "Gst",
+      icon: <RiMoneyDollarCircleLine />,
+      onlyRole: "super_admin",
+      children: [
+        { name: lang === "ta" ? "இன்றைய விற்பனை" : "purchase report", path: "/Purchase-reports" },
+        { name: lang === "ta" ? "அதிகம் விற்பனையாகும் பொருட்கள்" : "sales reports", path: "Bill-reports" },
+      ],
     },
 
     {
@@ -211,10 +214,10 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
     } finally {
       const defaultUnit = localStorage.getItem("defaultUnit") || "pcs";
 
-localStorage.clear();
-localStorage.setItem("defaultUnit", defaultUnit);
+      localStorage.clear();
+      localStorage.setItem("defaultUnit", defaultUnit);
 
-navigate("/login", { replace: true });
+      navigate("/login", { replace: true });
     }
   };
 
@@ -236,7 +239,7 @@ navigate("/login", { replace: true });
           {!collapsed && (
             <div className={styles.businessSection}>
 
-              
+
 
               <div className={styles.billRow}>
 

@@ -32,8 +32,8 @@ function ThermalReceipt({
         >
             <div className={styles.receipt}>
                 <div className={styles.receiptHeader}>
-                    <p className={styles.receiptShopName}>Billing</p>
-                    <p className={styles.receiptWelcome}>Welcome you</p>
+                    <p className={styles.receiptShopName}>AR TRADERS</p>
+                    <p className={styles.receiptWelcome}>mount road, Tenkasi</p>
                 </div>
 
                 <div className={styles.dashedLine} />
@@ -161,33 +161,32 @@ function ThermalReceipt({
 
                     <div className={styles.taxTable}>
                         <div className={`${styles.taxRow} ${styles.taxHeader}`}>
-                            <span>Tax %</span>
-                            <span>Amt</span>
-                            <span>GST</span>
-                            <span>SGST</span>
                             <span>CGST</span>
+                            <span>SGST</span>
+                            <span>GST</span>
+                            <span>Amt</span>
                         </div>
 
                         <div className={styles.taxRow}>
+
                             <span>
-                                {Number(receiptData.summary?.gstRate || 0).toFixed(2)}
+                                {Number(receiptData.summary?.cgst || 0).toFixed(2)}
+                            </span>
+
+                             <span>
+                                {Number(receiptData.summary?.sgst || 0).toFixed(2)}
+                            </span>
+
+                              <span>
+                                {Number(receiptData.summary?.totalGST || 0).toFixed(2)}
                             </span>
 
                             <span>
                                 {Number(receiptData.summary?.subTotal || 0).toFixed(2)}
                             </span>
 
-                            <span>
-                                {Number(receiptData.summary?.totalGST || 0).toFixed(2)}
-                            </span>
 
-                            <span>
-                                {Number(receiptData.summary?.sgst || 0).toFixed(2)}
-                            </span>
 
-                            <span>
-                                {Number(receiptData.summary?.cgst || 0).toFixed(2)}
-                            </span>
                         </div>
                     </div>
 

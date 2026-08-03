@@ -27,6 +27,8 @@ import SessionManagement from "./Pages/SessionHandling/SessionManagement";
 import Payment from "./Pages/Payment/Payment";
 import StockManagement from "./Pages/Stock/StockManagement";
 import GST from "./Pages/GST/GST";
+import BillReports from "./Pages/GST/BillReports";
+import PurchaseReports from "./Pages/GST/PurchaseReports";
 import Analytics from "./Pages/Analytics/Analytics";
 import Offers from "./Pages/Offers/Offers";
 import CreateOffer from "./Pages/Offers/CreateOffer";
@@ -157,6 +159,16 @@ function MainLayout() {
           <Route
             path="/gst"
             element={<GST />}
+          />
+
+          <Route
+            path="/Bill-reports"
+            element={<BillReports />}
+          />
+
+          <Route
+            path="/Purchase-reports"
+            element={<PurchaseReports />}
           />
 
           <Route

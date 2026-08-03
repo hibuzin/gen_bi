@@ -1,8 +1,16 @@
 const mongoose = require("mongoose");
 
 const billSchema = new mongoose.Schema({
+
+        billCount: {
+    type: Number,
+    default: 0
+},
+
+
     items: [
         {
+
             productId: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Product"
@@ -14,6 +22,27 @@ const billSchema = new mongoose.Schema({
             barcode: String,
 
             name: String,
+
+            hsnCode: {
+    type: String,
+    default: ""
+},
+
+discountAmount: {
+    type: Number,
+    default: 0
+},
+
+taxableAmount: {
+    type: Number,
+    default: 0
+},
+
+totalAmount: {
+    type: Number,
+    default: 0
+},
+
             unit: {
                 type: String,
                 enum: ["pcs", "kg", "g"],
@@ -72,24 +101,42 @@ const billSchema = new mongoose.Schema({
         sparse: true
     },
 
-    summary: {
-        subTotal: {
-            type: Number,
-            default: 0
-        },
-        totalGST: {
-            type: Number,
-            default: 0
-        },
-        discount: {
-            type: Number,
-            default: 0
-        },
-        grandTotal: {
-            type: Number,
-            default: 0
-        }
+summary: {
+    subTotal: {
+        type: Number,
+        default: 0
     },
+
+    totalGST: {
+        type: Number,
+        default: 0
+    },
+
+    itemDiscountAmount: {
+        type: Number,
+        default: 0
+    },
+
+    billDiscountAmount: {
+        type: Number,
+        default: 0
+    },
+
+    billDiscountPercentage: {
+        type: Number,
+        default: 0
+    },
+
+    discount: {
+        type: Number,
+        default: 0
+    },
+
+    grandTotal: {
+        type: Number,
+        default: 0
+    }
+},
 
     offer: {
         offerId: {
@@ -153,6 +200,16 @@ const billSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+
+    receivedAmount: {
+    type: Number,
+    default: 0
+},
+
+returnAmount: {
+    type: Number,
+    default: 0
+},
 
     pendingAmount: {
         type: Number,

@@ -3,55 +3,57 @@ import styles from "./POSTopBarTabs.module.css";
 import { API } from "../../constants/api";
 
 function POSTopBarTabs({
-    navigate,
-    token,
-    holdTabs,
-    setHoldTabs,
-    activeHoldId,
-    setActiveHoldId,
-    scannedItems,
-    setScannedItems,
-    codes,
-    setCodes,
-    setScanCode,
-    setLoading,
-    showToast,
-    clearCustomer,
+  navigate,
+  token,
+  holdTabs,
+  setHoldTabs,
+  activeHoldId,
+  setActiveHoldId,
+  scannedItems,
+  setScannedItems,
+  codes,
+  setCodes,
+  setScanCode,
+  setLoading,
+  showToast,
+  clearCustomer,
+  latestBillCount,
+   isEditMode,
+  editInvoiceNo,
 }) {
-    const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-    // DATE & TIME
-    const formattedDate = `${String(
-        currentDateTime.getDate()
-    ).padStart(2, "0")} / ${String(
-        currentDateTime.getMonth() + 1
-    ).padStart(2, "0")} / ${currentDateTime.getFullYear()}`;
+  // DATE & TIME
+  const formattedDate = `${String(
+    currentDateTime.getDate()
+  ).padStart(2, "0")} / ${String(
+    currentDateTime.getMonth() + 1
+  ).padStart(2, "0")} / ${currentDateTime.getFullYear()}`;
 
-    const formattedTime = currentDateTime.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-    });
+  const formattedTime = currentDateTime.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentDateTime(new Date());
-        }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-        return () => clearInterval(timer);
-    }, []);
+  // CLEAR CURRENT BILL
+  const clearCurrentBill = () => {
+    setActiveHoldId(null);
+    setScannedItems([]);
+    setCodes([]);
+    setScanCode("");
+    clearCustomer?.();
+  };
 
-    // CLEAR CURRENT BILL
-    const clearCurrentBill = () => {
-        setActiveHoldId(null);
-        setScannedItems([]);
-        setCodes([]);
-        setScanCode("");
-        clearCustomer?.();
-    };
-
-    // HOLD BILL
-    const holdBill = async () => {
+  // HOLD BILL
+  const holdBill = async () => {
     if (holdTabs.length >= 5) {
       showToast("Maximum 5 billing screens only", "error");
       return;
@@ -120,9 +122,9 @@ function POSTopBarTabs({
     }
   };
 
-    // RESUME HOLD BILL
+  // RESUME HOLD BILL
 
-    const resumeHoldBill = async (holdId) => {
+  const resumeHoldBill = async (holdId) => {
     try {
       setLoading(true);
 
@@ -171,9 +173,9 @@ function POSTopBarTabs({
     }
   };
 
-    // DELETE HOLD TAB
+  // DELETE HOLD TAB
 
-    const closeHoldTab = async (e, tab) => {
+  const closeHoldTab = async (e, tab) => {
     e.stopPropagation();
 
     try {
@@ -202,79 +204,91 @@ function POSTopBarTabs({
     }
   };
 
-    return (
-        <>
-          {/* TOP BAR */}
+  return (
+    <>
+      {/* TOP BAR */}
 
-            <div className={styles.topBar}>
-                <button className={styles.exitBtn} onClick={() => navigate(-1)}>
-                    <span>←</span> Exit pos <kbd>[CTRL+ESC]</kbd>
-                </button>
+      <div className={styles.topBar}>
+        <button className={styles.exitBtn} onClick={() => navigate(-1)}>
+          <span>←</span> Exit pos <kbd>[CTRL+ESC]</kbd>
+        </button>
 
-                <span className={styles.topTitle}>Pos billing</span>
+        <div className={styles.topTitleSection}>
+  <span className={styles.topTitle}>
+    {isEditMode ? "Edit POS Bill" : "POS Billing"}
+  </span>
 
-                <div className={styles.dateTime}>
-                    {formattedDate} - {formattedTime}
-                </div>
-            </div>
+  <span className={styles.billCount}>
+    {isEditMode
+      ? `Editing: ${editInvoiceNo || ""}`
+      : `Current Bill: #${Number(latestBillCount || 0) + 1}`}
+  </span>
+</div>
 
-            {/* ── Tab Row ── */}
-            <div className={styles.tabsRow}>
-                {holdTabs.map((tab) => (
-                    <div
-                        key={tab.holdId}
-                        className={
-                            activeHoldId === tab.holdId
-                                ? styles.tabActive
-                                : styles.tabHold
-                        }
-                        onClick={() => resumeHoldBill(tab.holdId)}
-                    >
-                        <span>Billing screen {tab.screenNo}</span>
+        <div className={styles.dateTime}>
+          {formattedDate} - {formattedTime}
+        </div>
+      </div>
 
-                        <button
-                            type="button"
-                            className={styles.closeTabBtn}
-                            onClick={(e) => closeHoldTab(e, tab)}
-                        >
-                            ×
-                        </button>
-                    </div>
-                ))}
+      {/* ── Tab Row ── */}
+      <div className={styles.tabsRow}>
+        {holdTabs.map((tab) => (
+          <div
+            key={tab.holdId}
+            className={
+              activeHoldId === tab.holdId
+                ? styles.tabActive
+                : styles.tabHold
+            }
+            onClick={() => resumeHoldBill(tab.holdId)}
+          >
+            <span>Billing screen {tab.screenNo}</span>
 
-                <div
-                    className={!activeHoldId ? styles.tabActive : styles.tabHold}
-                    onClick={() => {
-                        setActiveHoldId(null);
-                        setScannedItems([]);
-                        setCodes([]);
-                        setScanCode("");
-                    }}
-                >
-                    <span>Billing screen {holdTabs.length + 1}</span>
+            <button
+              type="button"
+              className={styles.closeTabBtn}
+              onClick={(e) => closeHoldTab(e, tab)}
+            >
+              ×
+            </button>
+          </div>
+        ))}
 
-                    <button
-                        type="button"
-                        className={styles.closeTabBtn}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveHoldId(null);
-                            setScannedItems([]);
-                            setCodes([]);
-                            setScanCode("");
-                            clearCustomer();
-                        }}
-                    >
-                        ×
-                    </button>
-                </div>
+        <div
+          className={!activeHoldId ? styles.tabActive : styles.tabHold}
+          onClick={() => {
+            setActiveHoldId(null);
+            setScannedItems([]);
+            setCodes([]);
+            setScanCode("");
+          }}
+        >
+          <span>Billing screen {holdTabs.length + 1}</span>
 
-                <div className={styles.tabAdd} onClick={holdBill}>
-                    + Hold bill & create another
-                </div>
-            </div>
-        </>
-    );
+          <button
+            type="button"
+            className={styles.closeTabBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveHoldId(null);
+              setScannedItems([]);
+              setCodes([]);
+              setScanCode("");
+              clearCustomer();
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        {!isEditMode && (
+  <div className={styles.tabAdd} onClick={holdBill}>
+    + Hold bill & create another
+  </div>
+)}
+      </div>
+    </>
+  );
 }
 
 export default POSTopBarTabs;

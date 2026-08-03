@@ -10,6 +10,8 @@ function POSRightPanel({
   setCustomerPhone,
   customerName,
   setCustomerName,
+  customerWhatsapp,
+  setCustomerWhatsapp,
   customerCity,
   setCustomerCity,
   customerGST,
@@ -24,6 +26,11 @@ function POSRightPanel({
   setCustomerPrevBalance,
   previewSummary,
   openPaymentModal,
+  billDiscountPercent,
+  setBillDiscountPercent,
+  billDiscountAmount,
+  setBillDiscountAmount,
+
 }) {
   const [customerResults, setCustomerResults] = useState([]);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
@@ -52,21 +59,26 @@ function POSRightPanel({
 
   // PHONE CHANGE
   const handlePhoneChange = (value) => {
+    setIsWalkInCustomer(false);
     setCustomerPhone(value);
     setSelectedCustomer(null);
     searchCustomersForBill(value);
   };
 
   const handleNameChange = (value) => {
+    setIsWalkInCustomer(false);
     setCustomerName(value);
     setSelectedCustomer(null);
     searchCustomersForBill(value);
   };
 
   const selectCustomer = async (customer) => {
+    setIsWalkInCustomer(false);
+
     setSelectedCustomer(customer);
     setCustomerName(customer.name || "");
     setCustomerPhone(customer.phone || "");
+    setCustomerWhatsapp(customer.whatsappNumber || "");
     setCustomerResults([]);
     setShowCustomerDropdown(false);
     setCustomerCity(customer.city || "");
@@ -76,7 +88,9 @@ function POSRightPanel({
       const customerId = customer._id || customer.id;
 
       const res = await fetch(`${API.customers}/${customerId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await res.json();
@@ -113,6 +127,7 @@ function POSRightPanel({
 
       setCustomerCity(fullCustomer.city || "");
       setCustomerGST(fullCustomer.gstNumber || "");
+      setCustomerWhatsapp(fullCustomer.whatsappNumber || "");
     } catch (err) {
       console.log(err);
     }
@@ -120,40 +135,49 @@ function POSRightPanel({
 
 
   // CLEAR CUSTOMER
-  const clearCustomer = () => {
+  const clearCustomer = (makeWalkIn = true) => {
     setSelectedCustomer(null);
     setCustomerName("");
     setCustomerPhone("");
+    setCustomerWhatsapp("");
     setCustomerCity("");
     setCustomerGST("");
     setCustomerPrevBalance(0);
     setAvailableLoyalty(0);
     setCustomerTotalSpend(0);
+    setCustomerResults([]);
+    setShowCustomerDropdown(false);
+
+    if (makeWalkIn) {
+      setIsWalkInCustomer(true);
+    }
   };
 
   return (
     <div className={styles.rightPanel}>
       <div className={styles.customerBox}>
+
         <div className={styles.recvLabel}>
-  <span>Customer</span>
+          <span>Customer</span>
 
-  <label className={styles.walkInCheck}>
-    <input
-      type="checkbox"
-      checked={isWalkInCustomer}
-      onChange={(e) => {
-        const checked = e.target.checked;
+          <label className={styles.walkInCheck}>
+            <input
+              type="checkbox"
+              checked={isWalkInCustomer}
+              onChange={(e) => {
+                const checked = e.target.checked;
 
-        setIsWalkInCustomer(checked);
+                setIsWalkInCustomer(checked);
 
-        if (checked) {
-          clearCustomer();
-        }
-      }}
-    />
-    <span>  Walk-in Customer</span>
-  </label>
-</div>
+                if (checked) {
+                  clearCustomer(true);
+                }
+              }}
+            />
+
+            <span>Walk-in Customer</span>
+          </label>
+        </div>
         <div className={styles.customerFieldsRow}>
           <input
             type="text"
@@ -181,8 +205,20 @@ function POSRightPanel({
             </button>
           )}
         </div>
-
         <div className={styles.customerFieldsRow}>
+          <input
+            type="text"
+            placeholder="WhatsApp number"
+            className={styles.customerInput}
+            value={customerWhatsapp}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+
+              setIsWalkInCustomer(false);
+              setCustomerWhatsapp(value);
+            }}
+          />
+
           <input
             type="text"
             placeholder="City"
@@ -190,6 +226,9 @@ function POSRightPanel({
             value={customerCity}
             onChange={(e) => setCustomerCity(e.target.value)}
           />
+        </div>
+        <div className={styles.customerFieldsRow}>
+
 
           <input
             type="text"
@@ -282,6 +321,69 @@ function POSRightPanel({
           <span>Tax</span>
           <span className={styles.billVal}>₹ {Number(previewSummary.totalGST || 0).toFixed(2)}</span>
         </div>
+
+        <div className={styles.billRow}>
+          <span>Bill discount (%)</span>
+
+          <input
+            type="text"
+            inputMode="decimal"
+            className={styles.billDiscountInput}
+            value={billDiscountPercent}
+            placeholder="0"
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+
+              if (Number(value) > 100) {
+                value = "100";
+              }
+
+              setBillDiscountPercent(value);
+
+              if (value !== "") {
+                setBillDiscountAmount("");
+              }
+            }}
+          />
+        </div>
+
+        <div className={styles.billRow}>
+          <span>Bill discount amount</span>
+
+          <input
+            type="text"
+            inputMode="decimal"
+            className={styles.billDiscountInput}
+            value={billDiscountAmount}
+            placeholder="0"
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+
+              setBillDiscountAmount(value);
+
+              if (value !== "") {
+                setBillDiscountPercent("");
+              }
+            }}
+          />
+        </div>
+
+        <div className={styles.billRow}>
+          <span>Bill discount</span>
+
+          <span className={styles.billVal}>
+            ₹ {Number(previewSummary.billDiscountAmount || 0).toFixed(2)}
+          </span>
+        </div>
+
+        <div className={styles.billRow}>
+          <span>Discount amount</span>
+
+          <span className={styles.billVal}>
+            ₹ {Number(previewSummary.billDiscountAmount || 0).toFixed(2)}
+          </span>
+        </div>
+
         <div className={styles.billRow}>
           <span>Offer price</span>
           <span className={styles.billVal}>
@@ -306,17 +408,18 @@ function POSRightPanel({
 
       <div className={styles.bottomActions}>
         <button
-          className={styles.savePrintBtn}
+          className={styles.saveBtn}
           onClick={() => openPaymentModal(true)}
         >
           Save & print <kbd>[F6]</kbd>
         </button>
+        {/*
         <button
           className={styles.saveBtn}
           onClick={() => openPaymentModal(false)}
         >
           Save bill <kbd>[F7]</kbd>
-        </button>
+        </button>*/}
       </div>
 
     </div>

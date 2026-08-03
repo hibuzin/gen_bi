@@ -23,6 +23,8 @@ function CustomerDetails() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [loyaltyChange, setLoyaltyChange] = useState("");
+  const [loyaltyLoading, setLoyaltyLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [messageType, setMessageType] = useState("");
@@ -80,6 +82,81 @@ function CustomerDetails() {
     }
   };
 
+  const handleUpdateLoyalty = async (type) => {
+    const enteredPoints = Number(loyaltyChange || 0);
+
+    if (!enteredPoints || enteredPoints <= 0) {
+      showToast("Enter valid loyalty points", "error");
+      return;
+    }
+
+    const pointsToSend =
+      type === "reduce"
+        ? -enteredPoints
+        : enteredPoints;
+
+    const currentPoints = Number(customer?.loyaltyPoints || 0);
+
+    if (
+      type === "reduce" &&
+      enteredPoints > currentPoints
+    ) {
+      showToast(
+        `Customer has only ${currentPoints} loyalty points`,
+        "error"
+      );
+      return;
+    }
+
+    try {
+      setLoyaltyLoading(true);
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        `${API.customers}/${customer._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            loyaltyPoints: pointsToSend,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Failed to update loyalty points"
+        );
+      }
+
+      setCustomer(data.data);
+
+      setLoyaltyChange("");
+
+      showToast(
+        type === "reduce"
+          ? `${enteredPoints} loyalty points reduced`
+          : `${enteredPoints} loyalty points added`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Loyalty update error:", error);
+
+      showToast(
+        error.message || "Failed to update loyalty points",
+        "error"
+      );
+    } finally {
+      setLoyaltyLoading(false);
+    }
+  };
+
   const fetchCustomerDetails = async (customerId) => {
     try {
       setLoading(true);
@@ -118,7 +195,11 @@ function CustomerDetails() {
       setEditCustomer({
         _id: customerInfo._id,
         name: customerInfo.name || "",
-        phone: customerInfo.phone || "",
+        phone:
+          customerInfo.phone ||
+          customerInfo.mobile ||
+          customerInfo.mobileNumber ||
+          "",
         email: customerInfo.email || "",
         address: customerInfo.address || "",
         state: customerInfo.state || "",
@@ -194,18 +275,6 @@ function CustomerDetails() {
       });
 
       const result = await res.json();
-
-      if (result.success) {
-
-
-        const filtered = (result.data || []).filter(
-          (item) => String(item.customerId) === String(numericCustomerId)
-        );
-
-
-        setCustomerItems(filtered);
-      }
-
 
       if (result.success) {
         const filtered = (result.data || []).filter(
@@ -477,7 +546,12 @@ function CustomerDetails() {
 
                     <div className={styles.profileRow}>
                       <span className={styles.lbl}>Phone</span>
-                      <span className={styles.val}>{customer?.phone || "-"}</span>
+                      <span className={styles.val}>
+                        {customer?.phone ||
+                          customer?.mobile ||
+                          customer?.mobileNumber ||
+                          "-"}
+                      </span>
                     </div>
 
                     <div className={styles.profileRow}>
@@ -514,6 +588,14 @@ function CustomerDetails() {
                     <div className={styles.profileRow}>
                       <span className={styles.lbl}>Address</span>
                       <span className={styles.val}>{customer?.address || "-"}</span>
+                    </div>
+                    <div className={styles.profileRow}>
+                      <span className={styles.lbl}>Loyalty points</span>
+                      <span className={styles.val}>
+                        {
+                          customer?.loyaltyPoints ??
+                          0}
+                      </span>
                     </div>
                   </div>
 
@@ -556,7 +638,7 @@ function CustomerDetails() {
                       </span>
                     </div>
                   </div>
-                  
+
                 </div>
               )}
 
@@ -679,6 +761,56 @@ function CustomerDetails() {
                 <input name="pincode" value={editCustomer.pincode} onChange={handleChange} />
               </div>
 
+              <div className={styles.sectionTitle}>
+                Loyalty points
+              </div>
+
+              <div className={styles.loyaltyEditBox}>
+                <div className={styles.currentLoyalty}>
+                  <span>Current points</span>
+
+                  <strong>
+                    {Number(customer?.loyaltyPoints || 0)}
+                  </strong>
+                </div>
+
+                <div className={styles.field}>
+                  <label>Add / reduce points</label>
+
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={loyaltyChange}
+                    onChange={(event) => {
+                      const value = event.target.value.replace(/\D/g, "");
+                      setLoyaltyChange(value);
+                    }}
+                    placeholder="Enter points"
+                    disabled={loyaltyLoading}
+                  />
+                </div>
+
+                <div className={styles.loyaltyActions}>
+                  <button
+                    type="button"
+                    className={styles.addPointsBtn}
+                    onClick={() => handleUpdateLoyalty("add")}
+                    disabled={loyaltyLoading}
+                  >
+                    {loyaltyLoading ? "Updating..." : "Add points"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.reducePointsBtn}
+                    onClick={() => handleUpdateLoyalty("reduce")}
+                    disabled={loyaltyLoading}
+                  >
+                    {loyaltyLoading ? "Updating..." : "Reduce points"}
+                  </button>
+                </div>
+              </div>
+
               <div className={styles.sectionTitle}>Bank details</div>
 
               <div className={styles.field}>
@@ -744,29 +876,6 @@ function CustomerDetails() {
                 onClick={handleDelete}
               >
                 Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showResetConfirm && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setShowResetConfirm(false)}
-        >
-          <div
-            className={styles.confirmBox}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>Reset loyalty points?</h3>
-            <p>This will reset {customer?.name}'s loyalty points. this cannot be undone.</p>
-            <div className={styles.confirmActions}>
-              <button className={styles.cancelBtn} onClick={() => setShowResetConfirm(false)}>
-                Cancel
-              </button>
-              <button className={styles.deleteBtn} onClick={handleResetLoyalty} disabled={resetLoading}>
-                {resetLoading ? "Resetting..." : "Reset"}
               </button>
             </div>
           </div>

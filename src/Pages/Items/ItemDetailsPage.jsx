@@ -265,10 +265,7 @@ function ItemDetails() {
 
         if (Number.isNaN(num)) return "-";
 
-        return num.toLocaleString("en-IN", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
+        return num;
     };
 
     const categoryName =
@@ -562,15 +559,15 @@ function ItemDetails() {
                                                     <td>{item.qty}</td>
 
                                                     <td>
-                                                        ₹ {Number(item.costPrice || 0).toFixed(2)}
+                                                        ₹ {Number(item.costPrice || 0)}
                                                     </td>
 
                                                     <td>
-                                                        ₹ {Number(item.sellingPrice || 0).toFixed(2)}
+                                                        ₹ {Number(item.sellingPrice || 0)}
                                                     </td>
 
                                                     <td>
-                                                        ₹ {Number(item.mrp || 0).toFixed(2)}
+                                                        ₹ {Number(item.mrp || 0)}
                                                     </td>
 
                                                     

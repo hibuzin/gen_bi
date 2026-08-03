@@ -19,6 +19,18 @@
   white-space: nowrap;
 }
 
+.billCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4c3cce;
+  margin-left: 8px;
+  background: #f1efff;
+  border: 1px solid #ded9ff;
+  padding: 5px 10px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
 .dateTime {
   margin-left: auto;
   font-size: 13px;

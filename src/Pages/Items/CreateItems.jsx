@@ -247,7 +247,7 @@ function CreateProduct() {
         sellingPrice: "",
         barcode: "",
         description: "",
-       unit: localStorage.getItem("defaultUnit") || "pcs",
+        unit: localStorage.getItem("defaultUnit") || "pcs",
         unitValue: "",
         productType: "normal",
         pricingType: "standard",
@@ -506,35 +506,55 @@ function CreateProduct() {
 
           </div>
 
-         <div className={styles.sectionTitleRow}>
-  <div className={styles.sectionTitle}>
-    Inventory details
-  </div>
+          <div className={styles.inventoryHeader}>
+  <span>Inventory details</span>
 
   <button
     type="button"
-    className={styles.defaultBtn}
-    onClick={() => setShowDefaultUnit(!showDefaultUnit)}
+    className={`${styles.defaultBtn} ${
+      showDefaultUnit ? styles.defaultBtnActive : ""
+    }`}
+    onClick={() =>
+      setShowDefaultUnit((prev) => !prev)
+    }
   >
-    Default
+    Default unit
+    {showDefaultUnit ? (
+      <FiChevronUp />
+    ) : (
+      <FiChevronDown />
+    )}
   </button>
 </div>
 
-{showDefaultUnit && (
+         {showDefaultUnit && (
   <div className={styles.defaultUnitBox}>
-    <label>Default Unit</label>
+    <div>
+      <strong>Default item unit</strong>
+      <p>
+        New items will use this unit automatically.
+      </p>
+    </div>
 
     <select
-      value={localStorage.getItem("defaultUnit") || "pcs"}
+      value={form.unit}
       onChange={(e) => {
-        localStorage.setItem("defaultUnit", e.target.value);
+        const value = e.target.value;
+
+        localStorage.setItem(
+          "defaultUnit",
+          value
+        );
 
         setForm((prev) => ({
           ...prev,
-          unit: e.target.value,
+          unit: value,
         }));
 
-        showToast("Default unit updated", "success");
+        showToast(
+          "Default unit updated",
+          "success"
+        );
       }}
     >
       <option value="pcs">Pcs</option>

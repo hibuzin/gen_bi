@@ -7,6 +7,7 @@ import treeKill from "tree-kill";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
 let mainWindow;
 let backendProcess;
 
@@ -49,6 +50,9 @@ function createWindow() {
     width: 1400,
     height: 900,
     autoHideMenuBar: true,
+
+icon: path.join(__dirname, "../build/icon.ico"),
+    
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

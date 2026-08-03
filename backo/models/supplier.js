@@ -32,7 +32,6 @@ const supplierSchema = new mongoose.Schema(
 
         gstNumber: {
             type: String,
-            required: true,
             trim: true,
             uppercase: true,
             match: [

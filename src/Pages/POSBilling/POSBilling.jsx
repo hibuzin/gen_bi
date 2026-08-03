@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./POSBilling.module.css";
 import { API } from "../../constants/api";
 import BillingPopup from "./BillingPopup";
@@ -20,6 +20,9 @@ function Toast({ message, type }) {
 function POSBilling() {
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const [editBillId, setEditBillId] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   const token = localStorage.getItem("token");
   const [scanCode, setScanCode] = useState("");
   const [codes, setCodes] = useState([]);
@@ -54,14 +57,23 @@ function POSBilling() {
   const [showBalanceAlert, setShowBalanceAlert] = useState(false);
   const [pendingPopupPrint, setPendingPopupPrint] = useState(false);
   const [calculatedItems, setCalculatedItems] = useState([]);
-  const [isWalkInCustomer, setIsWalkInCustomer] = useState(false);
+  const [isWalkInCustomer, setIsWalkInCustomer] = useState(true);
+  const [billDiscountPercent, setBillDiscountPercent] = useState("");
+  const [billDiscountAmount, setBillDiscountAmount] = useState("");
+  const [customerWhatsapp, setCustomerWhatsapp] = useState("");
+  const [latestBillCount, setLatestBillCount] = useState(0);
   const [chequeDetails, setChequeDetails] = useState({
     chequeNo: "",
     chequeDate: "",
     bankName: "",
     accountHolder: "",
   });
-
+  const totalReceivedAmount =
+    paymentMethod === "split"
+      ? Number(cashAmount || 0) +
+      Number(upiAmount || 0) +
+      Number(cardAmount || 0)
+      : Number(receivedAmount || 0);
   const [upiDetails, setUpiDetails] = useState({
     upiId: "",
     transactionId: "",
@@ -80,8 +92,246 @@ function POSBilling() {
   });
 
 
+  // edit
+
+  useEffect(() => {
+    const editBill = location.state?.editBill;
+
+    if (!editBill?.billId) return;
+
+    setIsEditMode(true);
+    setEditBillId(editBill.billId);
+
+    const billItems = Array.isArray(editBill.items)
+      ? editBill.items
+      : [];
+
+    setScannedItems(
+      billItems.map((item) => ({
+        ...item,
+
+        productId:
+          item.productId?._id ||
+          item.productId?.id ||
+          item.productId,
+
+        productName:
+          item.productName ||
+          item.name ||
+          "",
+
+        barcode:
+          item.barcode ||
+          item.itemCode ||
+          "",
+
+        qty: Number(item.qty || 1),
+
+        discountPercent:
+          Number(item.discountPercent || 0),
+
+        discountAmount:
+          Number(item.discountAmount || 0),
+
+        stock:
+          Number(
+            item.stock ??
+            item.currentStock ??
+            item.availableQty ??
+            0
+          ),
+      }))
+    );
+
+    setCodes(
+      billItems.map(
+        (item, index) =>
+          item.barcode ||
+          item.itemCode ||
+          String(item.productId?._id || item.productId || index)
+      )
+    );
+
+    const customer = editBill.customer || {};
+
+    const customerId =
+      customer.customerId ||
+      customer._id ||
+      customer.id ||
+      null;
+
+    const walkIn =
+      editBill.isWalkInCustomer === true ||
+      !customerId ||
+      customer.customerName === "Walk in Customer";
+
+    setIsWalkInCustomer(walkIn);
+
+    setCustomerName(
+      walkIn
+        ? ""
+        : customer.customerName ||
+        customer.name ||
+        ""
+    );
+
+    setCustomerPhone(
+      walkIn
+        ? ""
+        : customer.mobile ||
+        customer.phone ||
+        ""
+    );
+
+    setCustomerCity(customer.city || "");
+    setCustomerGST(
+      customer.gstNumber ||
+      customer.gstnumber ||
+      ""
+    );
+
+    if (!walkIn && customerId) {
+      setSelectedCustomer({
+        ...customer,
+        _id: customerId,
+        id: customerId,
+        name:
+          customer.customerName ||
+          customer.name ||
+          "",
+        phone:
+          customer.mobile ||
+          customer.phone ||
+          "",
+      });
+    } else {
+      setSelectedCustomer(null);
+    }
+
+    const method =
+      editBill.paymentMethod ||
+      editBill.payment?.method ||
+      "cash";
+
+    const status =
+      editBill.paymentStatus ||
+      editBill.payment?.status ||
+      "paid";
+
+    const payments =
+      editBill.payments ||
+      editBill.payment?.payments ||
+      [];
+
+    setPaymentMethod(method);
+    setPaymentStatus(status);
+
+    if (method === "split") {
+      const cashPayment = payments.find(
+        (payment) => payment.method === "cash"
+      );
+
+      const upiPayment = payments.find(
+        (payment) => payment.method === "upi"
+      );
+
+      const cardPayment = payments.find(
+        (payment) => payment.method === "card"
+      );
+
+      setCashAmount(
+        cashPayment?.amount != null
+          ? String(cashPayment.amount)
+          : ""
+      );
+
+      setUpiAmount(
+        upiPayment?.amount != null
+          ? String(upiPayment.amount)
+          : ""
+      );
+
+      setCardAmount(
+        cardPayment?.amount != null
+          ? String(cardPayment.amount)
+          : ""
+      );
+
+      if (upiPayment?.details) {
+        setUpiDetails((prev) => ({
+          ...prev,
+          ...upiPayment.details,
+        }));
+      }
+
+      if (cardPayment?.details) {
+        setCardDetails((prev) => ({
+          ...prev,
+          ...cardPayment.details,
+        }));
+      }
+    } else {
+      const currentPayment =
+        payments.find(
+          (payment) => payment.method === method
+        ) || payments[0];
+
+      setReceivedAmount(
+        currentPayment?.amount != null
+          ? String(currentPayment.amount)
+          : editBill.paidAmount != null
+            ? String(editBill.paidAmount)
+            : ""
+      );
+
+      if (method === "upi" && currentPayment?.details) {
+        setUpiDetails((prev) => ({
+          ...prev,
+          ...currentPayment.details,
+        }));
+      }
+
+      if (method === "card" && currentPayment?.details) {
+        setCardDetails((prev) => ({
+          ...prev,
+          ...currentPayment.details,
+        }));
+      }
+
+      if (method === "cheque" && currentPayment?.details) {
+        setChequeDetails((prev) => ({
+          ...prev,
+          ...currentPayment.details,
+        }));
+      }
+    }
+
+    setBillDiscountPercent(
+      editBill.summary?.billDiscountPercentage
+        ? String(editBill.summary.billDiscountPercentage)
+        : ""
+    );
+
+    setBillDiscountAmount(
+      editBill.summary?.billDiscountAmount
+        ? String(editBill.summary.billDiscountAmount)
+        : ""
+    );
+
+    setRedeemPoints(
+      editBill.redeemPoints
+        ? String(editBill.redeemPoints)
+        : ""
+    );
+  }, [location.state]);
+
+
+
+
+
   useEffect(() => {
     fetchStockList();
+    fetchLatestBillCount();
   }, []);
 
   useEffect(() => {
@@ -197,7 +447,7 @@ function POSBilling() {
   };
 
   const generateBill = async () => {
-    if (codes.length === 0) {
+   if (scannedItems.length === 0) {
       showToast("Please add at least one item", "error");
       return;
     }
@@ -206,15 +456,18 @@ function POSBilling() {
       setLoading(true);
       setBill(null);
 
-     let customerId = isWalkInCustomer
-  ? null
-  : selectedCustomer?.id || selectedCustomer?._id || null;
+      let customerId =
+        selectedCustomer?._id ||
+        selectedCustomer?.id ||
+        null;
+
+
       if (
-  !isWalkInCustomer &&
-  !customerId &&
-  customerPhone.trim() &&
-  customerName.trim()
-) {
+        !isWalkInCustomer &&
+        !customerId &&
+        customerPhone.trim() &&
+        customerName.trim()
+      ) {
         try {
 
           const custRes = await fetch(API.customers, {
@@ -226,6 +479,7 @@ function POSBilling() {
             body: JSON.stringify({
               name: customerName.trim(),
               phone: customerPhone.trim(),
+              whatsappNumber: customerWhatsapp.trim(),
               city: customerCity.trim(),
               gstNumber: customerGST.trim(),
             }),
@@ -262,29 +516,41 @@ function POSBilling() {
         return billItem;
       });
 
-      const res = await fetch(API.bill, {
-        method: "POST",
+      const billUrl = isEditMode
+        ? API.billEdit(editBillId)
+        : API.bill;
+
+      const res = await fetch(billUrl, {
+        method: isEditMode ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-  isWalkInCustomer,
+          isWalkInCustomer,
 
-  customerId:
-    isWalkInCustomer
-      ? undefined
-      : customerId
-        ? Number(customerId)
-        : undefined,
+          ...(!isWalkInCustomer &&
+            customerId && {
+            customerId: /^\d+$/.test(String(customerId))
+              ? Number(customerId)
+              : customerId,
+          }),
 
-  redeemPoints: isWalkInCustomer
-    ? 0
-    : Number(redeemPoints || 0),
+          redeemPoints: isWalkInCustomer
+            ? 0
+            : Number(redeemPoints || 0),
+          ...(Number(billDiscountPercent || 0) > 0 && {
+            discountPercent: Number(billDiscountPercent),
+          }),
 
-  items: billItems,
+          ...(Number(billDiscountAmount || 0) > 0 && {
+            discountAmount: Number(billDiscountAmount),
+          }),
+
+          items: billItems,
           paymentStatus,
           paymentMethod,
+          receivedAmount: totalReceivedAmount,
           payments:
             paymentMethod === "split"
               ? [
@@ -307,19 +573,44 @@ function POSBilling() {
                 {
                   method: paymentMethod,
                   amount: Number(receivedAmount || 0),
-                  ...(paymentMethod === "cheque" && { details: chequeDetails }),
-                  ...(paymentMethod === "upi" && { details: upiDetails }),
-                  ...(paymentMethod === "card" && { details: cardDetails }),
+
+                  ...(paymentMethod === "cheque" && {
+                    details: chequeDetails,
+                  }),
+
+                  ...(paymentMethod === "upi" && {
+                    details: upiDetails,
+                  }),
+
+                  ...(paymentMethod === "card" && {
+                    details: cardDetails,
+                  }),
                 },
               ],
         }),
       });
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.message || "Bill generation failed");
 
       setBill(data.data);
-      showToast("Bill generated successfully", "success");
+      setLatestBillCount(Number(data?.data?.billCount || 0));
+      showToast(
+        isEditMode
+          ? "Bill updated successfully"
+          : "Bill generated successfully",
+        "success"
+      );
+      if (isEditMode) {
+        setIsEditMode(false);
+        setEditBillId(null);
+
+        navigate("/posbilling", {
+          replace: true,
+          state: null,
+        });
+      }
       setShowBillingPopup(false);
 
       await fetchStockList();
@@ -342,13 +633,40 @@ function POSBilling() {
       setScanCode("");
       setActiveHoldId(null);
       clearCustomer();
-      setRowSearches({});
-      setRowSearchResults({});
-      setActiveRowIndex(0);
+      setIsWalkInCustomer(true);
+      setBillDiscountPercent("");
+      setBillDiscountAmount("");
+      setCustomerWhatsapp("");
+      setReceivedAmount("");
+      setCashAmount("");
+      setUpiAmount("");
+      setCardAmount("");
+      setRedeemPoints("");
+      setPaymentMethod("cash");
+      setPaymentStatus("paid");
+
+      setChequeDetails({
+        chequeNo: "",
+        chequeDate: "",
+        bankName: "",
+        accountHolder: "",
+      });
+
+      setUpiDetails({
+        upiId: "",
+        transactionId: "",
+      });
+
+      setCardDetails({
+        cardType: "",
+        cardLast4: "",
+        approvalCode: "",
+      });
 
       setTimeout(() => {
-        itemInputRefs.current[0]?.focus();
+        itemInputRefs.current?.[0]?.focus();
       }, 100);
+
     } catch (err) {
       showToast(err.message, "error");
     } finally {
@@ -395,13 +713,32 @@ function POSBilling() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          customerId: selectedCustomer?.id
-            ? Number(selectedCustomer.id)
-            : undefined,
-          loyaltyPoints: Number(redeemPoints || 0),
+          isWalkInCustomer,
+
+          ...(!isWalkInCustomer &&
+            (selectedCustomer?._id || selectedCustomer?.id) && {
+            customerId: /^\d+$/.test(
+              String(selectedCustomer?._id || selectedCustomer?.id)
+            )
+              ? Number(selectedCustomer?._id || selectedCustomer?.id)
+              : selectedCustomer?._id || selectedCustomer?.id,
+          }),
+
+          loyaltyPoints: isWalkInCustomer
+            ? 0
+            : Number(redeemPoints || 0),
+
           items: billItems,
+          ...(Number(billDiscountPercent || 0) > 0 && {
+            discountPercent: Number(billDiscountPercent),
+          }),
+
+          ...(Number(billDiscountAmount || 0) > 0 && {
+            discountAmount: Number(billDiscountAmount),
+          }),
           paymentStatus: "paid",
           paymentMethod,
+          receivedAmount: totalReceivedAmount,
         }),
       });
 
@@ -418,43 +755,120 @@ function POSBilling() {
     }
   };
 
+  // bill count 
+  const fetchLatestBillCount = async () => {
+    try {
+      const res = await fetch(API.bill, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to fetch bill count");
+      }
+
+      const bills = Array.isArray(data?.data) ? data.data : [];
+
+      const count = bills.reduce(
+        (highest, bill) =>
+          Math.max(highest, Number(bill?.billCount || 0)),
+        0
+      );
+
+      setLatestBillCount(count);
+    } catch (error) {
+      console.error("Bill count fetch error:", error);
+      setLatestBillCount(0);
+    }
+  };
+
   useEffect(() => {
     generatePreviewBill(scannedItems);
-  }, [scannedItems, paymentMethod, redeemPoints, selectedCustomer]);
+  }, [
+    scannedItems,
+    paymentMethod,
+    paymentStatus,
+
+    receivedAmount,
+    cashAmount,
+    upiAmount,
+    cardAmount,
+
+    redeemPoints,
+    selectedCustomer,
+    isWalkInCustomer,
+    billDiscountPercent,
+    billDiscountAmount,
+  ]);
 
   useEffect(() => {
-    const handleKey = (e) => {
-      if (e.ctrlKey && e.key === "Escape") {
-        navigate(-1);
-      }
+  const handleKey = (e) => {
+    if (e.ctrlKey && e.key === "Escape") {
+      e.preventDefault();
+      navigate(-1);
+      return;
+    }
 
-      if (e.key === "F4") {
-        e.preventDefault();
-        openPaymentModal(false);
-      }
+    // F6: Open payment popup with print enabled
+    if (e.key === "F6") {
+      e.preventDefault();
 
-      if (e.key === "F6") {
-        e.preventDefault();
+      if (!showBillingPopup && !showBalanceAlert) {
         openPaymentModal(true);
       }
 
-      if (e.key === "F7") {
-        e.preventDefault();
-        openPaymentModal(false);
+      return;
+    }
+
+    // F8: Generate and print bill from payment popup
+    if (e.key === "F8") {
+      e.preventDefault();
+
+      if (showBillingPopup && !loading) {
+        confirmPayment();
       }
 
-      if (e.ctrlKey && e.key.toLowerCase() === "b") {
-        e.preventDefault();
+      return;
+    }
+
+    if (e.ctrlKey && e.key.toLowerCase() === "b") {
+      e.preventDefault();
+
+      if (!showBillingPopup) {
         holdBill();
       }
-    };
+    }
+  };
 
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [codes, scannedItems, previewSummary]);
+  window.addEventListener("keydown", handleKey);
+
+  return () => {
+    window.removeEventListener("keydown", handleKey);
+  };
+}, [
+  scannedItems,
+  previewSummary,
+  showBillingPopup,
+  showBalanceAlert,
+  loading,
+  pendingPrint,
+  paymentMethod,
+  paymentStatus,
+  receivedAmount,
+  cashAmount,
+  upiAmount,
+  cardAmount,
+]);
+
+
+
 
   const openPaymentModal = (printFlag) => {
-    if (codes.length === 0) {
+   if (scannedItems.length === 0) {
       showToast("Please add at least one item", "error");
       setRedeemPoints("");
       return;
@@ -508,6 +922,10 @@ function POSBilling() {
         showToast={showToast}
 
         clearCustomer={clearCustomer}
+        latestBillCount={latestBillCount}
+
+        isEditMode={isEditMode}
+        editInvoiceNo={location.state?.editBill?.invoiceNo}
       />
 
       {/* ── Main Body ── */}
@@ -552,6 +970,12 @@ function POSBilling() {
           setCustomerPrevBalance={setCustomerPrevBalance}
           previewSummary={previewSummary}
           openPaymentModal={openPaymentModal}
+          billDiscountPercent={billDiscountPercent}
+          setBillDiscountPercent={setBillDiscountPercent}
+          billDiscountAmount={billDiscountAmount}
+          setBillDiscountAmount={setBillDiscountAmount}
+          customerWhatsapp={customerWhatsapp}
+          setCustomerWhatsapp={setCustomerWhatsapp}
         />
       </div>
 

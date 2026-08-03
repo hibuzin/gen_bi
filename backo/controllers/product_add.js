@@ -55,11 +55,21 @@ exports.productcreate = async (req, res) => {
 
         const itemCode = await generateItemCode(hierarchy.superAdminId);
 
-        const cat = await category.findOne({
-            _id: categoryId,
-            superAdminId: hierarchy.superAdminId
-        });
+       let cat = null;
 
+if (categoryId) {
+    cat = await category.findOne({
+        _id: categoryId,
+        superAdminId: hierarchy.superAdminId
+    });
+
+    if (!cat) {
+        return res.status(404).json({
+            success: false,
+            message: "Category not found"
+        });
+    }
+}
        
 
         const processedGstRate = Number(gstRate || 0);
@@ -201,8 +211,8 @@ exports.productcreate = async (req, res) => {
             costPrice: processedCostPrice,
             sellingPrice: processedSellingPrice,
 
-            categoryId,
-            categoryName: cat.name || "",
+          categoryId: categoryId || null,
+categoryName: cat ? cat.name : "",
 
             hsnCode: hsnCode ? String(hsnCode).trim() : "",
             gstRate: processedGstRate,
@@ -737,13 +747,15 @@ exports.allProducts = async (req, res) => {
                     isActive: true
                 }).lean();
 
-                const totalAvailableQty = barcodes.reduce(
-                    (sum, b) => sum + Number(b.availableQty || 0),
-                    0
-                );
+                const totalAvailableQty = Number(
+  barcodes
+    .reduce((sum, b) => sum + Number(b.availableQty || 0), 0)
+    .toFixed(2)
+);
 
                 return {
                     ...product,
+                    stock: Number(Number(product.stock || 0).toFixed(2)),
 
                     totalAvailableQty,
                     barcodeCount: barcodes.length,
@@ -753,7 +765,7 @@ exports.allProducts = async (req, res) => {
                         barcode: barcode.code || "",
 
                         qty: barcode.qty || 0,
-                        availableQty: barcode.availableQty || 0,
+                       availableQty: Number(Number(barcode.availableQty || 0).toFixed(2)),
 
                         unit: barcode.unit || product.unit || "pcs",
                         unitValue: barcode.unitValue || product.unitValue || 1,
@@ -823,8 +835,8 @@ exports.searchProducts = async (req, res) => {
             productName: product.name || "",
             itemCode: product.itemCode || "",
 
-            stock: Number(product.stock || 0),
-            reservedStock: Number(product.reservedStock || 0),
+            stock: parseFloat((product.stock || 0).toFixed(2)),
+            reservedStock: parseFloat((product.reservedStock || 0).toFixed(2)),
 
             categoryId: product.categoryId?._id || "",
             categoryName: product.categoryId?.name || "",
@@ -915,7 +927,7 @@ exports.searchProductsByCategory = async (req, res) => {
             productId: product._id,
             productName: product.name || "",
             brand: product.brand || "",
-            stock: Number(product.stock || 0),
+            stock: Number((product.stock || 0).toFixed(2)),
             reservedStock: Number(product.reservedStock || 0),
 
             categoryId: product.categoryId?._id || "",

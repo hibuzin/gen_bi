@@ -239,16 +239,37 @@ exports.createPurchase = async (req, res) => {
 
             const netAmount = round2(netcost * qty);
 
-            const sellingPrice = Number(item.sellingPrice ?? product.sellingPrice ?? mrp);
+            const hasItemMrp =
+    item.mrp !== undefined &&
+    item.mrp !== null &&
+    String(item.mrp).trim() !== "";
 
-            const mrp = Number(item.mrp ?? product.mrp);
+const existingProductMrp = Number(product.mrp || 0);
 
-            if (isNaN(mrp) || mrp <= 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid MRP"
-                });
-            }
+const mrp = hasItemMrp
+    ? Number(item.mrp)
+    : existingProductMrp;
+
+if (hasItemMrp && (isNaN(mrp) || mrp < 0)) {
+    return res.status(400).json({
+        success: false,
+        message: "Invalid MRP"
+    });
+}
+
+const sellingPrice = Number(
+    item.sellingPrice ??
+    product.sellingPrice ??
+    mrp ??
+    0
+);
+
+if (isNaN(sellingPrice) || sellingPrice < 0) {
+    return res.status(400).json({
+        success: false,
+        message: "Invalid selling price"
+    });
+}
 
             const purchaseUnit = product.unit || "pcs";
 
@@ -491,8 +512,32 @@ exports.createPurchase = async (req, res) => {
                 {
                     $inc: {
                         stock: stockQty
+                    },
+                    $set: {
+                        costPrice: netcost,
+                        sellingPrice: sellingPrice,
+                        mrp: mrp
                     }
                 }
+            );
+
+            await Product.updateOne(
+
+                {
+                    _id: product._id,
+                    superAdminId: hierarchy.superAdminId
+                },
+
+                {
+
+                    mrp: mrp,
+
+                    costPrice: netcost,
+
+                    sellingPrice: sellingPrice
+
+                }
+
             );
 
 
@@ -771,56 +816,63 @@ exports.createPurchase = async (req, res) => {
             createdBy: req.user.userId
         });
 
+await AuditLog.create({
+    ...hierarchy,
 
-        await AuditLog.create({
-            userId: req.user.userId,
-            role: req.user.role,
+    userId: req.user.userId,
+    role: req.user.role,
 
-            module: "Purchase",
-            action: "Create",
+    module: "Purchase",
+    action: "Create",
 
-            description: `Purchase created - GRN: ${purchase.grnNo}`,
+    documentId: purchase._id,
+    oldData: null,
 
-            referenceId: purchase._id,
+    newData: {
+        grnNo: purchase.grnNo || "",
+        invoiceNo: purchase.invoiceNo || "",
+        grnDate: purchase.grnDate || null,
 
-            metadata: {
-                supplierId: supplier._id,
-                supplierName: supplier.supplierName,
-                invoiceNo: purchase.invoiceNo,
+        supplierName: supplier.supplierName || "",
 
-                totalAmount: purchase.totalAmount,
-                supplierBillAmount: purchase.supplierBillAmount,
-                freightCharge: purchase.freightCharge || 0,
-                packagingCharge: purchase.packagingCharge || 0,
+        supplierGstNumber:
+            supplier.gstNumber ||
+            supplier.gstnumber ||
+            supplier.gstin ||
+            "",
 
-                gstRate: processedItems.length > 0 ? processedItems[0].taxPercentage : 0,
-                cgstRate: processedItems.length > 0 ? processedItems[0].taxPercentage / 2 : 0,
-                sgstRate: processedItems.length > 0 ? processedItems[0].taxPercentage / 2 : 0,
+        placeOfSupply:
+            supplier.state ||
+            supplier.placeOfSupply ||
+            "",
 
-                totalGSTAmount: totalTaxAmount,
-                totalCGSTAmount: round2(totalTaxAmount / 2),
-                totalSGSTAmount: round2(totalTaxAmount / 2),
+        items: purchase.items.map((item) => {
+            const gstRate = Number(item.taxPercentage || 0);
+            const taxAmount = Number(item.taxAmount || 0);
 
-                items: purchase.items.map(item => ({
-                    productId: item.productId,
-                    productName: item.productName,
-                    qty: item.qty,
+            return {
+                hsnCode: item.hsnCode || "",
+                itemName: item.productName || "",
 
-                    costPrice: item.costPrice,
-                    gst: item.gst,
-                    cgst: item.cgst,
-                    sgst: item.sgst,
+                qty: Number(item.qty || 0),
+                unit: item.unit || "",
 
-                    gstAmount: item.gstAmount,
-                    totalCostWithGST: item.totalCostWithGST,
-                    netCost: item.netcost
-                }))
+                rate: Number(
+                    item.Rate ??
+                    item.netcost ??
+                    0
+                ),
 
-            },
+                gst: gstRate,
+                cgst: gstRate / 2,
+                sgst: gstRate / 2,
 
-            ...hierarchy
-        });
-
+                mrp: Number(item.mrp || 0),
+                taxAmount
+            };
+        })
+    }
+});
 
         const responsePurchase = await Purchase.findById(purchase._id)
             .populate("items.productId", "name brand");
@@ -1032,7 +1084,7 @@ exports.calculatePurchase = async (req, res) => {
             const totalStockQty = qty + freeQty;
 
             const netcost = Number(item.netcost || item.purchasePrice || item.netCost);
-           
+           const mrp = Number(item.mrp || 0);
             const sellingPrice = Number(item.sellingPrice || mrp);
             const taxPercentage = Number(item.gst || item.gstRate || item.taxPercentage || 0);
 
@@ -1048,7 +1100,9 @@ exports.calculatePurchase = async (req, res) => {
                 throw new Error(`Invalid purchase price at item ${index + 1}`);
             }
 
-          
+           if (mrp < 0) {
+    throw new Error(`Invalid MRP at item ${index + 1}`);
+}
 
             const netAmount = round2(netcost * qty);
             const grossAmount = round2(qty * netcost);
@@ -1405,6 +1459,214 @@ exports.getProductForPurchase = async (req, res) => {
         });
     }
 };
+
+
+exports.getPurchasesByDate = async (req, res) => {
+    try {
+        const hierarchy = attachHierarchy(req.user);
+
+        const { date, fromDate, toDate } = req.query;
+
+        const filter = {
+            superAdminId: hierarchy.superAdminId
+        };
+
+        if (date) {
+            // Single Date
+            const [day, month, year] = date.split("/");
+
+            const start = new Date(year, month - 1, day);
+            const end = new Date(year, month - 1, day);
+
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+
+            filter.grnDate = {
+                $gte: start,
+                $lte: end
+            };
+
+        } else if (fromDate && toDate) {
+            // Date Range
+            const [fromDay, fromMonth, fromYear] = fromDate.split("/");
+            const [toDay, toMonth, toYear] = toDate.split("/");
+
+            const start = new Date(fromYear, fromMonth - 1, fromDay);
+            const end = new Date(toYear, toMonth - 1, toDay);
+
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+
+            filter.grnDate = {
+                $gte: start,
+                $lte: end
+            };
+        }
+
+        const purchases = await Purchase.find(filter)
+            .populate("supplierId", "supplierName mobile")
+            .sort({ invoiceDate: -1 });
+
+        return res.status(200).json({
+            success: true,
+            total: purchases.length,
+            data: purchases.map((purchase) => ({
+                _id: purchase._id,
+
+                supplier: {
+                    id: purchase.supplierId?._id || "",
+                    name: purchase.supplierId?.supplierName || "",
+                    mobile: purchase.supplierId?.mobile || ""
+                },
+
+                grnNo: purchase.grnNo,
+
+                grnDate: purchase.grnDate
+                    ? new Date(purchase.grnDate)
+                        .toLocaleDateString("en-GB")
+                        .replace(/\//g, "-")
+                    : "",
+
+                invoiceNo: purchase.invoiceNo,
+
+                invoiceDate: purchase.invoiceDate
+                    ? new Date(purchase.invoiceDate)
+                        .toLocaleDateString("en-GB")
+                        .replace(/\//g, "-")
+                    : "",
+
+                DueDate: purchase.DueDate
+                    ? new Date(purchase.DueDate)
+                        .toLocaleDateString("en-GB")
+                        .replace(/\//g, "-")
+                    : "",
+
+                totalAmount: purchase.totalAmount,
+                supplierBillAmount: purchase.supplierBillAmount,
+                paidAmount: purchase.paidAmount,
+                balanceAmount: purchase.balanceAmount,
+                paymentStatus: purchase.paymentStatus
+            }))
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: err.message
+        });
+    }
+};
+
+
+exports.getPurchaseItemWiseReport = async (req, res) => {
+    try {
+        const hierarchy = attachHierarchy(req.user);
+
+        const { date, fromDate, toDate } = req.query;
+
+        const filter = {
+            superAdminId: hierarchy.superAdminId
+        };
+
+        if (date) {
+            const [day, month, year] = date.split("/");
+
+            const start = new Date(year, month - 1, day);
+            const end = new Date(year, month - 1, day);
+            end.setHours(23, 59, 59, 999);
+
+            filter.createdAt = {
+                $gte: start,
+                $lte: end
+            };
+        }
+
+        if (fromDate && toDate) {
+            const [fd, fm, fy] = fromDate.split("/");
+            const [td, tm, ty] = toDate.split("/");
+
+            const start = new Date(fy, fm - 1, fd);
+            const end = new Date(ty, tm - 1, td);
+            end.setHours(23, 59, 59, 999);
+
+            filter.createdAt = {
+                $gte: start,
+                $lte: end
+            };
+        }
+
+        const purchases = await Purchase.find(filter)
+            .populate("items.productId", "name itemCode");
+
+        const report = {};
+
+        for (const purchase of purchases) {
+            for (const item of purchase.items) {
+
+                const id = item.productId?._id?.toString() || item.productId.toString();
+
+                if (!report[id]) {
+                    report[id] = {
+                        productId: item.productId?._id || item.productId,
+                        productName: item.productName || item.productId?.name || "",
+                        itemCode: item.productId?.itemCode || "",
+
+                        mrp: item.mrp || 0,
+                        sellingPrice: item.sellingPrice || 0,
+                        costPrice: item.netcost || 0,
+
+                        unit: item.unit || "",
+                        unitValue: item.unitValue || 1,
+
+                        gstRate: item.taxPercentage || 0,
+
+                        qtyPurchased: 0,
+                        freeQty: 0,
+                        totalStockQty: 0,
+
+                        purchaseAmount: 0,
+                        discountAmount: 0,
+                        gstAmount: 0,
+                        netPurchase: 0,
+
+                        profitAmount: 0,
+                        profitPercent: 0,
+                        roiPercent: 0
+                    };
+                }
+
+                report[id].qtyPurchased += Number(item.qty || 0);
+                report[id].freeQty += Number(item.freeQty || 0);
+                report[id].totalStockQty += Number(item.totalStockQty || 0);
+
+                report[id].purchaseAmount += Number(item.totalCostWithGST || 0);
+
+                report[id].discountAmount += Number(item.purchaseDiscount || item.discountAmount || 0);
+                report[id].gstAmount += Number(item.taxAmount || 0);
+                report[id].netPurchase += Number(item.totalCostWithGST || 0);
+
+                report[id].profitAmount = Number(item.profitAmount || 0);
+                report[id].profitPercent = Number(item.profitPercent || 0);
+                report[id].roiPercent = Number(item.roiPercent || 0);
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            count: Object.keys(report).length,
+            data: Object.values(report)
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: err.message
+        });
+    }
+};
+
 
 
 exports.getAllSupplierBalances = async (req, res) => {
@@ -1975,7 +2237,17 @@ exports.updatePurchase = async (req, res) => {
             supplierId,
             invoiceNo,
             invoiceDate,
+            grnDate,
+            invoiceAmount,
+
             items,
+
+            freightCharge = 0,
+            packagingCharge = 0,
+
+            billDiscountPercent = 0,
+            billDiscountAmount = 0,
+
             supplierBillAmount,
             paidAmount,
             DueDate
@@ -2384,6 +2656,29 @@ exports.updatePurchase = async (req, res) => {
             });
         }
 
+        let finalBillDiscount = 0;
+
+        if (billDiscountPercent > 0) {
+
+            finalBillDiscount = round2(
+                totalAmount * billDiscountPercent / 100
+            );
+
+        } else if (billDiscountAmount > 0) {
+
+            finalBillDiscount = round2(
+                billDiscountAmount
+            );
+
+        }
+
+        if (finalBillDiscount > totalAmount) {
+            return res.status(400).json({
+                success: false,
+                message: "Bill discount cannot exceed purchase total."
+            });
+        }
+
         let supplierData = {};
 
         if (supplierId) {
@@ -2407,9 +2702,68 @@ exports.updatePurchase = async (req, res) => {
         }
 
         purchase.invoiceNo = invoiceNo || purchase.invoiceNo;
-        purchase.invoiceDate = invoiceDate || purchase.invoiceDate;
+        let finalInvoiceDate = purchase.invoiceDate;
+
+        if (invoiceDate) {
+
+            finalInvoiceDate = new Date(invoiceDate);
+
+            if (invoiceDate.includes(".")) {
+                const [day, month, year] = invoiceDate.split(".");
+                finalInvoiceDate = new Date(`${year}-${month}-${day}`);
+            }
+
+            if (isNaN(finalInvoiceDate.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid invoice date"
+                });
+            }
+        }
+
+        purchase.invoiceDate = finalInvoiceDate;
+
+        let finalGrnDate = purchase.grnDate;
+
+        if (grnDate) {
+
+            finalGrnDate = new Date(grnDate);
+
+            if (grnDate.includes(".")) {
+                const [day, month, year] = grnDate.split(".");
+                finalGrnDate = new Date(`${year}-${month}-${day}`);
+            }
+
+            if (isNaN(finalGrnDate.getTime())) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid GRN date"
+                });
+            }
+        }
+
+        purchase.grnDate = finalGrnDate;
+
+        purchase.invoiceAmount =
+            Number(invoiceAmount || purchase.invoiceAmount);
+
         purchase.items = processedItems;
-        purchase.totalAmount = totalAmount;
+        const purchaseTotalAmount =
+            round2(
+                totalAmount +
+                Number(freightCharge) +
+                Number(packagingCharge)
+            );
+
+        purchase.totalAmount = purchaseTotalAmount;
+
+        purchase.freightCharge = Number(freightCharge);
+
+        purchase.packagingCharge = Number(packagingCharge);
+
+        purchase.billDiscountPercent = billDiscountPercent;
+
+        purchase.billDiscountAmount = finalBillDiscount;
 
         const finalSupplierBillAmount = Number(supplierBillAmount || totalAmount);
         const finalPaidAmount = Number(paidAmount ?? purchase.paidAmount ?? 0);
@@ -2435,21 +2789,90 @@ exports.updatePurchase = async (req, res) => {
         purchase.paidAmount = finalPaidAmount;
         purchase.balanceAmount = balanceAmount;
         purchase.paymentStatus = paymentStatus;
-        purchase.DueDate = balanceAmount > 0 ? DueDate || purchase.DueDate : null;
+        let finalDueDate = purchase.DueDate;
+
+        if (DueDate) {
+
+            finalDueDate = new Date(DueDate);
+
+            if (DueDate.includes(".")) {
+
+                const [day, month, year] = DueDate.split(".");
+
+                finalDueDate = new Date(`${year}-${month}-${day}`);
+            }
+
+            if (isNaN(finalDueDate.getTime())) {
+
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid Due Date"
+                });
+            }
+        }
+
+        purchase.DueDate =
+            balanceAmount > 0
+                ? finalDueDate
+                : null;
+
+        if (
+            finalPaidAmount > 0 &&
+            finalPaidAmount !== purchase.paidAmount
+        ) {
+            purchase.paymentHistory.push({
+                amount: finalPaidAmount,
+                paymentType: "cash",
+                note: "Purchase updated"
+            });
+        }
 
         Object.assign(purchase, supplierData);
 
         await purchase.save();
+
+        await AuditLog.create({
+            userId: req.user.userId,
+            role: req.user.role,
+
+            module: "Purchase",
+            action: "Update",
+
+            description: `Purchase updated - GRN: ${purchase.grnNo}`,
+
+            referenceId: purchase._id,
+
+            ...hierarchy
+        });
 
         return res.status(200).json({
             success: true,
             message: "Purchase updated successfully",
             data: {
                 _id: purchase._id,
+
                 invoiceNo: purchase.invoiceNo,
                 invoiceDate: purchase.invoiceDate,
+                invoiceAmount: purchase.invoiceAmount,
 
-                totalAmount: round2(totalAmount),
+                grnNo: purchase.grnNo,
+                grnDate: purchase.grnDate,
+                grnAmount: round2(purchase.totalAmount),
+
+                grnDate: purchase.grnDate,
+
+                freightCharge: purchase.freightCharge,
+                packagingCharge: purchase.packagingCharge,
+
+                billDiscountPercent: purchase.billDiscountPercent,
+                billDiscountAmount: purchase.billDiscountAmount,
+
+                supplierBillAmount: purchase.supplierBillAmount,
+                paidAmount: purchase.paidAmount,
+                balanceAmount: purchase.balanceAmount,
+                paymentStatus: purchase.paymentStatus,
+
+                totalAmount: round2(purchase.totalAmount),
                 totalGrossAmount: round2(totalGrossAmount),
                 totalTaxAmount: round2(totalTaxAmount),
 
