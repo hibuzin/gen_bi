@@ -67,42 +67,30 @@ export default function Home() {
     }
   };
 
-  const getTodayDate = () => {
-    const today = new Date();
-
-    const day = String(today.getDate()).padStart(2, "0");
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const year = today.getFullYear();
-
-    return `${day}/${month}/${year}`;
-  };
-
   const fetchTransactions = async () => {
-    try {
-      const res = await fetch(API.bill, {
-        headers: authHeaders,
-      });
+  try {
+    const res = await fetch(API.bill, {
+      headers: authHeaders,
+    });
 
-      const json = await res.json();
+    const json = await res.json();
 
-      if (!res.ok) {
-        throw new Error(json.message || "Failed to fetch bills");
-      }
-
-      const list = Array.isArray(json?.data) ? json.data : [];
-
-      const todayDate = getTodayDate();
-
-      const todayBills = list
-        .filter((bill) => bill.invoiceDate === todayDate)
-        .sort((a, b) => Number(b.billCount || 0) - Number(a.billCount || 0));
-
-      setTransactions(todayBills);
-    } catch (err) {
-      console.error("Today bill fetch error:", err);
-      setTransactions([]);
+    if (!res.ok) {
+      throw new Error(json.message || "Failed to fetch bills");
     }
-  };
+
+    const list = Array.isArray(json?.data) ? json.data : [];
+
+    const allBills = list.sort(
+      (a, b) => Number(b.billCount || 0) - Number(a.billCount || 0)
+    );
+
+    setTransactions(allBills);
+  } catch (err) {
+    console.error("Bill fetch error:", err);
+    setTransactions([]);
+  }
+};
 
   return (
     <div className={styles.container}>
@@ -171,7 +159,7 @@ export default function Home() {
         <div className={styles.transactionSection}>
           <div className={styles.transactionTitleRow}>
             <div>
-              <h2>Today bills</h2>
+              <h2>All Bills</h2>
               <p>{transactions.length} bills</p>
             </div>
           </div>

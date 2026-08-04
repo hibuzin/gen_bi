@@ -447,7 +447,7 @@ function POSBilling() {
   };
 
   const generateBill = async () => {
-   if (scannedItems.length === 0) {
+    if (scannedItems.length === 0) {
       showToast("Please add at least one item", "error");
       return;
     }
@@ -456,10 +456,10 @@ function POSBilling() {
       setLoading(true);
       setBill(null);
 
-   let customerId =
-    selectedCustomer?.id ??
-    selectedCustomer?.customerId ??
-    null;
+      let customerId =
+        selectedCustomer?.id ??
+        selectedCustomer?.customerId ??
+        null;
 
 
       if (
@@ -487,12 +487,12 @@ function POSBilling() {
 
           const custData = await custRes.json();
 
-         if (!custRes.ok) {
-    throw new Error(custData.message || "Failed to create customer");
-}
+          if (!custRes.ok) {
+            throw new Error(custData.message || "Failed to create customer");
+          }
 
-// Works for both newly created and existing customers
-customerId = custData.data.id;
+          // Works for both newly created and existing customers
+          customerId = custData.data.id;
           showToast("New customer created", "success");
         } catch (err) {
           showToast(err.message || "Customer creation failed", "error");
@@ -527,12 +527,14 @@ customerId = custData.data.id;
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+
+
         body: JSON.stringify({
           isWalkInCustomer,
 
           ...(!isWalkInCustomer &&
             customerId && {
-           customerId: Number(customerId),
+            customerId: Number(customerId),
           }),
 
           redeemPoints: isWalkInCustomer
@@ -805,69 +807,69 @@ customerId = custData.data.id;
   ]);
 
   useEffect(() => {
-  const handleKey = (e) => {
-    if (e.ctrlKey && e.key === "Escape") {
-      e.preventDefault();
-      navigate(-1);
-      return;
-    }
-
-    // F6: Open payment popup with print enabled
-    if (e.key === "F6") {
-      e.preventDefault();
-
-      if (!showBillingPopup && !showBalanceAlert) {
-        openPaymentModal(true);
+    const handleKey = (e) => {
+      if (e.ctrlKey && e.key === "Escape") {
+        e.preventDefault();
+        navigate(-1);
+        return;
       }
 
-      return;
-    }
+      // F6: Open payment popup with print enabled
+      if (e.key === "F6") {
+        e.preventDefault();
 
-    // F8: Generate and print bill from payment popup
-    if (e.key === "F8") {
-      e.preventDefault();
+        if (!showBillingPopup && !showBalanceAlert) {
+          openPaymentModal(true);
+        }
 
-      if (showBillingPopup && !loading) {
-        confirmPayment();
+        return;
       }
 
-      return;
-    }
+      // F8: Generate and print bill from payment popup
+      if (e.key === "F8") {
+        e.preventDefault();
 
-    if (e.ctrlKey && e.key.toLowerCase() === "b") {
-      e.preventDefault();
+        if (showBillingPopup && !loading) {
+          confirmPayment();
+        }
 
-      if (!showBillingPopup) {
-        holdBill();
+        return;
       }
-    }
-  };
 
-  window.addEventListener("keydown", handleKey);
+      if (e.ctrlKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
 
-  return () => {
-    window.removeEventListener("keydown", handleKey);
-  };
-}, [
-  scannedItems,
-  previewSummary,
-  showBillingPopup,
-  showBalanceAlert,
-  loading,
-  pendingPrint,
-  paymentMethod,
-  paymentStatus,
-  receivedAmount,
-  cashAmount,
-  upiAmount,
-  cardAmount,
-]);
+        if (!showBillingPopup) {
+          holdBill();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [
+    scannedItems,
+    previewSummary,
+    showBillingPopup,
+    showBalanceAlert,
+    loading,
+    pendingPrint,
+    paymentMethod,
+    paymentStatus,
+    receivedAmount,
+    cashAmount,
+    upiAmount,
+    cardAmount,
+  ]);
 
 
 
 
   const openPaymentModal = (printFlag) => {
-   if (scannedItems.length === 0) {
+    if (scannedItems.length === 0) {
       showToast("Please add at least one item", "error");
       setRedeemPoints("");
       return;

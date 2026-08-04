@@ -51,10 +51,10 @@ exports.createBill = async (req, res) => {
             paymentStatus = "paid",
             paymentMethod = "cash",
 
-           payments = [],
-paidAmount = 0,
-receivedAmount = 0,
-dueDate
+            payments = [],
+            paidAmount = 0,
+            receivedAmount = 0,
+            dueDate
         } = req.body;
 
         if (
@@ -70,13 +70,13 @@ dueDate
         const hierarchy = attachHierarchy(req.user);
 
 
-        
+
 
         const invoiceNo = await getNextInvoiceNo(hierarchy.superAdminId);
 
         const billCount = await getNextBillCount(hierarchy.superAdminId);
 
-       
+
         let subTotal = 0;
         let totalGST = 0;
         let totalItemDiscount = 0;
@@ -151,8 +151,8 @@ dueDate
 
 
 
-       const itemDiscountPercent = 0;
-const itemDiscountAmount = 0;
+            const itemDiscountPercent = 0;
+            const itemDiscountAmount = 0;
 
             let itemDiscount = 0;
 
@@ -176,52 +176,48 @@ const itemDiscountAmount = 0;
             subTotal += taxableAmount;
             totalGST += gstAmount;
 
-           items.push({
-    productId: product._id,
-    barcodeId: barcode._id,
-    barcode: barcode.code || "",
+            items.push({
+                productId: product._id,
+                barcodeId: barcode._id,
+                barcode: barcode.code || "",
 
-    name: product.name || "",
-    hsnCode: product.hsnCode || barcode.hsnCode || "",
+                name: product.name || "",
+                hsnCode: product.hsnCode || barcode.hsnCode || "",
 
-    unit: barcode.unit || product.unit || "pcs",
-    unitValue: Number(
-        barcode.unitValue || product.unitValue || 1
-    ),
+                unit: barcode.unit || product.unit || "pcs",
+                unitValue: Number(
+                    barcode.unitValue || product.unitValue || 1
+                ),
 
-    unitText: `${
-        barcode.unitValue || product.unitValue || 1
-    } ${
-        barcode.unit || product.unit || "pcs"
-    }`,
+                unitText: `${barcode.unitValue || product.unitValue || 1
+                    } ${barcode.unit || product.unit || "pcs"
+                    }`,
 
-    totalkg: `${
-        qty *
-        Number(barcode.unitValue || product.unitValue || 1)
-    } ${
-        barcode.unit || product.unit || "pcs"
-    }`,
+                totalkg: `${qty *
+                    Number(barcode.unitValue || product.unitValue || 1)
+                    } ${barcode.unit || product.unit || "pcs"
+                    }`,
 
-    mrp: Number(barcode.mrp || 0),
+                mrp: Number(barcode.mrp || 0),
 
-   
-    price: Number(price || 0),
 
-    qty: Number(qty || 0),
-    freeQty: 0,
-    totalGivenQty: Number(qty || 0),
+                price: Number(price || 0),
 
-    appliedPriceLevel,
-    appliedSlab,
+                qty: Number(qty || 0),
+                freeQty: 0,
+                totalGivenQty: Number(qty || 0),
 
-    gstRate: Number(gstRate || 0),
-    gstAmount: Number(gstAmount || 0),
+                appliedPriceLevel,
+                appliedSlab,
 
-    discountAmount: Number(itemDiscount || 0),
-    taxableAmount: Number(taxableAmount || 0),
-    totalAmount: Number(grossAmount || 0),
-    finalPrice: Number(finalPrice || 0)
-});
+                gstRate: Number(gstRate || 0),
+                gstAmount: Number(gstAmount || 0),
+
+                discountAmount: Number(itemDiscount || 0),
+                taxableAmount: Number(taxableAmount || 0),
+                totalAmount: Number(grossAmount || 0),
+                finalPrice: Number(finalPrice || 0)
+            });
 
             if (gstRate > 0 && gstAmount > 0) {
                 gstAuditItems.push({
@@ -236,7 +232,7 @@ const itemDiscountAmount = 0;
                 });
             }
 
-            
+
 
             barcode.availableQty = Math.max(Number(barcode.availableQty || 0) - qty, 0);
             await barcode.save();
@@ -300,11 +296,11 @@ const itemDiscountAmount = 0;
 
 
             if (!barcode) {
-    return res.status(404).json({
-        success: false,
-        message: `Barcode not found for product: ${product.name}`
-    });
-}
+                return res.status(404).json({
+                    success: false,
+                    message: `Barcode not found for product: ${product.name}`
+                });
+            }
 
 
 
@@ -444,73 +440,69 @@ const itemDiscountAmount = 0;
             subTotal += taxableAmount;
             totalGST += gstAmount;
 
-          items.push({
-    productId: product._id,
-    barcodeId: barcode._id,
-    barcode: barcode.code || "",
+            items.push({
+                productId: product._id,
+                barcodeId: barcode._id,
+                barcode: barcode.code || "",
 
-    name: product.name || "",
-    hsnCode: product.hsnCode || barcode.hsnCode || "",
+                name: product.name || "",
+                hsnCode: product.hsnCode || barcode.hsnCode || "",
 
-    unit: barcode.unit || product.unit || "pcs",
+                unit: barcode.unit || product.unit || "pcs",
 
-    unitValue: Number(
-        barcode.unitValue || product.unitValue || 1
-    ),
+                unitValue: Number(
+                    barcode.unitValue || product.unitValue || 1
+                ),
 
-    unitText: `${
-        barcode.unitValue || product.unitValue || 1
-    } ${
-        barcode.unit || product.unit || "pcs"
-    }`,
+                unitText: `${barcode.unitValue || product.unitValue || 1
+                    } ${barcode.unit || product.unit || "pcs"
+                    }`,
 
-    totalkg: `${
-        qty *
-        Number(barcode.unitValue || product.unitValue || 1)
-    } ${
-        barcode.unit || product.unit || "pcs"
-    }`,
+                totalkg: `${qty *
+                    Number(barcode.unitValue || product.unitValue || 1)
+                    } ${barcode.unit || product.unit || "pcs"
+                    }`,
 
-    mrp: Number(barcode.mrp || 0),
+                mrp: Number(barcode.mrp || 0),
 
-  
-    price: Number(price || 0),
 
-    qty: Number(qty || 0),
-    freeQty: Number(freeQty || 0),
+                price: Number(price || 0),
 
-totalGivenQty: Number(qty + freeQty),
+                qty: Number(qty || 0),
+                freeQty: Number(freeQty || 0),
 
-    appliedPriceLevel,
+                totalGivenQty: Number(qty + freeQty),
 
-    appliedSlab: appliedSlab
-        ? {
-            minQty: Number(appliedSlab.minQty || 0),
+                appliedPriceLevel,
 
-            maxQty:
-                appliedSlab.maxQty !== null &&
-                appliedSlab.maxQty !== undefined
-                    ? Number(appliedSlab.maxQty)
+                appliedSlab: appliedSlab
+                    ? {
+                        minQty: Number(appliedSlab.minQty || 0),
+
+                        maxQty:
+                            appliedSlab.maxQty !== null &&
+                                appliedSlab.maxQty !== undefined
+                                ? Number(appliedSlab.maxQty)
+                                : null,
+
+                        // Model field "price"
+                        price: Number(
+                            appliedSlab.slabPrice ||
+                            appliedSlab.price ||
+                            price ||
+                            0
+                        )
+                    }
                     : null,
 
-            // Model field "price"
-            price: Number(
-                appliedSlab.slabPrice ||
-                appliedSlab.price ||
-                price ||
-                0
-            )
-        }
-        : null,
+                gstRate: Number(gstRate || 0),
+                gstAmount: Number(gstAmount || 0),
 
-    gstRate: Number(gstRate || 0),
-    gstAmount: Number(gstAmount || 0),
-
-    discountAmount: Number(itemDiscount || 0),
-    taxableAmount: Number(taxableAmount || 0),
-    totalAmount: Number(grossAmount || 0),
-    finalPrice: Number(finalPrice || 0)
-});
+                discountAmount: Number(itemDiscount || 0),
+                taxableAmount: Number(taxableAmount || 0),
+                totalAmount: Number(grossAmount || 0),
+                finalPrice: Number(finalPrice || 0)
+            });
 
 
             if (gstRate > 0 && gstAmount > 0) {
@@ -526,7 +518,7 @@ totalGivenQty: Number(qty + freeQty),
                 });
             }
 
-            
+
 
             const availableStock =
                 Number(product.stock || 0) -
@@ -696,8 +688,8 @@ totalGivenQty: Number(qty + freeQty),
         const roundedGrandTotal = Math.round(grandTotal);
 
         const roundOff = Number(
-    (roundedGrandTotal - grandTotal).toFixed(2)
-);
+            (roundedGrandTotal - grandTotal).toFixed(2)
+        );
 
         let finalPayments = [];
 
@@ -727,7 +719,7 @@ totalGivenQty: Number(qty + freeQty),
                 finalPayments = [
                     {
                         method: paymentMethod,
-                      amount: roundedGrandTotal
+                        amount: roundedGrandTotal
                     }
                 ];
             }
@@ -799,44 +791,44 @@ totalGivenQty: Number(qty + freeQty),
 
 
         const finalReceivedAmount = Number(
-    receivedAmount || totalPaid || 0
-);
+            receivedAmount || totalPaid || 0
+        );
 
-const returnAmount =
-    paymentStatus === "paid" &&
-    paymentMethod === "cash"
-        ? Number(
-            Math.max(
-                finalReceivedAmount - grandTotal,
-                0
-            ).toFixed(2)
-        )
-        : 0;
+        const returnAmount =
+            paymentStatus === "paid" &&
+                paymentMethod === "cash"
+                ? Number(
+                    Math.max(
+                        finalReceivedAmount - grandTotal,
+                        0
+                    ).toFixed(2)
+                )
+                : 0;
 
 
         let pendingAmount = 0;
 
         if (paymentStatus === "paid") {
-    if (
-        paymentMethod === "cash" &&
-       finalReceivedAmount < roundedGrandTotal
-    ) {
-        return res.status(400).json({
-            success: false,
-            message: "Received amount is less than grand total"
-        });
-    }
+            if (
+                paymentMethod === "cash" &&
+                finalReceivedAmount < roundedGrandTotal
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Received amount is less than grand total"
+                });
+            }
 
-    if (
-        paymentMethod !== "cash" &&
-         totalPaid !== roundedGrandTotal
-    ) {
-        return res.status(400).json({
-            success: false,
-            message: "Paid amount must equal grand total"
-        });
-    }
-}
+            if (
+                paymentMethod !== "cash" &&
+                totalPaid !== roundedGrandTotal
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Paid amount must equal grand total"
+                });
+            }
+        }
 
         if (paymentStatus === "partial") {
             if (!customer) {
@@ -846,7 +838,7 @@ const returnAmount =
                 });
             }
 
-           if (totalPaid <= 0 || totalPaid >= roundedGrandTotal) {
+            if (totalPaid <= 0 || totalPaid >= roundedGrandTotal) {
                 return res.status(400).json({
                     success: false,
                     message: "Partial paid amount must be less than grand total"
@@ -880,21 +872,21 @@ const returnAmount =
 
         const bill = await Bill.create({
 
-             billCount,
+            billCount,
 
             items,
-           summary: {
-    subTotal,
-    totalGST,
+            summary: {
+                subTotal,
+                totalGST,
 
-    itemDiscountAmount: totalItemDiscount,
-    billDiscountAmount: billDiscount,
-    billDiscountPercentage,
+                itemDiscountAmount: totalItemDiscount,
+                billDiscountAmount: billDiscount,
+                billDiscountPercentage,
 
-    discount,
-     roundOff,
-     grandTotal: roundedGrandTotal
-},
+                discount,
+                roundOff,
+                grandTotal: roundedGrandTotal
+            },
 
 
             offer: {
@@ -910,19 +902,19 @@ const returnAmount =
             paymentStatus,
             payments: finalPayments,
 
-           paidAmount:
-    paymentStatus === "paid"
-         ? roundedGrandTotal
-        : totalPaid,
+            paidAmount:
+                paymentStatus === "paid"
+                    ? roundedGrandTotal
+                    : totalPaid,
 
-receivedAmount:
-    paymentMethod === "cash"
-        ? finalReceivedAmount
-        : totalPaid,
+            receivedAmount:
+                paymentMethod === "cash"
+                    ? finalReceivedAmount
+                    : totalPaid,
 
-returnAmount,
+            returnAmount,
 
-pendingAmount,
+            pendingAmount,
 
             cashier: req.user.userId || req.user.id,
             createdBy: req.user.userId || req.user.id,
@@ -931,242 +923,242 @@ pendingAmount,
             ...hierarchy
         });
 
-const hasGSTItems =
-    Array.isArray(gstAuditItems) &&
-    gstAuditItems.length > 0 &&
-    Number(totalGST || 0) > 0;
+        const hasGSTItems =
+            Array.isArray(gstAuditItems) &&
+            gstAuditItems.length > 0 &&
+            Number(totalGST || 0) > 0;
 
-if (hasGSTItems) {
-    await AuditLog.create({
-        ...hierarchy,
+        if (hasGSTItems) {
+            await AuditLog.create({
+                ...hierarchy,
 
-        userId: req.user.userId || req.user.id,
-        role: req.user.role,
+                userId: req.user.userId || req.user.id,
+                role: req.user.role,
 
-        module: "Bill",
-        action: "Create",
+                module: "Bill",
+                action: "Create",
 
-        documentId: bill._id,
-        oldData: null,
+                documentId: bill._id,
+                oldData: null,
 
-        newData: {
-            invoiceNo: bill.invoiceNo || "",
-            invoiceDate: bill.createdAt || new Date(),
+                newData: {
+                    invoiceNo: bill.invoiceNo || "",
+                    invoiceDate: bill.createdAt || new Date(),
 
-            customerId: customer?._id || null,
-            customerName: customer?.name || "Walk-in Customer",
+                    customerId: customer?._id || null,
+                    customerName: customer?.name || "Walk-in Customer",
 
-            customerGstNumber:
-                customer?.gstNumber ||
-                customer?.gstnumber ||
-                customer?.gstin ||
-                "",
+                    customerGstNumber:
+                        customer?.gstNumber ||
+                        customer?.gstnumber ||
+                        customer?.gstin ||
+                        "",
 
-            placeOfSupply:
-                customer?.state ||
-                customer?.placeOfSupply ||
-                "",
+                    placeOfSupply:
+                        customer?.state ||
+                        customer?.placeOfSupply ||
+                        "",
 
-            items: bill.items
-                .filter((item) =>
-                    Number(item.gstRate || 0) > 0 &&
-                    Number(item.gstAmount || 0) > 0
-                )
-                .map((item) => {
-                    const qty = Number(item.qty || 0);
-                    const freeQty = Number(item.freeQty || 0);
+                    items: bill.items
+                        .filter((item) =>
+                            Number(item.gstRate || 0) > 0 &&
+                            Number(item.gstAmount || 0) > 0
+                        )
+                        .map((item) => {
+                            const qty = Number(item.qty || 0);
+                            const freeQty = Number(item.freeQty || 0);
 
-                    const rate = Number(item.price || 0);
-                    const gstRate = Number(item.gstRate || 0);
-                    const gstAmount = Number(item.gstAmount || 0);
-                    const finalAmount = Number(item.finalPrice || 0);
+                            const rate = Number(item.price || 0);
+                            const gstRate = Number(item.gstRate || 0);
+                            const gstAmount = Number(item.gstAmount || 0);
+                            const finalAmount = Number(item.finalPrice || 0);
 
-                    const taxableAmount = Number(
-                        Number(
-                            item.taxableAmount ??
-                            Math.max(0, finalAmount - gstAmount)
-                        ).toFixed(2)
-                    );
+                            const taxableAmount = Number(
+                                Number(
+                                    item.taxableAmount ??
+                                    Math.max(0, finalAmount - gstAmount)
+                                ).toFixed(2)
+                            );
 
-                    return {
-                        productId: item.productId || null,
-                        barcodeId: item.barcodeId || null,
+                            return {
+                                productId: item.productId || null,
+                                barcodeId: item.barcodeId || null,
 
-                        itemName: item.name || "",
-                        hsnCode: item.hsnCode || "",
-                        barcode: item.barcode || "",
+                                itemName: item.name || "",
+                                hsnCode: item.hsnCode || "",
+                                barcode: item.barcode || "",
 
-                        qty,
-                        freeQty,
+                                qty,
+                                freeQty,
 
-                        totalGivenQty: Number(
-                            item.totalGivenQty ?? (qty + freeQty)
-                        ),
+                                totalGivenQty: Number(
+                                    item.totalGivenQty ?? (qty + freeQty)
+                                ),
 
-                        unit: item.unit || "pcs",
-                        unitValue: Number(item.unitValue || 1),
-                        unitText: item.unitText || "",
-                        totalKg: item.totalkg || "",
+                                unit: item.unit || "pcs",
+                                unitValue: Number(item.unitValue || 1),
+                                unitText: item.unitText || "",
+                                totalKg: item.totalkg || "",
 
-                        mrp: Number(item.mrp || 0),
-                        rate,
+                                mrp: Number(item.mrp || 0),
+                                rate,
 
-                        appliedPriceLevel:
-                            item.appliedPriceLevel || "normal",
+                                appliedPriceLevel:
+                                    item.appliedPriceLevel || "normal",
 
-                        appliedSlab:
-                            item.appliedPriceLevel === "slab" &&
-                            Number(item.appliedSlab?.price || 0) > 0
-                                ? {
-                                    minQty: Number(
-                                        item.appliedSlab?.minQty || 0
-                                    ),
+                                appliedSlab:
+                                    item.appliedPriceLevel === "slab" &&
+                                        Number(item.appliedSlab?.price || 0) > 0
+                                        ? {
+                                            minQty: Number(
+                                                item.appliedSlab?.minQty || 0
+                                            ),
 
-                                    maxQty:
-                                        item.appliedSlab?.maxQty !== null &&
-                                        item.appliedSlab?.maxQty !== undefined
-                                            ? Number(
-                                                item.appliedSlab.maxQty
+                                            maxQty:
+                                                item.appliedSlab?.maxQty !== null &&
+                                                    item.appliedSlab?.maxQty !== undefined
+                                                    ? Number(
+                                                        item.appliedSlab.maxQty
+                                                    )
+                                                    : null,
+
+                                            price: Number(
+                                                item.appliedSlab?.price || 0
                                             )
-                                            : null,
+                                        }
+                                        : null,
 
-                                    price: Number(
-                                        item.appliedSlab?.price || 0
-                                    )
-                                }
-                                : null,
+                                gstRate,
 
-                        gstRate,
+                                cgstRate: Number(
+                                    (gstRate / 2).toFixed(2)
+                                ),
 
-                        cgstRate: Number(
-                            (gstRate / 2).toFixed(2)
+                                sgstRate: Number(
+                                    (gstRate / 2).toFixed(2)
+                                ),
+
+                                gstAmount,
+
+                                cgstAmount: Number(
+                                    (gstAmount / 2).toFixed(2)
+                                ),
+
+                                sgstAmount: Number(
+                                    (gstAmount / 2).toFixed(2)
+                                ),
+
+                                discountAmount: Number(
+                                    item.discountAmount || 0
+                                ),
+
+                                taxableAmount,
+
+                                totalAmount: Number(
+                                    item.totalAmount || 0
+                                ),
+
+                                finalAmount
+                            };
+                        }),
+
+                    summary: {
+                        subTotal: Number(
+                            bill.summary?.subTotal || 0
                         ),
 
-                        sgstRate: Number(
-                            (gstRate / 2).toFixed(2)
+                        totalGST: Number(
+                            bill.summary?.totalGST || 0
                         ),
 
-                        gstAmount,
-
-                        cgstAmount: Number(
-                            (gstAmount / 2).toFixed(2)
+                        itemDiscountAmount: Number(
+                            bill.summary?.itemDiscountAmount || 0
                         ),
 
-                        sgstAmount: Number(
-                            (gstAmount / 2).toFixed(2)
+                        billDiscountAmount: Number(
+                            bill.summary?.billDiscountAmount || 0
                         ),
 
+                        billDiscountPercentage: Number(
+                            bill.summary?.billDiscountPercentage || 0
+                        ),
+
+                        loyaltyDiscount: Number(
+                            bill.summary?.discount || 0
+                        ),
+
+                        grandTotal: Number(
+                            bill.summary?.grandTotal || 0
+                        )
+                    },
+
+                    offer: {
+                        offerId: bill.offer?.offerId || null,
+                        offerName: bill.offer?.offerName || "",
                         discountAmount: Number(
-                            item.discountAmount || 0
-                        ),
+                            bill.offer?.discountAmount || 0
+                        )
+                    },
 
-                        taxableAmount,
+                    paidAmount: Number(bill.paidAmount || 0),
+                    pendingAmount: Number(bill.pendingAmount || 0),
 
-                        totalAmount: Number(
-                            item.totalAmount || 0
-                        ),
+                    paymentMethod: bill.paymentMethod || "due",
+                    paymentStatus: bill.paymentStatus || "due",
 
-                        finalAmount
-                    };
-                }),
+                    payments: (bill.payments || []).map((payment) => ({
+                        method: payment.method || "",
+                        amount: Number(payment.amount || 0),
 
-            summary: {
-                subTotal: Number(
-                    bill.summary?.subTotal || 0
-                ),
-
-                totalGST: Number(
-                    bill.summary?.totalGST || 0
-                ),
-
-                itemDiscountAmount: Number(
-                    bill.summary?.itemDiscountAmount || 0
-                ),
-
-                billDiscountAmount: Number(
-                    bill.summary?.billDiscountAmount || 0
-                ),
-
-                billDiscountPercentage: Number(
-                    bill.summary?.billDiscountPercentage || 0
-                ),
-
-                loyaltyDiscount: Number(
-                    bill.summary?.discount || 0
-                ),
-
-                grandTotal: Number(
-                    bill.summary?.grandTotal || 0
-                )
-            },
-
-            offer: {
-                offerId: bill.offer?.offerId || null,
-                offerName: bill.offer?.offerName || "",
-                discountAmount: Number(
-                    bill.offer?.discountAmount || 0
-                )
-            },
-
-            paidAmount: Number(bill.paidAmount || 0),
-            pendingAmount: Number(bill.pendingAmount || 0),
-
-            paymentMethod: bill.paymentMethod || "due",
-            paymentStatus: bill.paymentStatus || "due",
-
-            payments: (bill.payments || []).map((payment) => ({
-                method: payment.method || "",
-                amount: Number(payment.amount || 0),
-
-                details: {
-                    upiId: payment.details?.upiId || "",
-                    cardType: payment.details?.cardType || "",
-                    cardLast4: payment.details?.cardLast4 || "",
-                    chequeNo: payment.details?.chequeNo || "",
-                    chequeDate:
-                        payment.details?.chequeDate || null,
-                    bankName:
-                        payment.details?.bankName || "",
-                    accountHolder:
-                        payment.details?.accountHolder || ""
+                        details: {
+                            upiId: payment.details?.upiId || "",
+                            cardType: payment.details?.cardType || "",
+                            cardLast4: payment.details?.cardLast4 || "",
+                            chequeNo: payment.details?.chequeNo || "",
+                            chequeDate:
+                                payment.details?.chequeDate || null,
+                            bankName:
+                                payment.details?.bankName || "",
+                            accountHolder:
+                                payment.details?.accountHolder || ""
+                        }
+                    }))
                 }
-            }))
+            });
         }
-    });
-}   
 
 
-       
-        
 
-       if (hasGSTItems) {
-    await AuditLog.create({
-        ...hierarchy,
 
-        userId: req.user.userId || req.user.id,
-        role: req.user.role,
 
-        module: "GST",
-        action: "Create",
+        if (hasGSTItems) {
+            await AuditLog.create({
+                ...hierarchy,
 
-        documentId: bill._id,
-        oldData: null,
+                userId: req.user.userId || req.user.id,
+                role: req.user.role,
 
-        newData: {
-            invoiceNo: bill.invoiceNo || "",
+                module: "GST",
+                action: "Create",
 
-            customerId: customer?._id || null,
+                documentId: bill._id,
+                oldData: null,
 
-            gstItems: gstAuditItems,
+                newData: {
+                    invoiceNo: bill.invoiceNo || "",
 
-            totalGST: Number(
-                Number(totalGST || 0).toFixed(2)
-            ),
+                    customerId: customer?._id || null,
 
-            grandTotal: roundedGrandTotal
+                    gstItems: gstAuditItems,
+
+                    totalGST: Number(
+                        Number(totalGST || 0).toFixed(2)
+                    ),
+
+                    grandTotal: roundedGrandTotal
+                }
+            });
         }
-    });
-}
 
 
         const cgst = Number((totalGST / 2).toFixed(2));
@@ -1178,9 +1170,9 @@ if (hasGSTItems) {
             data: {
                 billId: bill._id,
 
-                 billCount: Number(
-            bill.billCount || 0
-        ),
+                billCount: Number(
+                    bill.billCount || 0
+                ),
 
                 invoiceNo: bill.invoiceNo,
 
@@ -1209,19 +1201,19 @@ if (hasGSTItems) {
 
                 payments: finalPayments,
 
-paidAmount:
-    paymentStatus === "paid"
-        ? roundedGrandTotal
-        : totalPaid,
+                paidAmount:
+                    paymentStatus === "paid"
+                        ? roundedGrandTotal
+                        : totalPaid,
 
-receivedAmount:
-    paymentMethod === "cash"
-        ? finalReceivedAmount
-        : totalPaid,
+                receivedAmount:
+                    paymentMethod === "cash"
+                        ? finalReceivedAmount
+                        : totalPaid,
 
-returnAmount,
+                returnAmount,
 
-pendingAmount,
+                pendingAmount,
 
                 items,
 
@@ -1246,9 +1238,9 @@ pendingAmount,
                     offerAmount: offerDiscount,
                     loyaltyDiscount: discount,
 
-                     actualGrandTotal: grandTotal,
-    roundOff,
-    grandTotal: roundedGrandTotal
+                    actualGrandTotal: grandTotal,
+                    roundOff,
+                    grandTotal: roundedGrandTotal
                 },
 
                 loyalty: {
@@ -1342,41 +1334,41 @@ exports.calculateBill = async (req, res) => {
             const gstRate = Number(barcode.gstRate || product.gstRate || 0);
 
             const grossAmount = Number((price * qty).toFixed(2));
-           let itemDiscount = 0;
-let finalDiscountPercent = 0;
+            let itemDiscount = 0;
+            let finalDiscountPercent = 0;
 
-if (Number(discountPercent) > 0 && Number(discountAmount) > 0) {
-    return res.status(400).json({
-        success: false,
-        message: "Provide either discountPercent or discountAmount, not both."
-    });
-}
+            if (Number(discountPercent) > 0 && Number(discountAmount) > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Provide either discountPercent or discountAmount, not both."
+                });
+            }
 
-if (Number(discountPercent) > 0) {
-    finalDiscountPercent = Number(
-        Number(discountPercent).toFixed(2)
-    );
+            if (Number(discountPercent) > 0) {
+                finalDiscountPercent = Number(
+                    Number(discountPercent).toFixed(2)
+                );
 
-    itemDiscount = Number(
-        ((grossAmount * finalDiscountPercent) / 100).toFixed(2)
-    );
-}
-else if (Number(discountAmount) > 0) {
-    if (Number(discountAmount) > grossAmount) {
-        return res.status(400).json({
-            success: false,
-            message: "Discount amount cannot exceed item amount."
-        });
-    }
+                itemDiscount = Number(
+                    ((grossAmount * finalDiscountPercent) / 100).toFixed(2)
+                );
+            }
+            else if (Number(discountAmount) > 0) {
+                if (Number(discountAmount) > grossAmount) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Discount amount cannot exceed item amount."
+                    });
+                }
 
-    itemDiscount = Number(
-        Number(discountAmount).toFixed(2)
-    );
+                itemDiscount = Number(
+                    Number(discountAmount).toFixed(2)
+                );
 
-    finalDiscountPercent = Number(
-        ((itemDiscount / grossAmount) * 100).toFixed(2)
-    );
-}
+                finalDiscountPercent = Number(
+                    ((itemDiscount / grossAmount) * 100).toFixed(2)
+                );
+            }
             totalItemDiscount += itemDiscount;
 
             const finalPrice = Number(
@@ -1449,12 +1441,12 @@ else if (Number(discountAmount) > 0) {
             }
 
             const itemDiscountPercent = Number(
-    billItem.discountPercent || 0
-);
+                billItem.discountPercent || 0
+            );
 
-const itemDiscountAmount = Number(
-    billItem.discountAmount || 0
-);
+            const itemDiscountAmount = Number(
+                billItem.discountAmount || 0
+            );
 
             if (isNaN(qty) || qty <= 0) {
                 return res.status(400).json({ success: false, message: "Invalid quantity" });
@@ -1622,60 +1614,60 @@ const itemDiscountAmount = Number(
         }
 
         const beforeBillDiscount = Number(
-    (subTotal + totalGST).toFixed(2)
-);
+            (subTotal + totalGST).toFixed(2)
+        );
 
-let billDiscountAmount = 0;
-let billDiscountPercentage = 0;
+        let billDiscountAmount = 0;
+        let billDiscountPercentage = 0;
 
-if (
-    Number(discountPercent) > 0 &&
-    Number(discountAmount) > 0
-) {
-    return res.status(400).json({
-        success: false,
-        message:
-            "Provide either bill discountPercent or discountAmount, not both."
-    });
-}
+        if (
+            Number(discountPercent) > 0 &&
+            Number(discountAmount) > 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Provide either bill discountPercent or discountAmount, not both."
+            });
+        }
 
-if (Number(discountPercent) > 0) {
-    billDiscountPercentage = Number(
-        Number(discountPercent).toFixed(2)
-    );
+        if (Number(discountPercent) > 0) {
+            billDiscountPercentage = Number(
+                Number(discountPercent).toFixed(2)
+            );
 
-    billDiscountAmount = Number(
-        (
-            beforeBillDiscount *
-            billDiscountPercentage /
-            100
-        ).toFixed(2)
-    );
-}
-else if (Number(discountAmount) > 0) {
-    billDiscountAmount = Number(
-        Number(discountAmount).toFixed(2)
-    );
-
-    if (billDiscountAmount > beforeBillDiscount) {
-        return res.status(400).json({
-            success: false,
-            message:
-                "Bill discount cannot exceed bill amount."
-        });
-    }
-
-    billDiscountPercentage =
-        beforeBillDiscount > 0
-            ? Number(
+            billDiscountAmount = Number(
                 (
-                    billDiscountAmount /
                     beforeBillDiscount *
+                    billDiscountPercentage /
                     100
                 ).toFixed(2)
-            )
-            : 0;
-}
+            );
+        }
+        else if (Number(discountAmount) > 0) {
+            billDiscountAmount = Number(
+                Number(discountAmount).toFixed(2)
+            );
+
+            if (billDiscountAmount > beforeBillDiscount) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Bill discount cannot exceed bill amount."
+                });
+            }
+
+            billDiscountPercentage =
+                beforeBillDiscount > 0
+                    ? Number(
+                        (
+                            billDiscountAmount /
+                            beforeBillDiscount *
+                            100
+                        ).toFixed(2)
+                    )
+                    : 0;
+        }
 
         let loyaltyDiscount = 0;
         let customer = null;
@@ -1709,13 +1701,13 @@ else if (Number(discountAmount) > 0) {
 
 
         let grandTotal = Number(
-    (
-        subTotal +
-        totalGST -
-        billDiscountAmount -
-        loyaltyDiscount
-    ).toFixed(2)
-);
+            (
+                subTotal +
+                totalGST -
+                billDiscountAmount -
+                loyaltyDiscount
+            ).toFixed(2)
+        );
 
         let offer = null;
         let offerDiscount = 0;
@@ -1762,8 +1754,8 @@ else if (Number(discountAmount) > 0) {
         const roundedGrandTotal = Math.round(grandTotal);
 
         const roundOff = Number(
-    (roundedGrandTotal - grandTotal).toFixed(2)
-);
+            (roundedGrandTotal - grandTotal).toFixed(2)
+        );
 
         const cgst = Number((totalGST / 2).toFixed(2));
         const sgst = Number((totalGST / 2).toFixed(2));
@@ -1773,12 +1765,12 @@ else if (Number(discountAmount) > 0) {
 
         if (Number(receivedAmount) > 0) {
 
-          changeAmount = Number(
-    Math.max(
-        Number(receivedAmount) - roundedGrandTotal,
-        0
-    ).toFixed(2)
-);
+            changeAmount = Number(
+                Math.max(
+                    Number(receivedAmount) - roundedGrandTotal,
+                    0
+                ).toFixed(2)
+            );
 
         }
 
@@ -1788,47 +1780,47 @@ else if (Number(discountAmount) > 0) {
             data: {
                 items,
                 summary: {
-    totalAmount: Number(
-        (
-            subTotal +
-            totalGST +
-            totalItemDiscount
-        ).toFixed(2)
-    ),
+                    totalAmount: Number(
+                        (
+                            subTotal +
+                            totalGST +
+                            totalItemDiscount
+                        ).toFixed(2)
+                    ),
 
-    subTotal: Number(subTotal.toFixed(2)),
-    cgst,
-    sgst,
-    totalGST: Number(totalGST.toFixed(2)),
+                    subTotal: Number(subTotal.toFixed(2)),
+                    cgst,
+                    sgst,
+                    totalGST: Number(totalGST.toFixed(2)),
 
-    itemDiscountAmount: Number(
-        totalItemDiscount.toFixed(2)
-    ),
+                    itemDiscountAmount: Number(
+                        totalItemDiscount.toFixed(2)
+                    ),
 
-    billDiscountAmount: Number(
-        billDiscountAmount.toFixed(2)
-    ),
+                    billDiscountAmount: Number(
+                        billDiscountAmount.toFixed(2)
+                    ),
 
-    billDiscountPercentage,
+                    billDiscountPercentage,
 
-    totalDiscount: Number(
-        (
-            totalItemDiscount +
-            billDiscountAmount
-        ).toFixed(2)
-    ),
+                    totalDiscount: Number(
+                        (
+                            totalItemDiscount +
+                            billDiscountAmount
+                        ).toFixed(2)
+                    ),
 
-    loyaltyDiscount,
-    offerName: appliedOffer,
-    offerAmount: offerDiscount,
+                    loyaltyDiscount,
+                    offerName: appliedOffer,
+                    offerAmount: offerDiscount,
 
-   actualGrandTotal: grandTotal,
-roundOff,
-grandTotal: roundedGrandTotal,
+                    actualGrandTotal: grandTotal,
+                    roundOff,
+                    grandTotal: roundedGrandTotal,
 
-    receivedAmount: Number(receivedAmount),
-    changeAmount
-},
+                    receivedAmount: Number(receivedAmount),
+                    changeAmount
+                },
                 loyalty: {
                     used: loyaltyDiscount,
                     earned: earnedPoints,
@@ -2693,7 +2685,7 @@ exports.editBill = async (req, res) => {
             _id: billId,
             superAdminId: hierarchy.superAdminId
         });
-        
+
 
         if (!bill) {
             return res.status(404).json({
@@ -2703,7 +2695,7 @@ exports.editBill = async (req, res) => {
         }
 
 
-        
+
         const billCreatedTime = new Date(bill.createdAt).getTime();
         const currentTime = Date.now();
 
@@ -3403,7 +3395,7 @@ exports.editBill = async (req, res) => {
 
         if (activeSession) {
 
-          
+
             activeSession.totalSales =
                 Number(
                     (
@@ -3547,151 +3539,151 @@ exports.editBill = async (req, res) => {
             await activeSession.save();
         }
 
-await AuditLog.findOneAndUpdate(
-    {
-        module: "Bill",
-        action: "Create",
-        documentId: bill._id,
-        superAdminId: hierarchy.superAdminId
-    },
-    {
-        $set: {
-            userId:
-                req.user.userId ||
-                req.user.id,
+        await AuditLog.findOneAndUpdate(
+            {
+                module: "Bill",
+                action: "Create",
+                documentId: bill._id,
+                superAdminId: hierarchy.superAdminId
+            },
+            {
+                $set: {
+                    userId:
+                        req.user.userId ||
+                        req.user.id,
 
-            role: req.user.role,
+                    role: req.user.role,
 
-            oldData: null,
+                    oldData: null,
 
-            newData: {
-                invoiceNo: bill.invoiceNo,
+                    newData: {
+                        invoiceNo: bill.invoiceNo,
 
-                customerId:
-                    customer?._id || null,
+                        customerId:
+                            customer?._id || null,
 
-                customerName:
-                    customer?.name ||
-                    "Walk In Customer",
+                        customerName:
+                            customer?.name ||
+                            "Walk In Customer",
 
-                items: newItems.map((item) => ({
-                    productId: item.productId,
-                    barcodeId: item.barcodeId,
+                        items: newItems.map((item) => ({
+                            productId: item.productId,
+                            barcodeId: item.barcodeId,
 
-                    itemName:
-                        item.name ||
-                        item.productName ||
-                        "",
+                            itemName:
+                                item.name ||
+                                item.productName ||
+                                "",
 
-                    barcode: item.barcode || "",
+                            barcode: item.barcode || "",
 
-                    qty: Number(item.qty || 0),
+                            qty: Number(item.qty || 0),
 
-                    freeQty:
-                        Number(item.freeQty || 0),
+                            freeQty:
+                                Number(item.freeQty || 0),
 
-                    totalGivenQty:
-                        Number(item.totalGivenQty || 0),
+                            totalGivenQty:
+                                Number(item.totalGivenQty || 0),
 
-                    unit:
-                        item.unit || "pcs",
+                            unit:
+                                item.unit || "pcs",
 
-                    unitValue:
-                        Number(item.unitValue || 1),
+                            unitValue:
+                                Number(item.unitValue || 1),
 
-                    unitText:
-                        item.unitText || "",
+                            unitText:
+                                item.unitText || "",
 
-                    mrp:
-                        Number(item.mrp || 0),
+                            mrp:
+                                Number(item.mrp || 0),
 
-                    rate:
-                        Number(item.sellingPrice || 0),
+                            rate:
+                                Number(item.sellingPrice || 0),
 
-                    gstRate:
-                        Number(item.gstRate || 0),
+                            gstRate:
+                                Number(item.gstRate || 0),
 
-                    gstAmount:
-                        Number(item.gstAmount || 0),
+                            gstAmount:
+                                Number(item.gstAmount || 0),
 
-                    discountAmount:
-                        Number(item.discountAmount || 0),
+                            discountAmount:
+                                Number(item.discountAmount || 0),
 
-                    totalAmount:
-                        Number(item.totalAmount || 0),
+                            totalAmount:
+                                Number(item.totalAmount || 0),
 
-                    finalAmount:
-                        Number(item.finalPrice || 0)
-                })),
+                            finalAmount:
+                                Number(item.finalPrice || 0)
+                        })),
 
-                summary: {
-                    subTotal:
-                        Number(subTotal || 0),
+                        summary: {
+                            subTotal:
+                                Number(subTotal || 0),
 
-                    totalGST:
-                        Number(totalGST || 0),
+                            totalGST:
+                                Number(totalGST || 0),
 
-                    itemDiscountAmount:
-                        Number(
-                            totalItemDiscount.toFixed(2)
-                        ),
+                            itemDiscountAmount:
+                                Number(
+                                    totalItemDiscount.toFixed(2)
+                                ),
 
-                    billDiscountAmount:
-                        Number(billDiscount || 0),
+                            billDiscountAmount:
+                                Number(billDiscount || 0),
 
-                    billDiscountPercentage:
-                        Number(
-                            billDiscountPercentage || 0
-                        ),
+                            billDiscountPercentage:
+                                Number(
+                                    billDiscountPercentage || 0
+                                ),
 
-                    offerName:
-                        appliedOffer || "",
+                            offerName:
+                                appliedOffer || "",
 
-                    offerAmount:
-                        Number(offerDiscount || 0),
+                            offerAmount:
+                                Number(offerDiscount || 0),
 
-                    loyaltyDiscount:
-                        Number(loyaltyDiscount || 0),
+                            loyaltyDiscount:
+                                Number(loyaltyDiscount || 0),
 
-                    grandTotal:
-                        Number(grandTotal || 0)
-                },
+                            grandTotal:
+                                Number(grandTotal || 0)
+                        },
 
-                paymentMethod:
-                    bill.paymentMethod,
+                        paymentMethod:
+                            bill.paymentMethod,
 
-                paymentStatus:
-                    bill.paymentStatus,
+                        paymentStatus:
+                            bill.paymentStatus,
 
-                payments:
-                    finalPayments.map((payment) => ({
-                        method: payment.method,
+                        payments:
+                            finalPayments.map((payment) => ({
+                                method: payment.method,
 
-                        amount:
-                            Number(payment.amount || 0),
+                                amount:
+                                    Number(payment.amount || 0),
 
-                        details:
-                            payment.details || {}
-                    })),
+                                details:
+                                    payment.details || {}
+                            })),
 
-                paidAmount:
-                    Number(totalPaid || 0),
+                        paidAmount:
+                            Number(totalPaid || 0),
 
-                pendingAmount:
-                    Number(pendingAmount || 0),
+                        pendingAmount:
+                            Number(pendingAmount || 0),
 
-                returnAmount:
-                    Number(returnAmount || 0),
+                        returnAmount:
+                            Number(returnAmount || 0),
 
-                editedAt:
-                    new Date()
+                        editedAt:
+                            new Date()
+                    }
+                }
+            },
+            {
+                new: true
             }
-        }
-    },
-    {
-        new: true
-    }
-);
+        );
 
         const cgst = Number(
             (totalGST / 2).toFixed(2)
