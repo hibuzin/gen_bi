@@ -52,8 +52,8 @@
 
 .headerBtn {
   border: none;
-  background: #4C3CCE;
-  color: #fff;
+ background: var(--button-bg);
+  color: var(--button-text);
   padding: 10px 18px;
   border-radius: 3px;
   cursor: pointer;

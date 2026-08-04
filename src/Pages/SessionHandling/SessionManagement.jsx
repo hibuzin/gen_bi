@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./SessionManagement.module.css";
+import { useNavigate } from "react-router-dom";
 import { API } from "../../constants/api";
 import Toast from "../../components/Toast";
 
@@ -34,6 +35,7 @@ function SessionManagement() {
   const [cashOutReason, setCashOutReason] = useState("");
   const [showEndReport, setShowEndReport] = useState(false);
   const [endReport, setEndReport] = useState(null);
+  const navigate = useNavigate();
 
   const printSessionReport = () => {
     window.print();
@@ -126,6 +128,7 @@ function SessionManagement() {
   const fetchCurrentSession = async () => {
     try {
       setLoading(true);
+
       const token = localStorage.getItem("token");
 
       const res = await fetch(API.sessionCurrent, {
@@ -136,19 +139,39 @@ function SessionManagement() {
 
       const data = await res.json();
 
-      if (data.success && data.session) {
-        setSession(data.session);
-
-        if (data.session.openingDenomination) {
-          setOpeningDenomination(data.session.openingDenomination);
-        }
-
-        if (data.session.closingDenomination) {
-          setClosingDenomination(data.session.closingDenomination);
-        }
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to fetch session");
       }
+
+      const currentSession = getSessionFromResponse(data);
+
+      const isActiveSession =
+  currentSession &&
+  ["open", "settled"].includes(currentSession.status);
+
+if (data.success && isActiveSession) {
+  setSession(currentSession);
+
+  setOpeningDenomination(
+    normalizeDenomination(
+      currentSession.openingDenomination
+    )
+  );
+
+  setClosingDenomination(
+    normalizeDenomination(
+      currentSession.closingDenomination
+    )
+  );
+} else {
+  setSession(null);
+  setEndReport(null);
+  setShowEndReport(false);
+  resetSessionForm();
+}
     } catch (err) {
-      console.log(err);
+      console.log("Current session error:", err);
+      setSession(null);
     } finally {
       setLoading(false);
     }
@@ -172,13 +195,27 @@ function SessionManagement() {
 
       const data = await res.json();
 
-      if (!data.success) {
+      if (!res.ok || !data.success) {
         showToast(data.message || "Session start failed", "error");
         return;
       }
 
-      setSession(data.session);
+      const newSession = getSessionFromResponse(data);
+
+      if (!newSession) {
+        throw new Error("Invalid session response");
+      }
+
+      setSession(newSession);
+
+      setOpeningDenomination(
+        normalizeDenomination(newSession.openingDenomination)
+      );
+
+      setClosingDenomination({ ...emptyDenomination });
+
       showToast("Session started successfully");
+
     } catch (err) {
       console.log(err);
       showToast("Something went wrong", "error");
@@ -217,18 +254,15 @@ function SessionManagement() {
 
       const data = await res.json();
 
-      if (!data.success) {
+      if (!res.ok || !data.success) {
         showToast(data.message || "Cash out failed", "error");
         return;
       }
 
-      setSession((prev) => ({
-        ...prev,
-        cashOut: data.data.cashOut,
-      }));
-
       setCashOutAmount("");
       setCashOutReason("");
+
+      await fetchCurrentSession();
 
       showToast("Cash out successful");
     } catch (err) {
@@ -257,12 +291,23 @@ function SessionManagement() {
 
       const data = await res.json();
 
-      if (!data.success) {
+      if (!res.ok || !data.success) {
         showToast(data.message || "Session settle failed", "error");
         return;
       }
 
-      setSession(data.session);
+      const settledSession = getSessionFromResponse(data);
+
+      if (settledSession) {
+        setSession(settledSession);
+
+        setClosingDenomination(
+          normalizeDenomination(settledSession.closingDenomination)
+        );
+      } else {
+        await fetchCurrentSession();
+      }
+
       showToast("Session settled successfully");
     } catch (err) {
       console.log(err);
@@ -272,35 +317,60 @@ function SessionManagement() {
     }
   };
 
-  const endSession = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
+ const endSession = async () => {
+  try {
+    setLoading(true);
 
-      const res = await fetch(API.sessionEnd, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const token = localStorage.getItem("token");
 
-      const data = await res.json();
+    const res = await fetch(API.sessionEnd, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      if (!data.success) {
-        showToast(data.message || "Session end failed", "error");
-        return;
-      }
-      setSession(data.session);
-      setEndReport({ ...data.session });
-      setShowEndReport(true);
-      showToast("Session ended successfully");
-    } catch (err) {
-      console.log(err);
-      showToast("Something went wrong", "error");
-    } finally {
-      setLoading(false);
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      showToast(
+        data.message || "Session end failed",
+        "error"
+      );
+      return;
     }
-  };
+
+    const closedSession = getSessionFromResponse(data);
+
+    if (!closedSession) {
+      throw new Error("Invalid end session response");
+    }
+
+    setSession(null);
+    setEndReport(null);
+    setShowEndReport(false);
+
+    setOpeningDenomination({
+      ...emptyDenomination,
+    });
+
+    setClosingDenomination({
+      ...emptyDenomination,
+    });
+
+    setCashOutAmount("");
+    setCashOutReason("");
+
+    showToast("Session ended successfully");
+
+    await fetchCurrentSession();
+  } catch (err) {
+    console.log(err);
+    showToast("Something went wrong", "error");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const formatMoney = (amount) =>
     Number(amount || 0).toLocaleString("en-IN", {
@@ -309,6 +379,34 @@ function SessionManagement() {
 
   const getReportTime = (key) => {
     return endReport?.[key] || session?.[key] || "";
+  };
+
+  const normalizeDenomination = (denomination = {}) => {
+    const result = {};
+
+    DENOMS.forEach((item) => {
+      const value = Number(denomination[item.key] || 0);
+
+      result[item.key] = value === 0 ? "" : String(value);
+    });
+
+    return result;
+  };
+
+  const getSessionFromResponse = (data) => {
+    return (
+      data?.session ||
+      data?.data?.session ||
+      data?.data ||
+      null
+    );
+  };
+
+  const resetSessionForm = () => {
+    setOpeningDenomination({ ...emptyDenomination });
+    setClosingDenomination({ ...emptyDenomination });
+    setCashOutAmount("");
+    setCashOutReason("");
   };
 
   return (
@@ -320,11 +418,21 @@ function SessionManagement() {
           <h2>Session handling</h2>
         </div>
 
-        <div
-          className={`${styles.statusBadge} ${session?.status ? styles[session.status] : ""
-            }`}
-        >
-          {session?.status || "No session"}
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.historyBtn}
+            onClick={() => navigate("/session-history")}
+          >
+            History
+          </button>
+
+          <div
+            className={`${styles.statusBadge} ${session?.status ? styles[session.status] : ""
+              }`}
+          >
+            {session?.status || "No session"}
+          </div>
         </div>
       </div>
 
@@ -392,7 +500,9 @@ function SessionManagement() {
             <div>
               <span>Settlement</span>
               <b className={styles.settlement}>
-                {session.settlementStatus?.replace("_", " ")}
+                {session.settlementStatus
+                  ? session.settlementStatus.replaceAll("_", " ")
+                  : "-"}
               </b>
             </div>
           </div>
@@ -417,7 +527,11 @@ function SessionManagement() {
                     handleChange("opening", d.key, e.target.value)
                   }
                   placeholder="0"
-                  disabled={session?.status === "open" || session?.status === "settled" || session?.status === "closed"}
+                  disabled={
+                    loading ||
+                    session?.status === "open" ||
+                    session?.status === "settled"
+                  }
                 />
               </div>
             ))}
@@ -426,7 +540,11 @@ function SessionManagement() {
           <button
             className={styles.primaryBtn}
             onClick={startSession}
-            disabled={loading || session?.status}
+            disabled={
+              loading ||
+              session?.status === "open" ||
+              session?.status === "settled"
+            }
           >
             {loading ? "Please wait..." : "Start session"}
           </button>
@@ -448,7 +566,7 @@ function SessionManagement() {
                     handleChange("closing", d.key, e.target.value)
                   }
                   placeholder="0"
-                  disabled={!session || session?.status === "closed"}
+                  disabled={loading || session?.status !== "open"}
                 />
               </div>
             ))}
@@ -484,6 +602,7 @@ function SessionManagement() {
                 type="text"
                 placeholder="Enter amount"
                 value={cashOutAmount}
+                disabled={loading || session?.status !== "open"}
                 onChange={(e) =>
                   setCashOutAmount(e.target.value.replace(/\D/g, ""))
                 }
@@ -496,6 +615,7 @@ function SessionManagement() {
                 type="text"
                 placeholder="Reason"
                 value={cashOutReason}
+                disabled={loading || session?.status !== "open"}
                 onChange={(e) => setCashOutReason(e.target.value)}
               />
             </div>
@@ -521,11 +641,25 @@ function SessionManagement() {
 
             <div className={styles.printArea}>
               <div className={styles.printTop}>
-                <h2 className={styles.printTitle}>Session Report</h2>
+                <div>
+
+                  <p className={styles.storeName}>
+                    {endReport?.name || "-"}
+                  </p>
+                </div>
 
                 <div className={styles.printTime}>
-                  <span>Start: {formatDateTime(getReportTime("Date"),("startTime"))}</span>
-                  <span>End: {formatDateTime(getReportTime("endDate"),("endTime"))}</span>
+                  <span>
+                    Start: {endReport?.Date || "-"} {endReport?.startTime || ""}
+                  </span>
+
+                  <span>
+                    End: {endReport?.endDate || "-"} {endReport?.endTime || ""}
+                  </span>
+
+                  <span>
+                    Duration: {endReport?.totalDuration || "-"}
+                  </span>
                 </div>
               </div>
 
@@ -567,7 +701,7 @@ function SessionManagement() {
 
                 <div className={styles.reportLine}>
                   <span>Total opening amount</span>
-                  <b>₹ {formatMoney(endReport.openingAmount || openingAmount)}</b>
+                  <b>₹ {formatMoney(endReport.openingAmount ?? openingAmount)}</b>
                 </div>
               </div>
 
@@ -580,17 +714,61 @@ function SessionManagement() {
 
                 <div className={styles.reportLine}>
                   <span>Total closing amount</span>
-                  <b>₹ {formatMoney(endReport.cashCounted || closingAmount)}</b>
+                  <b>₹ {formatMoney(endReport.cashCounted ?? closingAmount)}</b>
                 </div>
               </div>
 
               <div className={styles.reportSection}>
                 <h4>Cash out details</h4>
 
-                <div className={styles.reportLine}>
-                  <span>Total cash out</span>
-                  <b>₹ {formatMoney(endReport.cashOut)}</b>
-                </div>
+                {Array.isArray(endReport.cashMovements) &&
+                  endReport.cashMovements.filter(
+                    (movement) => movement.type === "cash_out"
+                  ).length > 0 ? (
+                  <>
+                    <div className={styles.cashOutDetailsList}>
+                      {endReport.cashMovements
+                        .filter((movement) => movement.type === "cash_out")
+                        .map((movement, index) => (
+                          <div
+                            className={styles.cashOutDetailItem}
+                            key={movement._id || index}
+                          >
+                            <div className={styles.cashOutDetailLeft}>
+                              <span className={styles.cashOutNumber}>
+                                {index + 1}
+                              </span>
+
+                              <div>
+                                <strong>{movement.reason || "Cash out"}</strong>
+
+                                <small>
+                                  {formatDateTime(movement.createdAt)}
+                                </small>
+
+                                {movement.remarks && (
+                                  <p>{movement.remarks}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            <b className={styles.cashOutDetailAmount}>
+                              ₹ {formatMoney(movement.amount)}
+                            </b>
+                          </div>
+                        ))}
+                    </div>
+
+                    <div className={`${styles.reportLine} ${styles.cashOutTotal}`}>
+                      <span>Total cash out</span>
+                      <b>₹ {formatMoney(endReport.cashOut)}</b>
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.noCashOut}>
+                    No cash out transactions
+                  </div>
+                )}
               </div>
 
               <div className={styles.reportSection}>
@@ -623,7 +801,9 @@ function SessionManagement() {
 
                 <div className={styles.reportLine}>
                   <span>Settlement</span>
-                  <b>{endReport.settlementStatus?.replace("_", " ") || "-"}</b>
+                  <b>{endReport.settlementStatus
+                    ? endReport.settlementStatus.replaceAll("_", " ")
+                    : "-"}</b>
                 </div>
               </div>
             </div>

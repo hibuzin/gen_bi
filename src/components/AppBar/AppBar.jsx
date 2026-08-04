@@ -71,7 +71,7 @@ function AppBar({ lang, setLang }) {
 
       <div className={styles.left}>
   <h2 className={styles.logoText}>
-      Billing -No. 1 Billing Software Accounting Software 
+       Fuel your sales by our Brand New Billing & Accounting Software 
   </h2>
 </div>
 {/*

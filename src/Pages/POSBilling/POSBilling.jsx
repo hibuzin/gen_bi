@@ -456,10 +456,10 @@ function POSBilling() {
       setLoading(true);
       setBill(null);
 
-      let customerId =
-        selectedCustomer?._id ||
-        selectedCustomer?.id ||
-        null;
+   let customerId =
+    selectedCustomer?.id ??
+    selectedCustomer?.customerId ??
+    null;
 
 
       if (
@@ -487,11 +487,12 @@ function POSBilling() {
 
           const custData = await custRes.json();
 
-          if (!custRes.ok) {
-            throw new Error(custData.message || "Failed to create customer");
-          }
+         if (!custRes.ok) {
+    throw new Error(custData.message || "Failed to create customer");
+}
 
-          customerId = custData.data.id || custData.data._id;
+// Works for both newly created and existing customers
+customerId = custData.data.id;
           showToast("New customer created", "success");
         } catch (err) {
           showToast(err.message || "Customer creation failed", "error");
@@ -531,9 +532,7 @@ function POSBilling() {
 
           ...(!isWalkInCustomer &&
             customerId && {
-            customerId: /^\d+$/.test(String(customerId))
-              ? Number(customerId)
-              : customerId,
+           customerId: Number(customerId),
           }),
 
           redeemPoints: isWalkInCustomer

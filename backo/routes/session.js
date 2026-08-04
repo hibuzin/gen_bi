@@ -4,12 +4,18 @@ const router = express.Router();
 const { verifyToken } = require("../middleware/auth");
 const authorize = require("../middleware/role");
 
+
 const {
     startSession,
-    handoverSession,
+    getAllSessions,
+    getSessionsByDate,
+    cashOut,
     settleSession,
     getCurrentSession,
     endSession,
+    getActiveSession,
+    getMySessionHistory,
+    getUserSessionHistory,
     todaySessions,
     sessionReport
 } = require("../controllers/session");
@@ -21,17 +27,31 @@ router.post(
     startSession
 );
 
-router.post(
-    "/handover",
+
+router.get("/",
     verifyToken,
-    authorize("cashier", "admin", "super_admin"),
-    handoverSession
+    authorize("super_admin"),
+    getAllSessions);
+
+
+router.get("/date",
+    verifyToken,
+    authorize("super_admin"),
+    getSessionsByDate);
+
+router.post(
+    "/cash-out",
+    verifyToken,
+    authorize("super_admin", "admin", "cashier"),
+    cashOut
 );
+
+
 
 router.get(
     "/current",
     verifyToken,
-    authorize("super_admin", "admin", "cashier"),
+    authorize("super_admin"),
     getCurrentSession
 );
 
@@ -42,6 +62,8 @@ router.post(
     settleSession
 );
 
+
+
 router.post(
     "/end",
     verifyToken,
@@ -49,17 +71,35 @@ router.post(
     endSession
 );
 
+router.get("/active",
+    verifyToken,
+    authorize("super_admin", "admin", "cashier"),
+    getActiveSession);
+
+router.get("/history",
+    verifyToken,
+    authorize("super_admin", "admin", "cashier"),
+    getMySessionHistory);
+
+
+router.get(
+    "/history/:userId",
+     verifyToken,
+    authorize("super_admin"),
+    getUserSessionHistory
+);
+
 router.get(
     "/today",
     verifyToken,
-    authorize("super_admin", "admin", "cashier"),
+    authorize("super_admin"),
     todaySessions
 );
 
 router.get(
     "/report",
     verifyToken,
-    authorize("super_admin", "admin"),
+    authorize("super_admin"),
     sessionReport
 );
 

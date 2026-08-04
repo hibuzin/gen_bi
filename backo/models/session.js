@@ -2,6 +2,22 @@ const mongoose = require("mongoose");
 
 const sessionSchema = new mongoose.Schema(
     {
+
+        Date: {
+            type: String,
+            default: ""
+        },
+
+        startTime: {
+            type: Date,
+            default: Date.now
+        },
+
+        endTime: {
+            type: Date,
+            default: null
+        },
+
         cashier: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -26,6 +42,32 @@ const sessionSchema = new mongoose.Schema(
             default: null
         },
 
+        cashMovements: [
+            {
+                type: {
+                    type: String,
+                    enum: ["cash_in", "cash_out"],
+                    required: true
+                },
+                amount: {
+                    type: Number,
+                    required: true
+                },
+                reason: {
+                    type: String,
+                    default: ""
+                },
+                remarks: {
+                    type: String,
+                    default: ""
+                },
+                createdAt: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ],
+
         settledBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -43,6 +85,7 @@ const sessionSchema = new mongoose.Schema(
             coin2: { type: Number, default: 0 },
             coin5: { type: Number, default: 0 },
             coin10: { type: Number, default: 0 },
+            coin20: { type: Number, default: 0 },
 
             note10: { type: Number, default: 0 },
             note20: { type: Number, default: 0 },
@@ -57,6 +100,8 @@ const sessionSchema = new mongoose.Schema(
             default: 0
         },
 
+
+
         totalSales: {
             type: Number,
             default: 0
@@ -67,14 +112,6 @@ const sessionSchema = new mongoose.Schema(
             default: 0
         },
 
-        startTime: {
-            type: Date,
-            default: Date.now
-        },
-
-        endTime: {
-            type: Date
-        },
 
         cashSales: {
             type: Number,

@@ -9,7 +9,7 @@ const PriceLevel = require("../models/price_level");
 const DuePayment = require("../models/due_payment");
 const { attachHierarchy } = require("../utils/hierarchy");
 const CashRegister = require("../models/cashregister");
-const Session = require("../models/session");
+
 const AuditLog = require("../models/audit_log");
 
 const getNextInvoiceNo = async (superAdminId) => {
@@ -70,13 +70,7 @@ dueDate
         const hierarchy = attachHierarchy(req.user);
 
 
-        const userId = req.user.userId || req.user.id;
-
-        const activeSession = await Session.findOne({
-    cashier: userId,
-    superAdminId: hierarchy.superAdminId,
-    status: "open"
-});
+        
 
         const invoiceNo = await getNextInvoiceNo(hierarchy.superAdminId);
 
@@ -1139,95 +1133,11 @@ if (hasGSTItems) {
             }))
         }
     });
-}      
-        activeSession.totalBills = (activeSession.totalBills || 0) + 1;
-
-        activeSession.totalSales = Number(
-    (
-        Number(activeSession.totalSales || 0) +
-        roundedGrandTotal
-    ).toFixed(2)
-);
-
-        for (const pay of finalPayments) {
-            const amount = Number(pay.amount || 0);
-
-            switch (pay.method) {
-                case "cash":
-                    activeSession.cashSales = Number(
-                        ((activeSession.cashSales || 0) + amount).toFixed(2)
-                    );
-                    break;
-
-                case "upi":
-                    activeSession.upiSales =
-                        (activeSession.upiSales || 0) + amount;
-                    break;
-
-                case "card":
-                    activeSession.cardSales =
-                        (activeSession.cardSales || 0) + amount;
-                    break;
-
-                case "cheque":
-                    activeSession.chequeSales =
-                        (activeSession.chequeSales || 0) + amount;
-                    break;
-
-                case "sodexo":
-                    activeSession.sodexoSales =
-                        (activeSession.sodexoSales || 0) + amount;
-                    break;
-            }
-        }
+}   
 
 
-        activeSession.expectedCash = Number(
-            (
-                Number(activeSession.openingAmount || 0) +
-                Number(activeSession.cashSales || 0)
-            ).toFixed(2)
-        );
-
-        await activeSession.save();
-
-        const cashRegister = await CashRegister.findOne({
-            superAdminId: hierarchy.superAdminId,
-            status: "open"
-        });
-
-        if (cashRegister && finalPayments.length > 0) {
-            for (const pay of finalPayments) {
-                const amount = Number(pay.amount || 0);
-
-                if (pay.method === "cash") {
-                    cashRegister.cashSales += amount;
-                }
-
-                if (pay.method === "upi") {
-                    cashRegister.upiSales += amount;
-                }
-
-                if (pay.method === "card") {
-                    cashRegister.cardSales += amount;
-                }
-
-                if (pay.method === "cheque") {
-                    cashRegister.chequeSales += amount;
-                }
-
-                if (pay.method === "sodexo") {
-                    cashRegister.sodexoSales += amount;
-                }
-            }
-
-            cashRegister.expectedCash =
-                cashRegister.openingAmount +
-                cashRegister.cashSales -
-                cashRegister.cashOut;
-
-            await cashRegister.save();
-        }
+       
+        
 
        if (hasGSTItems) {
     await AuditLog.create({

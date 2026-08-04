@@ -57,17 +57,19 @@ exports.createCustomer = async (req, res) => {
 
         const cleanPhone = phone.trim();
 
-        const existing = await Customer.findOne({
-            phone: cleanPhone,
-            superAdminId: finalSuperAdminId
-        });
+       const existing = await Customer.findOne({
+    phone: cleanPhone,
+    superAdminId: finalSuperAdminId
+});
 
-        if (existing) {
-            return res.status(400).json({
-                success: false,
-                message: "Customer already exists"
-            });
-        }
+if (existing) {
+    return res.status(200).json({
+        success: true,
+        alreadyExists: true,
+        message: "Customer already exists",
+        data: existing
+    });
+}
 
         const customerId = await getNextCustomerId();
 

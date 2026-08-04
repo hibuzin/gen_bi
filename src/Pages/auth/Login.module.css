@@ -68,8 +68,7 @@
   text-align: center;
   font-size: 22px;
   font-weight: 700;
-  color: #ff7a00;
-
+  color: var(--button-bg);
   margin-bottom: 10px;
 }
 
