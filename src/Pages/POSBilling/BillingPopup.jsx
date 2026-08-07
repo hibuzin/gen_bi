@@ -115,12 +115,7 @@ function BillingPopup({
                 onClose();
             }
 
-            if (event.key === "Enter" && !loading) {
-                event.preventDefault();
-                handleConfirm();
-            }
-
-            if (event.key === "F8") {
+            if (event.key === "F7") {
                 event.preventDefault();
                 handleConfirm();
                 return;
@@ -138,7 +133,13 @@ function BillingPopup({
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    });
+    }, []);
+
+    useEffect(() => {
+        if (paymentStatus === "paid" && paymentMethod !== "split") {
+            setReceivedAmount(payableAmount.toFixed(2));
+        }
+    }, [paymentStatus, paymentMethod, payableAmount]);
 
     const handlePaymentSelect = (method) => {
         setPaymentMethod(method);

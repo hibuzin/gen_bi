@@ -2282,7 +2282,7 @@ exports.updatePurchase = async (req, res) => {
             });
         }
 
-        // 1. Reverse old stock + old barcode stock
+       
         for (const oldItem of purchase.items) {
             const oldStockQty = Number(
                 oldItem.receivedQty ||
@@ -2354,18 +2354,34 @@ exports.updatePurchase = async (req, res) => {
             const netcost = Number(item.netcost || item.netCost);
             const netAmount = round2(netcost * qty);
 
-            const mrp = Number(item.mrp);
+  
+const mrpValue = item.mrp;
 
-            const productMrp = Number(product.mrp || 0);
+let mrp = 0;
 
-            if (mrp !== productMrp) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Selected MRP not found in product"
-                });
-            }
+if (
+    mrpValue !== undefined &&
+    mrpValue !== null &&
+    String(mrpValue).trim() !== ""
+) {
+    const parsedMrp = Number(mrpValue);
 
-            const sellingPrice = Number(item.sellingPrice || mrp);
+    if (!Number.isFinite(parsedMrp) || parsedMrp < 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid MRP"
+        });
+    }
+
+    mrp = parsedMrp;
+}
+
+const sellingPrice = Number(
+    item.sellingPrice ||
+    product.sellingPrice ||
+    mrp ||
+    0
+);
 
             if (isNaN(qty) || qty <= 0) {
                 return res.status(400).json({
@@ -2385,13 +2401,6 @@ exports.updatePurchase = async (req, res) => {
                 return res.status(400).json({
                     success: false,
                     message: "Invalid net cost"
-                });
-            }
-
-            if (isNaN(mrp) || mrp <= 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid MRP"
                 });
             }
 
@@ -2527,7 +2536,7 @@ exports.updatePurchase = async (req, res) => {
                 ? round2((profitAmount / netcost) * 100)
                 : 0;
 
-            // 2. Add new product stock
+           
             await Product.updateOne(
                 {
                     _id: product._id,
@@ -2551,7 +2560,8 @@ exports.updatePurchase = async (req, res) => {
                             productId: product._id,
                             code: barcode,
 
-                            mrp: item.mrp || product.mrp || 0,
+                            mrp: mrp,
+
                             costPrice: item.costPrice || product.costPrice || 0,
                             sellingPrice: item.sellingPrice || product.sellingPrice || 0,
                             gstRate: product.gstRate || 0,

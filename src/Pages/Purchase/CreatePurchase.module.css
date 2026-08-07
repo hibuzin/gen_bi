@@ -84,7 +84,7 @@
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #7164D8;
+ opacity: var(--hover);
 }
 
 .btnPrimary:disabled {

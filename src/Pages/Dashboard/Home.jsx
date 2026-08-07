@@ -105,57 +105,6 @@ export default function Home() {
       </div>
       {/* ONLY THIS SCROLLS */}
       <div className={styles.pageContent}>
-        <div className={styles.overviewGrid}>
-
-          <div className={`${styles.infoCard} ${styles.customerCardBox}`}>
-            <div className={`${styles.cardRow} ${styles.customerCard}`}>
-              <div className={styles.cardTitle}>
-                <FiArrowDown size={14} />
-                <p>To collect</p>
-              </div>
-
-              <ExternalLink
-                size={14}
-                className={styles.externalIcon}
-              />
-            </div>
-
-            <h2>₹0</h2>
-          </div>
-
-          <div className={`${styles.infoCard} ${styles.pointsCardBox}`}>
-            <div className={`${styles.cardRow} ${styles.pointsCard}`}>
-              <div className={styles.cardTitle}>
-                <FiArrowUp size={14} />
-                <p>To pay</p>
-              </div>
-
-              <ExternalLink
-                size={14}
-                className={styles.externalIcon}
-              />
-            </div>
-
-            <h2>₹0</h2>
-          </div>
-
-          <div className={`${styles.infoCard} ${styles.activeCardBox}`}>
-            <div className={`${styles.cardRow} ${styles.activeCard}`}>
-              <div className={styles.cardTitle}>
-                <FiCreditCard size={14} />
-                <p>Today cash</p>
-              </div>
-
-              <ExternalLink
-                size={14}
-                className={styles.externalIcon}
-              />
-            </div>
-
-            <h2>₹0</h2>
-          </div>
-
-        </div>
         <div className={styles.transactionSection}>
           <div className={styles.transactionTitleRow}>
             <div>

@@ -845,10 +845,10 @@ function POSBilling() {
       }
     };
 
-    window.addEventListener("keydown", handleKey);
+    document.addEventListener("keydown", handleKey, true);
 
     return () => {
-      window.removeEventListener("keydown", handleKey);
+      document.removeEventListener("keydown", handleKey, true);
     };
   }, [
     scannedItems,

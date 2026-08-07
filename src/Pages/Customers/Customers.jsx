@@ -321,66 +321,9 @@ function Customers() {
       {/* HEADER */}
       <div className={styles.header}>
         <h2>Customers</h2>
-
+        
       </div>
-
-      {/* CARDS */}
-      <div className={styles.cardsRow}>
-
-        {/* ALL CUSTOMERS */}
-        <div className={styles.infoCard}>
-          <div className={`${styles.cardRow} ${styles.customerCard}`}>
-            <div className={styles.cardTitle}>
-              <Users size={14} />
-              <p>All customers</p>
-            </div>
-
-            <ExternalLink
-              size={14}
-              className={styles.externalIcon}
-            />
-          </div>
-
-          <h2>{customers.length}</h2>
-        </div>
-
-        {/* LOYALTY POINTS */}
-        <div className={styles.infoCard}>
-          <div className={`${styles.cardRow} ${styles.pointsCard}`}>
-            <div className={styles.cardTitle}>
-              <Award size={14} />
-              <p>Total loyalty points</p>
-            </div>
-
-            <ExternalLink
-              size={14}
-              className={styles.externalIcon}
-            />
-          </div>
-
-          <h2>
-            {totalPoints.toLocaleString("en-IN")}
-          </h2>
-        </div>
-
-        {/* ACTIVE TODAY */}
-        <div className={styles.infoCard}>
-          <div className={`${styles.cardRow} ${styles.activeCard}`}>
-            <div className={styles.cardTitle}>
-              <UserCheck size={14} />
-              <p>To collect</p>
-            </div>
-
-            <ExternalLink
-              size={14}
-              className={styles.externalIcon}
-            />
-          </div>
-
-          <h2>0</h2>
-        </div>
-
-      </div>
+     
 
       {/* SEARCH + CREATE */}
       <div className={styles.searchRow}>

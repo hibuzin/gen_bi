@@ -134,7 +134,9 @@ exports.createBill = async (req, res) => {
                 });
             }
 
-            const normalSellingPrice = Number(barcode.sellingPrice || 0);
+           const normalSellingPrice = Number(
+    barcode?.sellingPrice ?? product.sellingPrice ?? 0
+);
 
             let price = normalSellingPrice;
             let slabPrice = null;
@@ -145,7 +147,9 @@ exports.createBill = async (req, res) => {
             let appliedSlab = null;
 
 
-            const gstRate = Number(barcode.gstRate || product.gstRate || 0);
+           const gstRate = Number(
+    barcode?.gstRate ?? product.gstRate ?? 0
+);
 
             const grossAmount = Number((price * qty).toFixed(2));
 
@@ -178,25 +182,27 @@ exports.createBill = async (req, res) => {
 
             items.push({
                 productId: product._id,
-                barcodeId: barcode._id,
-                barcode: barcode.code || "",
+                barcodeId: barcode?._id || null,
+barcode: barcode?.code || "",
 
                 name: product.name || "",
                 hsnCode: product.hsnCode || barcode.hsnCode || "",
 
-                unit: barcode.unit || product.unit || "pcs",
-                unitValue: Number(
-                    barcode.unitValue || product.unitValue || 1
-                ),
+                unit: barcode?.unit ?? product.unit ?? "pcs",
 
-                unitText: `${barcode.unitValue || product.unitValue || 1
-                    } ${barcode.unit || product.unit || "pcs"
-                    }`,
+unitValue: Number(
+    barcode?.unitValue ?? product.unitValue ?? 1
+),
 
-                totalkg: `${qty *
-                    Number(barcode.unitValue || product.unitValue || 1)
-                    } ${barcode.unit || product.unit || "pcs"
-                    }`,
+                unitText: `${barcode?.unitValue ?? product.unitValue ?? 1} ${
+    barcode?.unit ?? product.unit ?? "pcs"
+}`,
+
+                totalkg: `${qty * Number(
+    barcode?.unitValue ?? product.unitValue ?? 1
+)} ${
+    barcode?.unit ?? product.unit ?? "pcs"
+}`,
 
                 mrp: Number(barcode.mrp || 0),
 
@@ -234,8 +240,14 @@ exports.createBill = async (req, res) => {
 
 
 
-            barcode.availableQty = Math.max(Number(barcode.availableQty || 0) - qty, 0);
-            await barcode.save();
+            if (barcode) {
+    barcode.availableQty = Math.max(
+        Number(barcode.availableQty || 0) - (qty + freeQty),
+        0
+    );
+
+    await barcode.save();
+}
 
             await Product.updateOne(
                 { _id: product._id, superAdminId: hierarchy.superAdminId },
@@ -295,16 +307,11 @@ exports.createBill = async (req, res) => {
             });
 
 
-            if (!barcode) {
-                return res.status(404).json({
-                    success: false,
-                    message: `Barcode not found for product: ${product.name}`
-                });
-            }
 
 
-
-            const normalSellingPrice = Number(barcode.sellingPrice || 0);
+            const normalSellingPrice = Number(
+    barcode?.sellingPrice ?? product.sellingPrice ?? 0
+);
 
             let price = normalSellingPrice;
             let slabPrice = null;
@@ -390,7 +397,9 @@ exports.createBill = async (req, res) => {
             }
 
 
-            const gstRate = Number(barcode.gstRate || product.gstRate || 0);
+            const gstRate = Number(
+    barcode?.gstRate ?? product.gstRate ?? 0
+);
 
             if (price <= 0) {
                 return res.status(400).json({
@@ -441,29 +450,38 @@ exports.createBill = async (req, res) => {
             totalGST += gstAmount;
 
             items.push({
-                productId: product._id,
-                barcodeId: barcode._id,
-                barcode: barcode.code || "",
+                 productId: product._id,
+
+  
+    barcodeId: barcode?._id || null,
+    barcode: barcode?.code || "",
 
                 name: product.name || "",
-                hsnCode: product.hsnCode || barcode.hsnCode || "",
+                 hsnCode: product.hsnCode || barcode?.hsnCode || "",
 
-                unit: barcode.unit || product.unit || "pcs",
+                unit: barcode?.unit ?? product.unit ?? "pcs",
 
-                unitValue: Number(
-                    barcode.unitValue || product.unitValue || 1
-                ),
+                 unitValue: Number(
+        barcode?.unitValue ?? product.unitValue ?? 1
+    ),
 
-                unitText: `${barcode.unitValue || product.unitValue || 1
-                    } ${barcode.unit || product.unit || "pcs"
-                    }`,
+    unitText: `${
+        barcode?.unitValue ?? product.unitValue ?? 1
+    } ${
+        barcode?.unit ?? product.unit ?? "pcs"
+    }`,
 
-                totalkg: `${qty *
-                    Number(barcode.unitValue || product.unitValue || 1)
-                    } ${barcode.unit || product.unit || "pcs"
-                    }`,
+                totalkg: `${
+        qty * Number(
+            barcode?.unitValue ?? product.unitValue ?? 1
+        )
+    } ${
+        barcode?.unit ?? product.unit ?? "pcs"
+    }`,
 
-                mrp: Number(barcode.mrp || 0),
+    mrp: Number(
+        barcode?.mrp ?? product.mrp ?? 0
+    ),
 
 
                 price: Number(price || 0),
@@ -485,7 +503,7 @@ exports.createBill = async (req, res) => {
                                 ? Number(appliedSlab.maxQty)
                                 : null,
 
-                        // Model field "price"
+                       
                         price: Number(
                             appliedSlab.slabPrice ||
                             appliedSlab.price ||
@@ -509,7 +527,7 @@ exports.createBill = async (req, res) => {
                 gstAuditItems.push({
                     productId: product._id,
                     productName: product.name || "",
-                    barcode: barcode.code,
+                    barcode: barcode?.code || "",
                     qty,
                     price,
                     gstRate,
@@ -531,12 +549,14 @@ exports.createBill = async (req, res) => {
                 });
             }
 
-            barcode.availableQty = Math.max(
-                Number(barcode.availableQty || 0) - (qty + freeQty),
-                0
-            );
+            if (barcode) {
+    barcode.availableQty = Math.max(
+        Number(barcode.availableQty || 0) - (qty + freeQty),
+        0
+    );
 
-            await barcode.save();
+    await barcode.save();
+}
 
             const stockUpdate = await Product.updateOne(
                 {

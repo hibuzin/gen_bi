@@ -705,55 +705,7 @@ const closeModal = () => {
 
 
       </div>
-
-      <div className={styles.cardsRow}>
-
-        {/* STOCK VALUE */}
-        <div className={styles.infoCard}>
-          <div className={`${styles.cardRow} ${styles.stockCard}`}>
-            <div className={styles.cardTitle}>
-              <TrendingUp size={16} />
-              <p>Stock value</p>
-            </div>
-
-            <ExternalLink size={16} className={styles.externalIcon} />
-          </div>
-
-          <h2>
-            ₹ {Number(stockValue).toLocaleString("en-IN")}
-          </h2>
-        </div>
-
-        {/* LOW STOCK */}
-        <div className={styles.infoCard}>
-          <div className={`${styles.cardRow} ${styles.lowStockCard}`}>
-            <div className={styles.cardTitle}>
-              <PackageMinus size={16} />
-              <p>Low stock</p>
-            </div>
-
-            <ExternalLink size={16} className={styles.externalIcon} />
-          </div>
-
-          <h2>{lowStockItems}</h2>
-        </div>
-
-        {/* OUT OF STOCK */}
-        <div className={styles.infoCard}>
-          <div className={`${styles.cardRow} ${styles.outStockCard}`}>
-            <div className={styles.cardTitle}>
-              <PackageX size={16} />
-              <p>Out of stock</p>
-            </div>
-
-            <ExternalLink size={16} className={styles.externalIcon} />
-          </div>
-
-          <h2>0</h2>
-        </div>
-
-      </div>
-
+      
       <div className={styles.searchRow}>
         <div className={styles.searchBox}>
           <FaSearch className={styles.searchIcon} />

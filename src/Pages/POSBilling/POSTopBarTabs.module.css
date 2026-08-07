@@ -22,7 +22,7 @@
 .billCount {
   font-size: 12px;
   font-weight: 600;
-  color: #4c3cce;
+  color: var(--button-bg);
   margin-left: 8px;
   background: #f1efff;
   border: 1px solid #ded9ff;
@@ -90,7 +90,7 @@
 
 .tabHold {
   background: #f8fafc;
-  color: #374151;
+  color: #345861;
   font-weight: 500;
 }
 
@@ -116,7 +116,7 @@
   padding: 20px 16px;
   font-size: 13px;
   font-weight: 500;
-  color: #2563eb;
+  color: var(--button-bg);
   cursor: pointer;
 }
 

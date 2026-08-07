@@ -53,10 +53,8 @@
   width: min(900px, calc(100vw - 24px));
   height: min(610px, calc(100vh - 24px));
   max-height: calc(100vh - 24px);
-
   display: flex;
   flex-direction: column;
-
   background: #ffffff;
   border: 1px solid #e5e7eb;
   box-shadow: 0 18px 50px rgba(76, 60, 206, 0.18);
@@ -73,8 +71,7 @@
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
-  background: #5949d6;
-  border-bottom: 1px solid #4b41b9;
+  background: var(--button-bg);
 }
 
 .closeButton {
@@ -132,8 +129,7 @@
   align-items: center;
   justify-content: flex-end;
   padding: 0 14px;
-  background: #7261f0;
-  border: 1px solid #6654f0;
+  background: var(--button-bg);
   color: floralwhite;
   box-shadow: none;
   font-size: 22px;
@@ -190,7 +186,6 @@
 
 .fieldGroup input:focus,
 .loyaltyField input:focus {
-  border-color: #7364e8;
   box-shadow: 0 0 0 3px rgba(76, 60, 206, 0.12);
 }
 
@@ -269,12 +264,12 @@
 }
 
 .paymentOptionActive {
-   background: #6454dd;
+   background: var(--button-bg);
   color: #ffffff;
 }
 
 .paymentOptionActive:hover {
-  background: #4C3CCE;
+  background: var(--button-bg);
 }
 
 .paymentOption strong {
@@ -295,7 +290,7 @@
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
-  background: #514d6e;
+  background: #648397;
 }
 
 .pendingBox strong {
@@ -320,16 +315,16 @@
   height: 36px;
   font-size: 13px;
   cursor: pointer;
-   background: #5948d4;
+   background: var(--button-bg);
   color: #ffffff;
-  border: 1px solid #5f50cb;
+  border: 1px solid var(--button-bg);
   border-radius: 6px;
 
 }
 
 .doneButton:hover,
 .exitButton:hover {
-   background: #5d4ee6;
+   background: var(--button-bg);
 }
 
 .doneButton:disabled,
@@ -348,7 +343,7 @@
 
 .statusTitle {
   margin: 0 0 8px;
-  color: #263747;
+  color: var(--button-bg);
   font-size: 13px;
   font-weight: 700;
 }
@@ -371,8 +366,8 @@
 }
 
 .statusBtnActive {
-  background: #6354d6;
-  border-color: #6b5cdf;
+  background: var(--button-bg);
+  border-color: var(--button-bg);
   color: #ffffff;
 }
 

@@ -41,7 +41,8 @@ exports.productcreate = async (req, res) => {
             priceLevel,
             productType,
             parentProductId,
-            lowStockQty
+            lowStockQty,
+            openingStock
         } = req.body;
 
         if (!name ) {
@@ -171,6 +172,19 @@ if (categoryId) {
             });
         }
 
+        const processedOpeningStock = Number(openingStock ?? 0);
+
+if (
+    !Number.isFinite(processedOpeningStock) ||
+    processedOpeningStock < 0
+) {
+    return res.status(400).json({
+        success: false,
+        message: "Valid opening stock is required"
+    });
+}
+
+
         let barcodeCode = "";
 
         if (barcode) {
@@ -199,7 +213,7 @@ if (categoryId) {
                 ? String(description).trim()
                 : "",
 
-            stock: 0,
+            stock: processedOpeningStock,
             lowStockQty: processedLowStockQty,
             reservedStock: 0,
 
@@ -1046,6 +1060,7 @@ exports.ProductsById = async (req, res) => {
     }
 };
 
+
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -1062,7 +1077,8 @@ exports.updateProduct = async (req, res) => {
             lowStockQty,
             costPrice,
             sellingPrice,
-            barcode
+            barcode,
+             openingStock
         } = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -1238,6 +1254,23 @@ exports.updateProduct = async (req, res) => {
 
         product.updatedBy = req.user.userId || req.user.id;
 
+        if (openingStock !== undefined) {
+    const processedOpeningStock = Number(openingStock);
+
+    if (
+        !Number.isFinite(processedOpeningStock) ||
+        processedOpeningStock < 0
+    ) {
+        return res.status(400).json({
+            success: false,
+            message: "Valid opening stock is required"
+        });
+    }
+
+    
+    product.stock = processedOpeningStock;
+}
+
         let createdBarcode = null;
 
         if (
@@ -1295,22 +1328,29 @@ exports.updateProduct = async (req, res) => {
 
         await product.save();
 
-        await Barcode.updateMany(
-            {
-                productId: product._id,
-                superAdminId: hierarchy.superAdminId
-            },
-            {
-                $set: {
-                    mrp: product.mrp,
-                    costPrice: product.costPrice,
-                    sellingPrice: product.sellingPrice,
-                    gstRate: product.gstRate,
-                    unit: product.unit,
-                    unitValue: product.unitValue
-                }
-            }
-        );
+       const barcodeUpdateData = {
+    mrp: product.mrp,
+    costPrice: product.costPrice,
+    sellingPrice: product.sellingPrice,
+    gstRate: product.gstRate,
+    unit: product.unit,
+    unitValue: product.unitValue
+};
+
+if (openingStock !== undefined) {
+    barcodeUpdateData.qty = product.stock;
+    barcodeUpdateData.availableQty = product.stock;
+}
+
+await Barcode.updateMany(
+    {
+        productId: product._id,
+        superAdminId: hierarchy.superAdminId
+    },
+    {
+        $set: barcodeUpdateData
+    }
+);
 
         const barcodes = await Barcode.find({
             productId: product._id,

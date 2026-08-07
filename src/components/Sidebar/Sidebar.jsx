@@ -113,37 +113,37 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
   const menu = [
 
     {
-      name: lang === "ta" ? "முகப்பு பலகம்" : "Dashboard",
+      name: lang === "ta" ? "முகப்பு பலகம்" : "DASHBOARD",
       path: "/home",
       icon: <FaHome />
     },
 
     {
-      name: lang === "ta" ? "வாடிக்கையாளர்கள்" : "Customers",
+      name: lang === "ta" ? "வாடிக்கையாளர்கள்" : "CUSTOMERS",
       path: "/customers",
       icon: <FaUsers />
     },
 
     {
-      name: lang === "ta" ? "பொருட்கள்" : "Items",
+      name: lang === "ta" ? "பொருட்கள்" : "ITEMS",
       path: "/product",
       icon: <FaBox />,
     },
 
     {
-      name: lang === "ta" ? "சப்ளையர்கள்" : "Suppliers",
+      name: lang === "ta" ? "சப்ளையர்கள்" : "SUPPLIERS",
       path: "/supplier",
       icon: <FaTruckLoading />
     },
 
     {
-      name: lang === "ta" ? "கொள்முதல்" : "Purchase",
+      name: lang === "ta" ? "கொள்முதல்" : "PURCHASE",
       path: "/purchase",
       icon: <FaFileInvoice />
     },
 
     {
-      name: lang === "ta" ? "விற்பனை" : "Sales",
+      name: lang === "ta" ? "விற்பனை" : "SALES",
       icon: <RiMoneyDollarCircleLine />,
       children: [
         { name: lang === "ta" ? "இன்றைய விற்பனை" : "Sales check", path: "/sales" },
@@ -152,12 +152,12 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
       ],
     },
     {
-      name: lang === "ta" ? "பொருட்கள்" : "Repack",
+      name: lang === "ta" ? "பொருட்கள்" : "REPACK",
       path: "/repack",
       icon: <FaBox />,
     },
     {
-      name: lang === "ta" ? "பொருட்கள்" : "Return",
+      name: lang === "ta" ? "பொருட்கள்" : "RETURN",
       icon: <FaBox />,
       children: [
         { name: lang === "ta" ? "இன்றைய விற்பனை" : "purchase return ", path: "/return" },
@@ -165,18 +165,18 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
       ],
     },
     {
-      name: lang === "ta" ? "பொருட்கள்" : "Payment",
+      name: lang === "ta" ? "பொருட்கள்" : "PAYMENT",
       path: "/payment",
       icon: <FaBox />,
     },
     {
-      name: lang === "ta" ? "சரக்கு" : "Stocks",
+      name: lang === "ta" ? "சரக்கு" : "STOCKS",
       path: "/stocks",
       icon: <MdInventory />,
     },
 
     {
-      name: lang === "ta" ? "விற்பனை" : "Gst",
+      name: lang === "ta" ? "விற்பனை" : "GST",
       icon: <RiMoneyDollarCircleLine />,
       onlyRole: "super_admin",
       children: [
@@ -186,7 +186,7 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
     },
 
     {
-      name: lang === "ta" ? "சலுகைகள்" : "Offers",
+      name: lang === "ta" ? "சலுகைகள்" : "OFFERS",
       path: "/offers",
       icon: <FaTags />
     },

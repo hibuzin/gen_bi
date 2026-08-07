@@ -90,7 +90,7 @@
 .selectedCustomerTag {
   margin-top: 8px;
   font-size: 12px;
-  color: #6c63ff;
+  color: var(--button-bg);
   background-color: #f0eeff;
   padding: 4px 8px;
   border-radius: 4px;
@@ -194,14 +194,14 @@
   border-radius: 8px;
   padding: 10px 6px;
   cursor: pointer;
-  background: #4f46e5;
+  background: var(--button-bg);
   color: #ffffff;
   font-weight: 600;
   line-height: 1.4;
 }
 
 .saveBtn:hover {
-  background: #4338ca;
+  background: opacity(0.7);
 }
 
 .saveBtn:disabled {
@@ -266,5 +266,5 @@
 }
 
 .billDiscountInput:focus {
-  border-color: #7c6ee6;
+  border-color: #6eb6e6;
 }

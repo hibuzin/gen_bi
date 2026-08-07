@@ -82,9 +82,16 @@ function POSItemsTable({
       });
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.message || "Product not found");
 
       const stockInfo = getStockInfo(data.data);
+
+      if (Number(stockInfo.stock) <= 0) {
+        showToast(`${data.data.productName} is out of stock`, "error");
+        return;
+      }
+
       checkLowStock(stockInfo, data.data.productName);
 
       setScannedItems((prev) => {
@@ -180,6 +187,11 @@ function POSItemsTable({
   // SELECT SEARCH RESULT
   const selectRowProduct = (rowIndex, product) => {
     const stockInfo = getStockInfo(product);
+
+    if (Number(stockInfo.stock) <= 0) {
+      showToast(`${product.productName} is out of stock`, "error");
+      return;
+    }
     checkLowStock(stockInfo, product.productName);
 
     setScannedItems((prev) => {
@@ -652,9 +664,11 @@ function POSItemsTable({
                                     ? styles.rowDropdownItemActive
                                     : ""
                                     }`}
-                                  onMouseDown={() =>
-                                    selectRowProduct(idx, product)
-                                  }
+                                  onMouseDown={() => {
+                                    if (Number(product.stock || 0) > 0) {
+                                      selectRowProduct(idx, product);
+                                    }
+                                  }}
                                 >
                                   <div>
                                     <strong>{product.productName}</strong>
@@ -745,9 +759,9 @@ function POSItemsTable({
                         inputMode="decimal"
                         value={item.discountAmount ?? ""}
                         placeholder="0"
-                       onChange={(e) =>
-  updateDiscountAmount(idx, e.target.value)
-}
+                        onChange={(e) =>
+                          updateDiscountAmount(idx, e.target.value)
+                        }
                       />
                     ) : (
                       ""
@@ -763,11 +777,11 @@ function POSItemsTable({
                         value={item.discountPercent ?? ""}
                         placeholder="0"
                         onChange={(e) =>
-  updateDiscountPercent(
-    idx,
-    e.target.value
-  )
-}
+                          updateDiscountPercent(
+                            idx,
+                            e.target.value
+                          )
+                        }
                       />
                     ) : (
                       ""

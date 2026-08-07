@@ -221,25 +221,58 @@
   background: #106161;
 }
 
-.item {
-  margin: 3px 10px;
-  padding: 0 14px;
-  height: 40px;
-  border-radius: 14px;
 
-  cursor: pointer;
-  gap: 6px;
+
+
+.item {
+  position: relative;
+  height: 40px;
+  padding: 0 14px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  transition: background 0.25s ease;
-  color: #ffffff;
+  cursor: pointer;
+  gap: 6px;
+  color: #fff;
+
+  background: transparent;
+}
+
+/* Full-width hover */
+.item:hover::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #106161;
+  z-index: 0;
 }
 
 
+/* Keep icon/text above background */
+.item > * {
+  position: relative;
+  z-index: 1;
+}
+
 .active {
   background: #036666;
+}
+
+.active::before {
+  content: "";
+  position: absolute;
+
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 3px;
+  height: 39px;
+
+  background: #4cd4ce;
+  border-radius: 1px;
 }
 
 .subMenu {
