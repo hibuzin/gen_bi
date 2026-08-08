@@ -5,13 +5,13 @@
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "preview": "vite preview",
-  "electron": "electron .",
-  "dist": "npm run build && electron-builder",
-  "pack": "electron-builder --dir"
-},
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "dist": "npm run build && electron-builder",
+    "pack": "electron-builder --dir"
+  },
   "dependencies": {
     "axios": "^1.16.1",
     "crypto-js": "^4.2.0",
@@ -45,52 +45,42 @@
     "vite": "^8.0.10"
   },
   "build": {
-  "appId": "com.hibuz.billing",
-  "productName": "Hibuz Billing",
-  "win": {
-    "target": "nsis",
-    "icon": "build/icon.ico"
-  },
-
-  "directories": {
-    "output": "release"
-  },
-
-  "files": [
-    "dist/**/*",
-    "electron/**/*",
-    "backo/**/*",
-    "package.json"
-  ],
-"extraResources": [
-  {
-    "from": "backo",
-    "to": "backo"
-  },
-  {
-    "from": "backo/node_modules",
-    "to": "backo/node_modules"
-  },
-  {
-    "from": "node-runtime",
-    "to": "node-runtime"
-  },
-  {
-    "from": "installer/mongodb.msi",
-    "to": "installer/mongodb.msi"
-  }
-],
-
-  "win": {
-    "target": "nsis"
-  },
-
-  "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true,
-     "include": "build/installer.nsh"
+    "appId": "com.hibuz.billing",
+    "productName": "Hibuz Billing",
+    "win": {
+      "target": "nsis"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "backo/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "backo",
+        "to": "backo"
+      },
+      {
+        "from": "backo/node_modules",
+        "to": "backo/node_modules"
+      },
+      {
+        "from": "node-runtime",
+        "to": "node-runtime"
+      },
+      {
+        "from": "installer/mongodb.msi",
+        "to": "installer/mongodb.msi"
+      }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
+    }
   }
 }
-  
-}
-

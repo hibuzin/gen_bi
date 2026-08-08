@@ -251,8 +251,8 @@ categoryName: cat ? cat.name : "",
                 productId: product._id,
                 code: barcodeCode,
 
-                qty: 0,
-                availableQty: 0,
+                qty: processedOpeningStock,
+    availableQty: processedOpeningStock,
 
                 mrp: processedMrp,
 

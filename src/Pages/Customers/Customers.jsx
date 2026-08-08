@@ -140,14 +140,11 @@ function Customers() {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch(
-        "https://pos-backend-6uh4.onrender.com/api/customer/customer-balances",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(API.customerBalances, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
@@ -321,9 +318,9 @@ function Customers() {
       {/* HEADER */}
       <div className={styles.header}>
         <h2>Customers</h2>
-        
+
       </div>
-     
+
 
       {/* SEARCH + CREATE */}
       <div className={styles.searchRow}>

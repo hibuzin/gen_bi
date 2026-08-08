@@ -350,106 +350,111 @@ function Item() {
   };
 
   // OPEN EDIT
-const openEdit = async (item) => {
-  try {
-    setOpenMenu(null);
+  const openEdit = async (item) => {
+    try {
+      setOpenMenu(null);
 
-    const itemId = item._id || item.productId;
-    const token = localStorage.getItem("token");
+      const itemId = item._id || item.productId;
+      const token = localStorage.getItem("token");
 
-    // Full product details fetch
-    const res = await fetch(
-      `${API.products}/${itemId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+      // Full product details fetch
+      const res = await fetch(
+        `${API.products}/${itemId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    const data = await res.json();
+      const data = await res.json();
 
-    const fullItem =
-      data.success && data.data
-        ? data.data
-        : item;
+      const fullItem =
+        data.success && data.data
+          ? data.data
+          : item;
 
-    const categoryId =
-      fullItem.categoryId?._id ||
-      fullItem.categoryId ||
-      fullItem.category?._id ||
-      fullItem.category ||
-      "";
+      const categoryId =
+        fullItem.categoryId?._id ||
+        fullItem.categoryId ||
+        fullItem.category?._id ||
+        fullItem.category ||
+        "";
 
-    setEditProduct({
-      ...fullItem,
+      setEditProduct({
+        ...fullItem,
 
-      _id: itemId,
+        _id: itemId,
 
-      name:
-        fullItem.name ||
-        fullItem.productName ||
-        "",
+        name:
+          fullItem.name ||
+          fullItem.productName ||
+          "",
 
-      categoryId:
-        typeof categoryId === "object"
-          ? categoryId._id || ""
-          : categoryId,
+        categoryId:
+          typeof categoryId === "object"
+            ? categoryId._id || ""
+            : categoryId,
 
-      description:
-        fullItem.description || "",
+        description:
+          fullItem.description || "",
 
-      hsnCode:
-        fullItem.hsnCode || "",
+        hsnCode:
+          fullItem.hsnCode || "",
 
-      gstRate:
-        fullItem.gstRate ??
-        fullItem.taxPercentage ??
-        "",
+        gstRate:
+          fullItem.gstRate ??
+          fullItem.taxPercentage ??
+          "",
 
-      lowStockQty:
-        fullItem.lowStockQty ?? "",
+        openingStock:
+          fullItem.stock ??
+          fullItem.openingStock ??
+          0,
 
-      mrp:
-        fullItem.mrp ?? "",
+        lowStockQty:
+          fullItem.lowStockQty ?? "",
 
-      costPrice:
-        fullItem.costPrice ??
-        fullItem.purchasePrice ??
-        fullItem.netcost ??
-        "",
+        mrp:
+          fullItem.mrp ?? "",
 
-      sellingPrice:
-        fullItem.sellingPrice ?? "",
+        costPrice:
+          fullItem.costPrice ??
+          fullItem.purchasePrice ??
+          fullItem.netcost ??
+          "",
 
-      barcode:
-        fullItem.barcode ||
-        fullItem.barcodeNumber ||
-        fullItem.primaryBarcode ||
-        "",
-    });
+        sellingPrice:
+          fullItem.sellingPrice ?? "",
 
-    setShowModal(true);
-    document.body.style.overflow = "hidden";
-  } catch (error) {
-    console.error("Edit product fetch error:", error);
+        barcode:
+          fullItem.barcode ||
+          fullItem.barcodeNumber ||
+          fullItem.primaryBarcode ||
+          "",
+      });
 
-    showToast(
-      "error",
-      "Unable to load item details"
-    );
-  }
-};
+      setShowModal(true);
+      document.body.style.overflow = "hidden";
+    } catch (error) {
+      console.error("Edit product fetch error:", error);
 
-const closeModal = () => {
-  if (updateLoading) return;
+      showToast(
+        "error",
+        "Unable to load item details"
+      );
+    }
+  };
 
-  setShowModal(false);
-  setEditProduct(null);
+  const closeModal = () => {
+    if (updateLoading) return;
 
-  document.body.style.overflow = "auto";
-};
+    setShowModal(false);
+    setEditProduct(null);
+
+    document.body.style.overflow = "auto";
+  };
 
   // CHANGE
 
@@ -496,6 +501,9 @@ const closeModal = () => {
 
       hsnCode:
         editProduct.hsnCode?.trim() || "",
+
+      openingStock:
+        numberValue(editProduct.openingStock),
 
       lowStockQty:
         numberValue(editProduct.lowStockQty),
@@ -705,7 +713,7 @@ const closeModal = () => {
 
 
       </div>
-      
+
       <div className={styles.searchRow}>
         <div className={styles.searchBox}>
           <FaSearch className={styles.searchIcon} />
@@ -845,7 +853,7 @@ const closeModal = () => {
             </div>
           )}
         </div>
-        {/*
+        
         <button
           className={styles.bulkBtn}
           onClick={() => navigate("/bulk-action")}
@@ -853,7 +861,7 @@ const closeModal = () => {
           <FiLayers className={styles.bulkBtnIcon} />
           <span>Bulk actions</span>
         </button>
-*/}
+
         <button
           className={styles.addBtn}
           onClick={() => navigate("/create-product")}
@@ -1050,23 +1058,23 @@ const closeModal = () => {
                 </label>
 
                 <select
-  name="categoryId"
-  value={editProduct.categoryId || ""}
-  onChange={handleChange}
->
-  <option value="">
-    Select category
-  </option>
+                  name="categoryId"
+                  value={editProduct.categoryId || ""}
+                  onChange={handleChange}
+                >
+                  <option value="">
+                    Select category
+                  </option>
 
-  {categories.map((cat) => (
-    <option
-      key={cat._id}
-      value={cat._id}
-    >
-      {cat.name}
-    </option>
-  ))}
-</select>
+                  {categories.map((cat) => (
+                    <option
+                      key={cat._id}
+                      value={cat._id}
+                    >
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className={styles.field}>
@@ -1095,6 +1103,19 @@ const closeModal = () => {
                   type="number"
                   name="gstRate"
                   value={editProduct.gstRate ?? ""}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label>Opening stock</label>
+
+                <input
+                  type="number"
+                  name="openingStock"
+                  min="0"
+                  step="0.001"
+                  value={editProduct.openingStock ?? ""}
                   onChange={handleChange}
                 />
               </div>

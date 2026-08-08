@@ -105,7 +105,7 @@ function CreateOffer() {
       console.log("Create offer payload:", payload);
 
       const response = await fetch(
-        "https://pos-backend-6uh4.onrender.com/api/offers",
+        API.offers,
         {
           method: "POST",
           headers: {

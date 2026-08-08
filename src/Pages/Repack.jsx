@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import styles from "./Repack.module.css";
 import { FiPackage, FiSearch, FiPlus, FiTrash2, FiX } from "react-icons/fi";
+import { API } from "../constants/api";
 
 function Repack() {
   const [products, setProducts] = useState([]);
@@ -20,7 +21,6 @@ function Repack() {
   const [saving, setSaving] = useState(false);
 
   const token = localStorage.getItem("token");
-  const BASE_URL = "https://pos-backend-6uh4.onrender.com";
 
   useEffect(() => { fetchProducts(); }, []);
 
@@ -28,7 +28,7 @@ function Repack() {
     try {
       setLoading(true);
       const res = await fetch(
-        `${BASE_URL}/api/productadd/product-type?productType=bulk`,
+        API.repackProducts,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -61,7 +61,7 @@ function Repack() {
       setRepackLoading(true);
 
       const res = await fetch(
-        `${BASE_URL}/api/repack/repack-by-bulk/${bulkProduct._id}`,
+        API.repackProductsByBulk(bulkProduct._id),
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -122,7 +122,7 @@ function Repack() {
         payload.note = note.trim();
       }
 
-      const res = await fetch(`${BASE_URL}/api/repack/create`, {
+      const res = await fetch(API.createRepack, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

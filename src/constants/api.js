@@ -55,6 +55,7 @@ export const API = {
   // products
   products: `${BASE_URL}/productadd`,
   createProduct: `${BASE_URL}/productadd/add`,
+  createBulkProduct: `${BASE_URL}/productadd/bulk-add`,
   searchProduct: `${BASE_URL}/productadd/search`,
   billSearchProduct: `${BASE_URL}/bill/search-product`,
   productPriceHistory: `${BASE_URL}/product-price-history/purchase-product`,
@@ -67,11 +68,11 @@ export const API = {
   calculatePurchase: `${BASE_URL}/purchase/calculate`,
   purchase: `${BASE_URL}/purchase`,
   purchaseById: (purchaseId) =>
-  `${BASE_URL}/purchase/${purchaseId}`,
+    `${BASE_URL}/purchase/${purchaseId}`,
   createPurchase: `${BASE_URL}/purchase/purchase`,
   purchaseById: (id) => `${BASE_URL}/purchase/${id}`,
-  purchaseItemWiseReport :`${BASE_URL}/purchase/item-wise`,
-  purchaseReturnItemWise : `${BASE_URL}/return/purchase-return/item-wise`,
+  purchaseItemWiseReport: `${BASE_URL}/purchase/item-wise`,
+  purchaseReturnItemWise: `${BASE_URL}/return/purchase-return/item-wise`,
 
   // stock
   stock: `${BASE_URL}/stock`,
@@ -89,8 +90,8 @@ export const API = {
   //sales
   topselling: `${BASE_URL}/stock/top-selling-products`,
   salesCheck: `${BASE_URL}/bill/sales-check`,
-  salesReturnItemWiseReport : `${BASE_URL}/sales-return/report/item-wise`,
-  salesReturnBillWiseReport :`${BASE_URL}/sales-return/report/bill-wise`,
+  salesReturnItemWiseReport: `${BASE_URL}/sales-return/report/item-wise`,
+  salesReturnBillWiseReport: `${BASE_URL}/sales-return/report/bill-wise`,
 
   //return
   purchaseReturn: `${BASE_URL}/return/purchase-return/bill-wise-report`,
@@ -127,7 +128,16 @@ export const API = {
   activeSessions: `${BASE_URL}/session/active`,
   logout: `${BASE_URL}/auth/logout`,
 
+  // offers
+  offers: `${BASE_URL}/offers`,
+
+  // profile
+  profileme: `${BASE_URL}/profile/me`,
+  account: `${BASE_URL}/profile/me`,
+
+
   // gst reports
-  auditreports:`${BASE_URL}/audit-logs`,
-  purchasereports:`${BASE_URL}/audit-logs?module=Purchase`,
+  auditreports: `${BASE_URL}/audit-logs`,
+  purchasereports: `${BASE_URL}/audit-logs?module=Purchase`,
+  purchaseSummary: `${BASE_URL}/gst-reports/purchase-summary`,
 };

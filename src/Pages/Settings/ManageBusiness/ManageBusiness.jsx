@@ -69,7 +69,7 @@ const [messageType, setMessageType] = useState("");
       delete payload.role;
 
       const res = await fetch(
-        "https://pos-backend-6uh4.onrender.com/api/profile/me",
+        API.profileme,
         {
           method: "PUT",
           headers: {

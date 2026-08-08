@@ -93,7 +93,7 @@ function PurchaseList() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `https://pos-backend-6uh4.onrender.com/api/purchase/search?search=${encodeURIComponent(
+        `${API.purchase}/search?search=${encodeURIComponent(
           query
         )}`,
         {

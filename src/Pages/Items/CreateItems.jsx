@@ -16,14 +16,13 @@ function CreateProduct() {
     mrp: "",
     costPrice: "",
     sellingPrice: "",
+    openingStock: "",
     description: "",
     barcode: "",
-
     unit: defaultUnit,
     unitValue: "",
     productType: "normal",
     parentProductId: "",
-
     pricingType: "standard",
     slabs: [],
   });
@@ -148,7 +147,7 @@ function CreateProduct() {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        "https://pos-backend-6uh4.onrender.com/api/productadd/product-type?productType=bulk",
+        API.repackBulkProducts,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -170,28 +169,41 @@ function CreateProduct() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       setLoading(true);
+
       const token = localStorage.getItem("token");
+
       const payload = {
-        name: form.name,
-        categoryId: form.categoryId,
+        name: form.name.trim(),
+        description: form.description,
+
+        // Send empty category as empty string
+        categoryId: form.categoryId || "",
+
         hsnCode: form.hsnCode,
+
         gstRate: Number(form.gstRate || 0),
-        lowStockQty: Number(form.lowStockQty || 0),
         mrp: Number(form.mrp || 0),
-        productType: form.productType,
+
+        unit: form.unit,
+        unitValue: Number(form.unitValue || 1),
+
+        lowStockQty: Number(form.lowStockQty || 0),
+
         costPrice: Number(form.costPrice || 0),
         sellingPrice: Number(form.sellingPrice || 0),
-        unit: form.unit,
+
+        // ⭐ IMPORTANT
+        openingStock: Number(form.openingStock || 0),
+
         productType: form.productType,
-        barcode: form.barcode,
-        description: form.description,
+
+        barcode: form.barcode || "",
       };
 
-      if (form.unitValue !== "") {
-        payload.unitValue = Number(form.unitValue);
-      }
+      // Slab pricing
       if (form.pricingType === "slab") {
         payload.priceLevel = {
           pricingType: "slab",
@@ -199,14 +211,13 @@ function CreateProduct() {
             minQty: Number(s.minQty),
             maxQty: s.maxQty ? Number(s.maxQty) : null,
             price: Number(s.price),
-          }))
+          })),
         };
       }
 
-
       const url =
         form.productType === "repack"
-          ? "https://pos-backend-6uh4.onrender.com/api/productadd/bulk-add"
+          ? API.createBulkProduct
           : API.createProduct;
 
       const finalPayload =
@@ -233,9 +244,20 @@ function CreateProduct() {
         },
         body: JSON.stringify(finalPayload),
       });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create item");
+
+      console.log("CREATE PRODUCT RESPONSE:", data);
+
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.message || "Failed to create item"
+        );
+      }
+
       showToast("Item created successfully", "success");
+
+      // Reset form
       setForm({
         name: "",
         categoryId: "",
@@ -243,17 +265,21 @@ function CreateProduct() {
         gstRate: "",
         mrp: "",
         costPrice: "",
-        lowStockQty: "",
         sellingPrice: "",
+        openingStock: "",
+        lowStockQty: "",
         barcode: "",
         description: "",
         unit: localStorage.getItem("defaultUnit") || "pcs",
         unitValue: "",
         productType: "normal",
+        parentProductId: "",
         pricingType: "standard",
         slabs: [],
       });
+
     } catch (err) {
+      console.error("CREATE PRODUCT ERROR:", err);
       showToast(err.message, "error");
     } finally {
       setLoading(false);
@@ -507,66 +533,65 @@ function CreateProduct() {
           </div>
 
           <div className={styles.inventoryHeader}>
-  <span>Inventory details</span>
+            <span>Inventory details</span>
 
-  <button
-    type="button"
-    className={`${styles.defaultBtn} ${
-      showDefaultUnit ? styles.defaultBtnActive : ""
-    }`}
-    onClick={() =>
-      setShowDefaultUnit((prev) => !prev)
-    }
-  >
-    Default unit
-    {showDefaultUnit ? (
-      <FiChevronUp />
-    ) : (
-      <FiChevronDown />
-    )}
-  </button>
-</div>
+            <button
+              type="button"
+              className={`${styles.defaultBtn} ${showDefaultUnit ? styles.defaultBtnActive : ""
+                }`}
+              onClick={() =>
+                setShowDefaultUnit((prev) => !prev)
+              }
+            >
+              Default unit
+              {showDefaultUnit ? (
+                <FiChevronUp />
+              ) : (
+                <FiChevronDown />
+              )}
+            </button>
+          </div>
 
-         {showDefaultUnit && (
-  <div className={styles.defaultUnitBox}>
-    <div>
-      <strong>Default item unit</strong>
-      <p>
-        New items will use this unit automatically.
-      </p>
-    </div>
+          {showDefaultUnit && (
+            <div className={styles.defaultUnitBox}>
+              <div>
+                <strong>Default item unit</strong>
+                <p>
+                  New items will use this unit automatically.
+                </p>
+              </div>
 
-    <select
-      value={form.unit}
-      onChange={(e) => {
-        const value = e.target.value;
+              <select
+                value={form.unit}
+                onChange={(e) => {
+                  const value = e.target.value;
 
-        localStorage.setItem(
-          "defaultUnit",
-          value
-        );
+                  localStorage.setItem(
+                    "defaultUnit",
+                    value
+                  );
 
-        setForm((prev) => ({
-          ...prev,
-          unit: value,
-        }));
+                  setForm((prev) => ({
+                    ...prev,
+                    unit: value,
+                  }));
 
-        showToast(
-          "Default unit updated",
-          "success"
-        );
-      }}
-    >
-      <option value="pcs">Pcs</option>
-      <option value="kg">Kg</option>
-      <option value="g">Gram</option>
-      <option value="ltr">Litre</option>
-      <option value="ml">Ml</option>
-      <option value="box">Box</option>
-      <option value="packet">Packet</option>
-    </select>
-  </div>
-)}
+                  showToast(
+                    "Default unit updated",
+                    "success"
+                  );
+                }}
+              >
+                <option value="pcs">Pcs</option>
+                <option value="kg">Kg</option>
+                <option value="g">Gram</option>
+                <option value="ltr">Litre</option>
+                <option value="ml">Ml</option>
+                <option value="box">Box</option>
+                <option value="packet">Packet</option>
+              </select>
+            </div>
+          )}
 
           <div className={styles.grid}>
 
@@ -600,6 +625,18 @@ function CreateProduct() {
                 onChange={handleChange}
                 onKeyDown={(e) => handleKeyDown(e, barcodeRef)}
                 placeholder="Optional"
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label>Opening stock</label>
+
+              <input
+                type="text"
+                name="openingStock"
+                value={form.openingStock}
+                onChange={handleChange}
+                placeholder="Enter opening stock"
               />
             </div>
 

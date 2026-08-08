@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import styles from "./Account.module.css";
+import { API } from "../../../constants/api";
 
 function Account() {
 
@@ -13,52 +14,41 @@ function Account() {
   const [toastVisible, setToastVisible] =
     useState(false);
 
-  const API_URL =
-    "http://192.168.31.181:5000/api/profile/seperate/create";
+  const API_URL = API.account;
 
   useEffect(() => {
     fetchProfile();
   }, []);
 
   const fetchProfile = async () => {
-
     try {
-
-      const token =
-        localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
       const res = await fetch(API_URL, {
-        method: "POST",
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      // check response type
-      const text = await res.text();
+      const data = await res.json();
 
-      console.log(text);
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to fetch profile");
+      }
 
-      const data = JSON.parse(text);
-
-      const profileData =
-        data.data || data;
+      const profileData = data.data || data;
 
       setForm({
-        name:
-          profileData.name || "",
-        phone:
-          profileData.phone || "",
-        email:
-          profileData.email || "",
+        name: profileData.name || "",
+        phone: profileData.phone || "",
+        email: profileData.email || "",
         password: "",
       });
 
     } catch (err) {
-
-      console.log(err);
-      alert("Failed to fetch profile");
-
+      console.error("Fetch profile error:", err);
+      alert(err.message);
     }
   };
 
@@ -73,11 +63,8 @@ function Account() {
   };
 
   const handleSave = async () => {
-
     try {
-
-      const token =
-        localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
       const payload = {
         name: form.name,
@@ -87,25 +74,18 @@ function Account() {
       };
 
       const res = await fetch(API_URL, {
-        method: "POST",
+        method: "PUT",
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
-      const text = await res.text();
-
-      console.log(text);
-
-      const data = JSON.parse(text);
+      const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data.message || "Failed"
-        );
+        throw new Error(data.message || "Failed to update profile");
       }
 
       setToastVisible(true);
@@ -115,10 +95,8 @@ function Account() {
       }, 2500);
 
     } catch (err) {
-
-      console.log(err);
+      console.error("Update profile error:", err);
       alert(err.message);
-
     }
   };
 
@@ -131,9 +109,9 @@ function Account() {
 
     return parts.length >= 2
       ? (
-          parts[0][0] +
-          parts[parts.length - 1][0]
-        ).toUpperCase()
+        parts[0][0] +
+        parts[parts.length - 1][0]
+      ).toUpperCase()
       : name.slice(0, 2).toUpperCase();
   };
 

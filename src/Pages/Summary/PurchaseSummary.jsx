@@ -14,7 +14,7 @@ function PurchaseSummary() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://192.168.31.181:5000/api/gst-reports/purchase-summary",
+        API.purchaseSummary,
         {
           method: "GET",
           headers: {

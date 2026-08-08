@@ -61,36 +61,36 @@ export default function PurchaseHeader({
     };
 
     useEffect(() => {
-    if (!form.supplierId || suppliers.length === 0) return;
+        if (!form.supplierId || suppliers.length === 0) return;
 
-    const supplier = suppliers.find(
-        (s) => String(s._id || s.id) === String(form.supplierId)
-    );
+        const supplier = suppliers.find(
+            (s) => String(s._id || s.id) === String(form.supplierId)
+        );
 
-    if (!supplier) return;
+        if (!supplier) return;
 
-    setSupplierSearch(
-        supplier.supplierName || supplier.name || ""
-    );
+        setSupplierSearch(
+            supplier.supplierName || supplier.name || ""
+        );
 
-    setSupplierDetails({
-        number:
-            supplier.phone ||
-            supplier.mobile ||
-            supplier.supplierPhone ||
-            "",
+        setSupplierDetails({
+            number:
+                supplier.phone ||
+                supplier.mobile ||
+                supplier.supplierPhone ||
+                "",
 
-        address: supplier.address || "",
+            address: supplier.address || "",
 
-        gstNumber: supplier.gstNumber || "",
+            gstNumber: supplier.gstNumber || "",
 
-        city: supplier.city || "",
+            city: supplier.city || "",
 
-        state: supplier.state || "",
+            state: supplier.state || "",
 
-        pincode: supplier.pincode || "",
-    });
-}, [form.supplierId, suppliers]);
+            pincode: supplier.pincode || "",
+        });
+    }, [form.supplierId, suppliers]);
 
     const createInlineSupplier = async () => {
         const supplierPayload = {
@@ -114,28 +114,16 @@ export default function PurchaseHeader({
             },
         };
 
-        console.log(
-            "INLINE SUPPLIER PAYLOAD:",
-            supplierPayload
-        );
-
         const res = await fetch(API.createsupplier, {
             method: "POST",
-
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
             },
-
             body: JSON.stringify(supplierPayload),
         });
 
         const data = await res.json();
-
-        console.log(
-            "INLINE SUPPLIER RESPONSE:",
-            data
-        );
 
         if (!res.ok || data.success === false) {
             throw new Error(
@@ -143,37 +131,26 @@ export default function PurchaseHeader({
             );
         }
 
-        // Support different possible backend response structures
         const createdSupplier =
             data.data?.supplier ||
             data.data?.createdSupplier ||
             data.supplier ||
             data.data;
 
-        const supplierId =
+        const createdSupplierId =
             createdSupplier?._id ||
             createdSupplier?.supplierId ||
             data.data?.supplierId ||
             data.supplierId;
 
-        console.log(
-            "CREATED SUPPLIER:",
-            createdSupplier
-        );
-
-        console.log(
-            "CREATED SUPPLIER ID:",
-            supplierId
-        );
-
-        if (!supplierId) {
+        if (!createdSupplierId) {
             throw new Error(
-                `Supplier created but supplier id not returned for ${supplierSearch}`
+                "Supplier created but supplier ID was not returned"
             );
         }
 
         return {
-            supplierId: String(supplierId),
+            supplierId: String(createdSupplierId),
             supplier: createdSupplier,
         };
     };
@@ -226,54 +203,54 @@ export default function PurchaseHeader({
         }));
     };
 
-const handleSupplierSelect = (supplier) => {
-  const selectedName =
-    supplier.supplierName ||
-    supplier.name ||
-    "";
+    const handleSupplierSelect = (supplier) => {
+        const selectedName =
+            supplier.supplierName ||
+            supplier.name ||
+            "";
 
-  const selectedDetails = {
-    number:
-      supplier.phone ||
-      supplier.mobile ||
-      supplier.supplierPhone ||
-      "",
+        const selectedDetails = {
+            number:
+                supplier.phone ||
+                supplier.mobile ||
+                supplier.supplierPhone ||
+                "",
 
-    address:
-      supplier.address || "",
+            address:
+                supplier.address || "",
 
-    gstNumber:
-      supplier.gstNumber || "",
+            gstNumber:
+                supplier.gstNumber || "",
 
-    city:
-      supplier.city || "",
+            city:
+                supplier.city || "",
 
-    state:
-      supplier.state || "",
+            state:
+                supplier.state || "",
 
-    pincode:
-      supplier.pincode || "",
-  };
+            pincode:
+                supplier.pincode || "",
+        };
 
-  setSupplierSearch(selectedName);
-  setSupplierDetails(selectedDetails);
+        setSupplierSearch(selectedName);
+        setSupplierDetails(selectedDetails);
 
-  onSupplierSearchChange?.(
-    selectedName
-  );
+        onSupplierSearchChange?.(
+            selectedName
+        );
 
-  onSupplierDetailsChange?.(
-    selectedDetails
-  );
+        onSupplierDetailsChange?.(
+            selectedDetails
+        );
 
-  setForm((prev) => ({
-    ...prev,
-    supplierId:
-      supplier._id || supplier.id,
-  }));
+        setForm((prev) => ({
+            ...prev,
+            supplierId:
+                supplier._id || supplier.id,
+        }));
 
-  setShowSupplierList(false);
-};
+        setShowSupplierList(false);
+    };
 
     return (
         <div className={styles.headerSection}>

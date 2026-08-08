@@ -10,71 +10,162 @@ exports.allstockcheck = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
 
-        const barcodes = await Barcode.find({
+        // Get ALL products
+        const products = await Product.find({
             superAdminId: hierarchy.superAdminId
         })
-            .populate("productId", "name itemCode stock unit unitValue mrp costPrice sellingPrice")
+            .select(
+                "name itemCode stock unit unitValue mrp costPrice sellingPrice"
+            )
             .sort({ createdAt: -1 });
 
-        const data = [];
+        // Get all barcodes for these products
+        const barcodes = await Barcode.find({
+            superAdminId: hierarchy.superAdminId
+        });
+
+        // Group barcodes by productId
+        const barcodeMap = {};
+
+        for (const barcode of barcodes) {
+            const productId = barcode.productId?.toString();
+
+            if (!productId) continue;
+
+            if (!barcodeMap[productId]) {
+                barcodeMap[productId] = [];
+            }
+
+            barcodeMap[productId].push(barcode);
+        }
 
         const formatQty = (value) => {
             const num = Number(value || 0);
-            return Number.isInteger(num) ? String(num) : String(Number(num.toFixed(2)));
+
+            return Number.isInteger(num)
+                ? String(num)
+                : String(Number(num.toFixed(2)));
         };
 
-        for (const barcode of barcodes) {
-            const product = barcode.productId;
+        const data = [];
 
-            if (!product) continue;
+        for (const product of products) {
 
-            const currentStock = Number(Number(barcode.availableQty || 0).toFixed(2));
-            const totalQty = Number(Number(barcode.qty || 0).toFixed(2));
+            const productId = product._id.toString();
 
-            const unit = barcode.unit || product.unit || "pcs";
-            const unitValue = Number(barcode.unitValue || product.unitValue || 1);
+            const productBarcodes = barcodeMap[productId] || [];
+
+            /*
+             * If barcode exists:
+             * use barcode stock.
+             *
+             * If barcode does not exist:
+             * use product stock.
+             */
+
+            let currentStock;
+            let totalQty;
+            let soldQty;
+
+            if (productBarcodes.length > 0) {
+
+                // For barcode products
+                totalQty = productBarcodes.reduce(
+                    (sum, barcode) =>
+                        sum + Number(barcode.qty || 0),
+                    0
+                );
+
+                currentStock = productBarcodes.reduce(
+                    (sum, barcode) =>
+                        sum + Number(barcode.availableQty || 0),
+                    0
+                );
+
+                soldQty = Math.max(
+                    Number((totalQty - currentStock).toFixed(2)),
+                    0
+                );
+
+            } else {
+
+                // ⭐ No barcode → use Product stock
+                currentStock = Number(product.stock || 0);
+
+                totalQty = currentStock;
+
+                soldQty = 0;
+            }
+
+            currentStock = Number(currentStock.toFixed(2));
+            totalQty = Number(totalQty.toFixed(2));
+
+            const unit = product.unit || "pcs";
+
+            const unitValue = Number(
+                product.unitValue || 1
+            );
 
             let totalStockText = "";
 
             if (unit === "kg") {
-                totalStockText = `${formatQty(currentStock * unitValue)} kg`;
+
+                totalStockText =
+                    `${formatQty(currentStock * unitValue)} kg`;
+
             } else if (unit === "g") {
-                totalStockText = `${formatQty((currentStock * unitValue) / 1000)} kg`;
+
+                totalStockText =
+                    `${formatQty(
+                        (currentStock * unitValue) / 1000
+                    )} kg`;
+
             } else {
-                totalStockText = `${formatQty(currentStock)} pcs`;
+
+                totalStockText =
+                    `${formatQty(currentStock)} pcs`;
             }
 
-            const soldQty = Math.max(
-                Number((totalQty - currentStock).toFixed(2)),
-                0
-            );
-
             data.push({
+
                 productId: product._id,
+
                 productName: product.name || "",
-               
+
                 itemCode: product.itemCode || "",
 
-                barcode: barcode.code,
+                // ⭐ Barcode if available
+                barcode:
+                    productBarcodes.length > 0
+                        ? productBarcodes[0].code
+                        : null,
 
                 totalQty,
+
                 currentStock,
+
                 soldQty,
 
                 totalStockText,
 
-                mrp: barcode.mrp || product.mrp || 0,
-                costPrice: barcode.costPrice || product.costPrice || 0,
-                sellingPrice: barcode.sellingPrice || product.sellingPrice || 0,
+                mrp: product.mrp || 0,
+
+                costPrice: product.costPrice || 0,
+
+                sellingPrice: product.sellingPrice || 0,
 
                 unit,
+
                 unitValue,
-                unitText: `${unitValue} ${unit}`,
+
+                unitText:
+                    `${unitValue} ${unit}`,
 
                 status:
                     currentStock <= 0
                         ? "Out Of Stock"
-                        : currentStock <= 10
+                        : currentStock <=
+                          Number(product.lowStockQty || 10)
                             ? "Low Stock"
                             : "Available"
             });
@@ -87,6 +178,12 @@ exports.allstockcheck = async (req, res) => {
         });
 
     } catch (err) {
+
+        console.error(
+            "ALL STOCK CHECK ERROR:",
+            err
+        );
+
         return res.status(500).json({
             success: false,
             message: "Server error",
@@ -94,7 +191,6 @@ exports.allstockcheck = async (req, res) => {
         });
     }
 };
-
 
 exports.getAllRepackStock = async (req, res) => {
     try {

@@ -155,7 +155,7 @@ function BulkAction() {
       const payload = { products };
 
       const res = await fetch(
-        "https://pos-backend-6uh4.onrender.com/api/productadd/bulk-add",
+        API.bulkAddProducts,
         {
           method: "POST",
           headers: {

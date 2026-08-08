@@ -16,7 +16,7 @@ function Offers() {
       setError("");
 
       const response = await fetch(
-        "https://pos-backend-6uh4.onrender.com/api/offers",
+        API.offers,
         {
           method: "GET",
           headers: {

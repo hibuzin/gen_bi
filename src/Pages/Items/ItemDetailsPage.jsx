@@ -56,7 +56,7 @@ function ItemDetails() {
             const token = localStorage.getItem("token");
 
             const res = await fetch(
-                `https://pos-backend-6uh4.onrender.com/api/product-price-history/purchase-product/${id}`,
+                `${API.productPriceHistory}/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -501,26 +501,25 @@ function ItemDetails() {
                                         </tr>
                                     </thead>
                                     <tbody>
-  {stockData.map((item, index) => (
-    <tr key={item.barcode || index}>
-      <td>{item.currentStock}</td>
+                                        {stockData.map((item, index) => (
+                                            <tr key={item.barcode || index}>
+                                                <td>{item.currentStock}</td>
 
-      <td>{item.soldQty}</td>
+                                                <td>{item.soldQty}</td>
 
-      <td>
-        <span
-          className={`${styles.badge} ${
-            item.status === "Available"
-              ? styles.inStock
-              : styles.outStock
-          }`}
-        >
-          {item.status}
-        </span>
-      </td>
-    </tr>
-  ))}
-</tbody>
+                                                <td>
+                                                    <span
+                                                        className={`${styles.badge} ${item.status === "Available"
+                                                            ? styles.inStock
+                                                            : styles.outStock
+                                                            }`}
+                                                    >
+                                                        {item.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -539,7 +538,7 @@ function ItemDetails() {
                                             <th>Cost price</th>
                                             <th>Selling price</th>
                                             <th>Mrp</th>
-                                            
+
                                         </tr>
                                     </thead>
 
@@ -570,7 +569,7 @@ function ItemDetails() {
                                                         ₹ {Number(item.mrp || 0)}
                                                     </td>
 
-                                                    
+
                                                 </tr>
                                             ))
                                         ) : (
