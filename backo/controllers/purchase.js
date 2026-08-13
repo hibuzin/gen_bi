@@ -816,63 +816,100 @@ if (isNaN(sellingPrice) || sellingPrice < 0) {
             createdBy: req.user.userId
         });
 
-await AuditLog.create({
-    ...hierarchy,
+const gstPurchaseItems = purchase.items.filter(
+    (item) =>
+        Number(item.taxPercentage || 0) > 0 &&
+        Number(item.taxAmount || 0) > 0
+);
 
-    userId: req.user.userId,
-    role: req.user.role,
+if (gstPurchaseItems.length > 0) {
 
-    module: "Purchase",
-    action: "Create",
+    await AuditLog.create({
+        ...hierarchy,
 
-    documentId: purchase._id,
-    oldData: null,
+        userId: req.user.userId,
+        role: req.user.role,
 
-    newData: {
-        grnNo: purchase.grnNo || "",
-        invoiceNo: purchase.invoiceNo || "",
-        grnDate: purchase.grnDate || null,
+        module: "Purchase",
+        action: "Create",
 
-        supplierName: supplier.supplierName || "",
+        documentId: purchase._id,
+        oldData: null,
 
-        supplierGstNumber:
-            supplier.gstNumber ||
-            supplier.gstnumber ||
-            supplier.gstin ||
-            "",
+        newData: {
+            grnNo: purchase.grnNo || "",
+            invoiceNo: purchase.invoiceNo || "",
+            grnDate: purchase.grnDate || null,
 
-        placeOfSupply:
-            supplier.state ||
-            supplier.placeOfSupply ||
-            "",
+            supplierName:
+                supplier.supplierName || "",
 
-        items: purchase.items.map((item) => {
-            const gstRate = Number(item.taxPercentage || 0);
-            const taxAmount = Number(item.taxAmount || 0);
+            supplierGstNumber:
+                supplier.gstNumber ||
+                supplier.gstnumber ||
+                supplier.gstin ||
+                "",
 
-            return {
-                hsnCode: item.hsnCode || "",
-                itemName: item.productName || "",
+            placeOfSupply:
+                supplier.state ||
+                supplier.placeOfSupply ||
+                "",
 
-                qty: Number(item.qty || 0),
-                unit: item.unit || "",
+            items: gstPurchaseItems.map((item) => {
 
-                rate: Number(
-                    item.Rate ??
-                    item.netcost ??
-                    0
-                ),
+                const gstRate =
+                    Number(
+                        item.taxPercentage || 0
+                    );
 
-                gst: gstRate,
-                cgst: gstRate / 2,
-                sgst: gstRate / 2,
+                const taxAmount =
+                    Number(
+                        item.taxAmount || 0
+                    );
 
-                mrp: Number(item.mrp || 0),
-                taxAmount
-            };
-        })
-    }
-});
+                return {
+                    hsnCode:
+                        item.hsnCode || "",
+
+                    itemName:
+                        item.productName || "",
+
+                    qty:
+                        Number(item.qty || 0),
+
+                    unit:
+                        item.unit || "",
+
+                    rate: Number(
+                        item.Rate ??
+                        item.netcost ??
+                        0
+                    ),
+
+                    gst:
+                        gstRate,
+
+                    cgst:
+                        gstRate / 2,
+
+                    sgst:
+                        gstRate / 2,
+
+                         cgstAmount:
+        Number((taxAmount / 2).toFixed(2)),
+
+    sgstAmount:
+        Number((taxAmount / 2).toFixed(2)),
+
+                    mrp:
+                        Number(item.mrp || 0),
+
+                    taxAmount
+                };
+            })
+        }
+    });
+}
 
         const responsePurchase = await Purchase.findById(purchase._id)
             .populate("items.productId", "name brand");

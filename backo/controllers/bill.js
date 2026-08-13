@@ -1486,7 +1486,12 @@ exports.calculateBill = async (req, res) => {
                 superAdminId: hierarchy.superAdminId
             });
 
-            const normalSellingPrice = Number(barcode?.sellingPrice || 0);
+            const normalSellingPrice = Number(
+    barcode?.sellingPrice ??
+    product.sellingPrice ??
+    0
+);
+
             let price = normalSellingPrice;
             let appliedPriceLevel = "normal";
             let appliedSlab = null;
@@ -1507,7 +1512,20 @@ exports.calculateBill = async (req, res) => {
                 } else if (priceLevel === "auto" && productPriceLevel.pricingType === "auto") {
                     const profitPercent = Number(productPriceLevel.autoPricing?.profitPercent || 0);
                     const baseOn = productPriceLevel.autoPricing?.baseOn || "costPrice";
-                    const basePrice = baseOn === "mrp" ? Number(barcode?.mrp || 0) : Number(barcode?.costPrice || 0);
+
+                   const basePrice =
+    baseOn === "mrp"
+        ? Number(
+            barcode?.mrp ??
+            product.mrp ??
+            0
+          )
+        : Number(
+            barcode?.costPrice ??
+            product.costPrice ??
+            0
+          );
+
                     price = basePrice + (basePrice * profitPercent / 100);
                     appliedPriceLevel = "auto";
                 } else if (priceLevel === "slab" && productPriceLevel.pricingType === "slab") {

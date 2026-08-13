@@ -21,6 +21,12 @@ const productSchema = new mongoose.Schema({
         default: null
     },
 
+    bulkId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: null,
+    index: true
+},
+
     name: { type: String, required: true },
 
     description: {

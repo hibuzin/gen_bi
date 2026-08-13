@@ -399,15 +399,21 @@ function CreateProduct() {
 
             <div className={styles.field}>
               <label>Gst rate (%)</label>
-              <input
+
+              <select
                 ref={gstRef}
-                type="text"
                 name="gstRate"
                 value={form.gstRate}
                 onChange={handleChange}
                 onKeyDown={(e) => handleKeyDown(e, mrpRef)}
-                placeholder="18"
-              />
+              >
+                <option value="">Select GST</option>
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18">18%</option>
+                <option value="28">28%</option>
+              </select>
             </div>
 
           </div>
@@ -585,10 +591,6 @@ function CreateProduct() {
                 <option value="pcs">Pcs</option>
                 <option value="kg">Kg</option>
                 <option value="g">Gram</option>
-                <option value="ltr">Litre</option>
-                <option value="ml">Ml</option>
-                <option value="box">Box</option>
-                <option value="packet">Packet</option>
               </select>
             </div>
           )}
@@ -607,10 +609,6 @@ function CreateProduct() {
                 <option value="pcs">Pcs</option>
                 <option value="kg">Kg</option>
                 <option value="g">Gram</option>
-                <option value="ltr">Litre</option>
-                <option value="ml">Ml</option>
-                <option value="box">Box</option>
-                <option value="packet">Packet</option>
               </select>
             </div>
 

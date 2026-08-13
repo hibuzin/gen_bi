@@ -45,7 +45,7 @@ exports.productcreate = async (req, res) => {
             openingStock
         } = req.body;
 
-        if (!name ) {
+        if (!name) {
             return res.status(400).json({
                 success: false,
                 message: "Name required"
@@ -56,22 +56,22 @@ exports.productcreate = async (req, res) => {
 
         const itemCode = await generateItemCode(hierarchy.superAdminId);
 
-       let cat = null;
+        let cat = null;
 
-if (categoryId) {
-    cat = await category.findOne({
-        _id: categoryId,
-        superAdminId: hierarchy.superAdminId
-    });
+        if (categoryId) {
+            cat = await category.findOne({
+                _id: categoryId,
+                superAdminId: hierarchy.superAdminId
+            });
 
-    if (!cat) {
-        return res.status(404).json({
-            success: false,
-            message: "Category not found"
-        });
-    }
-}
-       
+            if (!cat) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Category not found"
+                });
+            }
+        }
+
 
         const processedGstRate = Number(gstRate || 0);
 
@@ -174,15 +174,15 @@ if (categoryId) {
 
         const processedOpeningStock = Number(openingStock ?? 0);
 
-if (
-    !Number.isFinite(processedOpeningStock) ||
-    processedOpeningStock < 0
-) {
-    return res.status(400).json({
-        success: false,
-        message: "Valid opening stock is required"
-    });
-}
+        if (
+            !Number.isFinite(processedOpeningStock) ||
+            processedOpeningStock < 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Valid opening stock is required"
+            });
+        }
 
 
         let barcodeCode = "";
@@ -225,8 +225,8 @@ if (
             costPrice: processedCostPrice,
             sellingPrice: processedSellingPrice,
 
-          categoryId: categoryId || null,
-categoryName: cat ? cat.name : "",
+            categoryId: categoryId || null,
+            categoryName: cat ? cat.name : "",
 
             hsnCode: hsnCode ? String(hsnCode).trim() : "",
             gstRate: processedGstRate,
@@ -252,7 +252,7 @@ categoryName: cat ? cat.name : "",
                 code: barcodeCode,
 
                 qty: processedOpeningStock,
-    availableQty: processedOpeningStock,
+                availableQty: processedOpeningStock,
 
                 mrp: processedMrp,
 
@@ -328,6 +328,7 @@ categoryName: cat ? cat.name : "",
 };
 
 
+
 exports.bulkProductCreate = async (req, res) => {
     try {
         const { products } = req.body;
@@ -341,50 +342,81 @@ exports.bulkProductCreate = async (req, res) => {
 
         const hierarchy = attachHierarchy(req.user);
 
+       const bulkId = new mongoose.Types.ObjectId();
+
         const allowedGstRates = [0, 5, 12, 18, 28];
         const allowedUnits = ["pcs", "kg", "g"];
 
-        const createdProducts = [];
         const errors = [];
+        const validatedProducts = [];
         const requestBarcodes = new Set();
+
+        
+
+
 
         for (let i = 0; i < products.length; i++) {
             try {
                 const item = products[i];
 
-                const name = item.name ? String(item.name).trim() : "";
+                const name = item.name
+                    ? String(item.name).trim()
+                    : "";
 
-                const brand = item.brand ? String(item.brand).trim() : "";
-                const description = item.description ? String(item.description).trim() : "";
-                const categoryId = item.categoryId;
+                const brand = item.brand
+                    ? String(item.brand).trim()
+                    : "";
 
-                const hsnCode = item.hsnCode ? String(item.hsnCode).trim() : "";
-                const barcodeCode = item.barcode ? String(item.barcode).trim() : "";
+                const description = item.description
+                    ? String(item.description).trim()
+                    : "";
 
-                if (!name || !categoryId) {
+                const categoryId = item.categoryId || null;
+
+                const hsnCode = item.hsnCode
+                    ? String(item.hsnCode).trim()
+                    : "";
+
+                const barcodeCode = item.barcode
+                    ? String(item.barcode).trim()
+                    : "";
+
+               
+
+                if (!name) {
                     errors.push({
                         row: i + 1,
                         name,
                         barcode: barcodeCode,
-                        message: "Name and category required"
+                        message: "Name is required"
                     });
+
                     continue;
                 }
 
-                const cat = await category.findOne({
-                    _id: categoryId,
-                    superAdminId: hierarchy.superAdminId
-                });
+               
 
-                if (!cat) {
-                    errors.push({
-                        row: i + 1,
-                        name,
-                        barcode: barcodeCode,
-                        message: "Category not found"
+                let cat = null;
+
+                if (categoryId) {
+                    cat = await category.findOne({
+                        _id: categoryId,
+                        superAdminId: hierarchy.superAdminId
                     });
-                    continue;
+
+                    if (!cat) {
+                        errors.push({
+                            row: i + 1,
+                            name,
+                            barcode: barcodeCode,
+                            message: "Category not found"
+                        });
+
+                        continue;
+                    }
                 }
+
+              
 
                 const processedGstRate = Number(item.gstRate || 0);
 
@@ -398,14 +430,19 @@ exports.bulkProductCreate = async (req, res) => {
                         barcode: barcodeCode,
                         message: "GST rate must be 0, 5, 12, 18 or 28"
                     });
+
                     continue;
                 }
 
+              
                 let finalUnit = item.unit
                     ? String(item.unit).trim().toLowerCase()
                     : "pcs";
 
-                if (finalUnit === "gram" || finalUnit === "grams") {
+                if (
+                    finalUnit === "gram" ||
+                    finalUnit === "grams"
+                ) {
                     finalUnit = "g";
                 }
 
@@ -416,19 +453,25 @@ exports.bulkProductCreate = async (req, res) => {
                         barcode: barcodeCode,
                         message: "Unit must be pcs, kg or g"
                     });
+
                     continue;
                 }
 
+               
+
                 const finalUnitValue =
                     item.unitValue !== undefined &&
-                        item.unitValue !== null &&
-                        item.unitValue !== ""
+                    item.unitValue !== null &&
+                    item.unitValue !== ""
                         ? Number(item.unitValue)
                         : undefined;
 
                 if (
                     finalUnitValue !== undefined &&
-                    (isNaN(finalUnitValue) || finalUnitValue <= 0)
+                    (
+                        isNaN(finalUnitValue) ||
+                        finalUnitValue <= 0
+                    )
                 ) {
                     errors.push({
                         row: i + 1,
@@ -436,12 +479,21 @@ exports.bulkProductCreate = async (req, res) => {
                         barcode: barcodeCode,
                         message: "Valid unitValue is required"
                     });
+
                     continue;
                 }
 
+               
+
                 const processedMrp = Number(item.mrp || 0);
 
-                const allowedProductTypes = ["normal", "bulk", "repack"];
+              
+
+                const allowedProductTypes = [
+                    "normal",
+                    "bulk",
+                    "repack"
+                ];
 
                 const finalProductType = item.productType
                     ? String(item.productType).trim().toLowerCase()
@@ -452,10 +504,14 @@ exports.bulkProductCreate = async (req, res) => {
                         row: i + 1,
                         name,
                         barcode: barcodeCode,
-                        message: "Product type must be normal, bulk or repack"
+                        message:
+                            "Product type must be normal, bulk or repack"
                     });
+
                     continue;
                 }
+
+               
 
                 let finalParentProductId = null;
 
@@ -465,8 +521,10 @@ exports.bulkProductCreate = async (req, res) => {
                             row: i + 1,
                             name,
                             barcode: barcodeCode,
-                            message: "Parent bulk product required for repack product"
+                            message:
+                                "Parent bulk product required for repack product"
                         });
+
                         continue;
                     }
 
@@ -481,107 +539,250 @@ exports.bulkProductCreate = async (req, res) => {
                             row: i + 1,
                             name,
                             barcode: barcodeCode,
-                            message: "Parent bulk product not found"
+                            message:
+                                "Parent bulk product not found"
                         });
+
                         continue;
                     }
 
                     finalParentProductId = item.parentProductId;
                 }
 
+              
 
-                const processedCostPrice = Number(item.costPrice || 0);
-                const processedSellingPrice = Number(item.sellingPrice || 0);
-                const processedLowStockQty = Number(item.lowStockQty || 10);
+                const processedCostPrice =
+                    Number(item.costPrice || 0);
 
-                if (isNaN(processedLowStockQty) || processedLowStockQty < 0) {
+                const processedSellingPrice =
+                    Number(item.sellingPrice || 0);
+
+                const processedLowStockQty =
+                    Number(item.lowStockQty || 10);
+
+              
+
+                const processedOpeningStock =
+                    item.openingStock !== undefined &&
+                    item.openingStock !== null &&
+                    item.openingStock !== ""
+                        ? Number(item.openingStock)
+                        : 0;
+
+                if (
+                    isNaN(processedOpeningStock) ||
+                    processedOpeningStock < 0
+                ) {
                     errors.push({
                         row: i + 1,
                         name,
                         barcode: barcodeCode,
-                        message: "Valid low stock qty is required"
+                        message:
+                            "Valid opening stock is required"
                     });
+
                     continue;
                 }
 
+               
+
+                if (
+                    isNaN(processedLowStockQty) ||
+                    processedLowStockQty < 0
+                ) {
+                    errors.push({
+                        row: i + 1,
+                        name,
+                        barcode: barcodeCode,
+                        message:
+                            "Valid low stock qty is required"
+                    });
+
+                    continue;
+                }
+
+               
+
                 if (barcodeCode) {
+                  
                     if (requestBarcodes.has(barcodeCode)) {
                         errors.push({
                             row: i + 1,
                             name,
                             barcode: barcodeCode,
-                            message: "Duplicate barcode in request"
+                            message:
+                                "Duplicate barcode in request"
                         });
+
                         continue;
                     }
 
                     requestBarcodes.add(barcodeCode);
 
-                    const existingBarcode = await Barcode.findOne({
-                        code: barcodeCode,
-                        superAdminId: hierarchy.superAdminId
-                    });
+                   
+                    const existingBarcode =
+                        await Barcode.findOne({
+                            code: barcodeCode,
+                            superAdminId:
+                                hierarchy.superAdminId
+                        });
 
                     if (existingBarcode) {
                         errors.push({
                             row: i + 1,
                             name,
                             barcode: barcodeCode,
-                            message: "Barcode already exists"
+                            message:
+                                "Barcode already exists"
                         });
+
                         continue;
                     }
                 }
 
-                const itemCode = await generateItemCode(hierarchy.superAdminId);
+              
 
-                const product = await Product.create({
-
-                    itemCode,
+                validatedProducts.push({
+                    row: i + 1,
+                    item,
                     name,
                     brand,
                     description,
-
-                    productType: finalProductType,
-                    parentProductId: finalParentProductId,
-
-                    stock: 0,
-                    lowStockQty: processedLowStockQty,
-                    reservedStock: 0,
-
-                    mrp: processedMrp,
-
-                    unit: finalUnit,
-                    ...(finalUnitValue !== undefined && {
-                        unitValue: finalUnitValue
-                    }),
-
-                    costPrice: processedCostPrice,
-                    sellingPrice: processedSellingPrice,
-
                     categoryId,
-                    categoryName: cat.name || "",
-
+                    cat,
                     hsnCode,
-                    gstRate: processedGstRate,
-
-                    ...hierarchy,
-                    createdBy: req.user.userId
+                    barcodeCode,
+                    processedGstRate,
+                    finalUnit,
+                    finalUnitValue,
+                    processedMrp,
+                    finalProductType,
+                    finalParentProductId,
+                    processedCostPrice,
+                    processedSellingPrice,
+                    processedLowStockQty,
+                    processedOpeningStock
                 });
 
-                let createdBarcode = null;
+            } catch (err) {
+                errors.push({
+                    row: i + 1,
+                    name: products[i]?.name || "",
+                    barcode: products[i]?.barcode || "",
+                    message:
+                        err.code === 11000
+                            ? "Duplicate product or barcode"
+                            : err.message
+                });
+            }
+        }
 
-                if (barcodeCode) {
-                    createdBarcode = await Barcode.create({
+       
+
+        if (errors.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Bulk product add failed. Fix all errors and try again.",
+                bulkId,
+                total: products.length,
+                createdCount: 0,
+                errorCount: errors.length,
+                data: [],
+                errors
+            });
+        }
+
+      
+
+        const createdProducts = [];
+
+        for (const validated of validatedProducts) {
+            const {
+                row,
+                item,
+                name,
+                brand,
+                description,
+                categoryId,
+                cat,
+                hsnCode,
+                barcodeCode,
+                processedGstRate,
+                finalUnit,
+                finalUnitValue,
+                processedMrp,
+                finalProductType,
+                finalParentProductId,
+                processedCostPrice,
+                processedSellingPrice,
+                processedLowStockQty,
+                processedOpeningStock
+            } = validated;
+
+            const itemCode =
+                await generateItemCode(
+                    hierarchy.superAdminId
+                );
+
+           
+
+            const product = await Product.create({
+                itemCode,
+
+                name,
+                brand,
+                description,
+
+                productType: finalProductType,
+                parentProductId: finalParentProductId,
+
+                bulkId,
+
+                stock: processedOpeningStock,
+                lowStockQty: processedLowStockQty,
+                reservedStock: 0,
+
+                mrp: processedMrp,
+
+                unit: finalUnit,
+
+                ...(finalUnitValue !== undefined && {
+                    unitValue: finalUnitValue
+                }),
+
+                costPrice: processedCostPrice,
+                sellingPrice: processedSellingPrice,
+
+                categoryId,
+                categoryName: cat
+                    ? cat.name
+                    : null,
+
+                hsnCode,
+                gstRate: processedGstRate,
+
+                ...hierarchy,
+                createdBy: req.user.userId
+            });
+
+         
+
+            let createdBarcode = null;
+
+            if (barcodeCode) {
+                createdBarcode =
+                    await Barcode.create({
                         productId: product._id,
                         code: barcodeCode,
 
-                        qty: 0,
-                        availableQty: 0,
+                        qty: processedOpeningStock,
+                        availableQty: processedOpeningStock,
 
                         mrp: processedMrp,
 
                         unit: finalUnit,
+
                         ...(finalUnitValue !== undefined && {
                             unitValue: finalUnitValue
                         }),
@@ -595,28 +796,45 @@ exports.bulkProductCreate = async (req, res) => {
                         ...hierarchy,
                         createdBy: req.user.userId
                     });
-                }
+            }
 
-                let createdPriceLevel = null;
+          
+           
 
-                if (item.priceLevel) {
-                    createdPriceLevel = await PriceLevel.findOneAndUpdate(
+            let createdPriceLevel = null;
+
+            if (item.priceLevel) {
+                createdPriceLevel =
+                    await PriceLevel.findOneAndUpdate(
                         {
                             productId: product._id,
-                            superAdminId: hierarchy.superAdminId
+                            superAdminId:
+                                hierarchy.superAdminId
                         },
                         {
                             productId: product._id,
-                            pricingType: item.priceLevel.pricingType || "slab",
-                            manualPrice: item.priceLevel.manualPrice || 0,
-                            autoPricing: item.priceLevel.autoPricing || {
-                                baseOn: "costPrice",
-                                profitPercent: 0
-                            },
-                            slabs: item.priceLevel.slabs || [],
+
+                            pricingType:
+                                item.priceLevel.pricingType ||
+                                "slab",
+
+                            manualPrice:
+                                item.priceLevel.manualPrice ||
+                                0,
+
+                            autoPricing:
+                                item.priceLevel.autoPricing || {
+                                    baseOn: "costPrice",
+                                    profitPercent: 0
+                                },
+
+                            slabs:
+                                item.priceLevel.slabs || [],
 
                             ...hierarchy,
+
                             createdBy: req.user.userId,
+
                             isActive: true
                         },
                         {
@@ -625,36 +843,69 @@ exports.bulkProductCreate = async (req, res) => {
                             runValidators: true
                         }
                     );
-                }
-
-                createdProducts.push({
-                    row: i + 1,
-                    product,
-                    barcode: createdBarcode,
-                    priceLevel: createdPriceLevel
-                });
-
-            } catch (err) {
-                errors.push({
-                    row: i + 1,
-                    message: err.code === 11000
-                        ? "Duplicate product or barcode"
-                        : err.message
-                });
             }
+
+          
+
+            createdProducts.push({
+                row,
+
+                productId: product._id,
+
+                itemCode: product.itemCode,
+
+                name: product.name,
+
+                productType: product.productType,
+
+                categoryId: product.categoryId,
+
+                categoryName: product.categoryName,
+
+                openingStock: product.stock,
+
+                barcode: createdBarcode
+                    ? {
+                        id: createdBarcode._id,
+                        code: createdBarcode.code,
+                        qty: createdBarcode.qty
+                    }
+                    : null,
+
+                priceLevel: createdPriceLevel
+                    ? {
+                        id: createdPriceLevel._id,
+                        pricingType:
+                            createdPriceLevel.pricingType
+                    }
+                    : null
+            });
         }
 
+      
         return res.status(201).json({
             success: true,
             message: "Bulk product add completed",
+
+            bulkId,
+
             total: products.length,
+
             createdCount: createdProducts.length,
-            errorCount: errors.length,
+
+            errorCount: 0,
+
             data: createdProducts,
-            errors
+
+            errors: []
         });
 
     } catch (err) {
+        console.error(
+            "Bulk product create error:",
+            err
+        );
+
         return res.status(500).json({
             success: false,
             message: "Server error",
@@ -662,6 +913,44 @@ exports.bulkProductCreate = async (req, res) => {
         });
     }
 };
+
+
+exports.getProductsByBulkId = async (req, res) => {
+    try {
+        const { bulkId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(bulkId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid bulk ID"
+            });
+        }
+
+        const hierarchy = attachHierarchy(req.user);
+
+        const products = await Product.find({
+            bulkId,
+            superAdminId: hierarchy.superAdminId
+        }).sort({ createdAt: 1 });
+
+        return res.status(200).json({
+            success: true,
+            bulkId,
+            count: products.length,
+            data: products
+        });
+
+    } catch (err) {
+        console.error("Get bulk products error:", err);
+
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: err.message
+        });
+    }
+};
+
 
 exports.getproductMrps = async (req, res) => {
     try {
@@ -762,10 +1051,10 @@ exports.allProducts = async (req, res) => {
                 }).lean();
 
                 const totalAvailableQty = Number(
-  barcodes
-    .reduce((sum, b) => sum + Number(b.availableQty || 0), 0)
-    .toFixed(2)
-);
+                    barcodes
+                        .reduce((sum, b) => sum + Number(b.availableQty || 0), 0)
+                        .toFixed(2)
+                );
 
                 return {
                     ...product,
@@ -779,7 +1068,7 @@ exports.allProducts = async (req, res) => {
                         barcode: barcode.code || "",
 
                         qty: barcode.qty || 0,
-                       availableQty: Number(Number(barcode.availableQty || 0).toFixed(2)),
+                        availableQty: Number(Number(barcode.availableQty || 0).toFixed(2)),
 
                         unit: barcode.unit || product.unit || "pcs",
                         unitValue: barcode.unitValue || product.unitValue || 1,
@@ -1078,7 +1367,7 @@ exports.updateProduct = async (req, res) => {
             costPrice,
             sellingPrice,
             barcode,
-             openingStock
+            openingStock
         } = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -1255,21 +1544,22 @@ exports.updateProduct = async (req, res) => {
         product.updatedBy = req.user.userId || req.user.id;
 
         if (openingStock !== undefined) {
-    const processedOpeningStock = Number(openingStock);
+            const processedOpeningStock = Number(openingStock);
 
-    if (
-        !Number.isFinite(processedOpeningStock) ||
-        processedOpeningStock < 0
-    ) {
-        return res.status(400).json({
-            success: false,
-            message: "Valid opening stock is required"
-        });
-    }
+            if (
+                !Number.isFinite(processedOpeningStock) ||
+                processedOpeningStock < 0
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Valid opening stock is required"
+                });
+            }
 
-    
-    product.stock = processedOpeningStock;
-}
+
+               product.stock = processedOpeningStock;
+
+        }
 
         let createdBarcode = null;
 
@@ -1328,29 +1618,29 @@ exports.updateProduct = async (req, res) => {
 
         await product.save();
 
-       const barcodeUpdateData = {
-    mrp: product.mrp,
-    costPrice: product.costPrice,
-    sellingPrice: product.sellingPrice,
-    gstRate: product.gstRate,
-    unit: product.unit,
-    unitValue: product.unitValue
-};
+        const barcodeUpdateData = {
+            mrp: product.mrp,
+            costPrice: product.costPrice,
+            sellingPrice: product.sellingPrice,
+            gstRate: product.gstRate,
+            unit: product.unit,
+            unitValue: product.unitValue
+        };
 
-if (openingStock !== undefined) {
-    barcodeUpdateData.qty = product.stock;
-    barcodeUpdateData.availableQty = product.stock;
-}
+        if (openingStock !== undefined) {
+            barcodeUpdateData.qty = product.stock;
+            barcodeUpdateData.availableQty = product.stock;
+        }
 
-await Barcode.updateMany(
-    {
-        productId: product._id,
-        superAdminId: hierarchy.superAdminId
-    },
-    {
-        $set: barcodeUpdateData
-    }
-);
+        await Barcode.updateMany(
+            {
+                productId: product._id,
+                superAdminId: hierarchy.superAdminId
+            },
+            {
+                $set: barcodeUpdateData
+            }
+        );
 
         const barcodes = await Barcode.find({
             productId: product._id,
@@ -1382,6 +1672,436 @@ await Barcode.updateMany(
         });
     }
 };
+
+
+
+exports.bulkProductUpdate = async (req, res) => {
+    try {
+        const { bulkId } = req.params;
+        const { products } = req.body;
+
+        if (!bulkId) {
+            return res.status(400).json({
+                success: false,
+                message: "Bulk ID is required"
+            });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(bulkId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid bulk ID"
+            });
+        }
+
+        if (
+            !Array.isArray(products) ||
+            products.length === 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Products array is required"
+            });
+        }
+
+        const hierarchy = attachHierarchy(req.user);
+
+        const updatedProducts = [];
+        const errors = [];
+
+        for (let i = 0; i < products.length; i++) {
+            try {
+                const item = products[i];
+
+                if (!item.productId) {
+                    errors.push({
+                        row: i + 1,
+                        message:
+                            "Product ID is required"
+                    });
+                    continue;
+                }
+
+                // VERY IMPORTANT
+                // Product must belong to this bulkId
+                const product =
+                    await Product.findOne({
+                        _id: item.productId,
+                        bulkId: bulkId,
+                        superAdminId:
+                            hierarchy.superAdminId
+                    });
+
+                if (!product) {
+                    errors.push({
+                        row: i + 1,
+                        productId:
+                            item.productId,
+                        message:
+                            "Product not found in this bulk"
+                    });
+                    continue;
+                }
+
+                
+
+                if (item.name !== undefined) {
+                    const name =
+                        String(item.name).trim();
+
+                    if (!name) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Product name cannot be empty"
+                        });
+                        continue;
+                    }
+
+                    product.name = name;
+                }
+
+                if (item.brand !== undefined) {
+                    product.brand =
+                        String(item.brand).trim();
+                }
+
+                if (
+                    item.description !== undefined
+                ) {
+                    product.description =
+                        String(
+                            item.description
+                        ).trim();
+                }
+
+                if (item.hsnCode !== undefined) {
+                    product.hsnCode =
+                        String(
+                            item.hsnCode
+                        ).trim();
+                }
+
+                // -------------------------
+                // CATEGORY
+                // -------------------------
+
+                if (item.categoryId) {
+                    const cat =
+                        await category.findOne({
+                            _id:
+                                item.categoryId,
+                            superAdminId:
+                                hierarchy.superAdminId
+                        });
+
+                    if (!cat) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Category not found"
+                        });
+                        continue;
+                    }
+
+                    product.categoryId =
+                        item.categoryId;
+
+                    product.categoryName =
+                        cat.name || "";
+                }
+
+                // -------------------------
+                // GST
+                // -------------------------
+
+                if (
+                    item.gstRate !== undefined
+                ) {
+                    const gstRate =
+                        Number(
+                            item.gstRate
+                        );
+
+                    if (
+                        isNaN(gstRate) ||
+                        ![
+                            0,
+                            5,
+                            12,
+                            18,
+                            28
+                        ].includes(gstRate)
+                    ) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "GST rate must be 0, 5, 12, 18 or 28"
+                        });
+                        continue;
+                    }
+
+                    product.gstRate =
+                        gstRate;
+                }
+
+                // -------------------------
+                // MRP
+                // -------------------------
+
+                if (
+                    item.mrp !== undefined
+                ) {
+                    const mrp =
+                        Number(item.mrp);
+
+                    if (
+                        isNaN(mrp) ||
+                        mrp < 0
+                    ) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Invalid MRP"
+                        });
+                        continue;
+                    }
+
+                    product.mrp = mrp;
+                }
+
+                // -------------------------
+                // COST PRICE
+                // -------------------------
+
+                if (
+                    item.costPrice !==
+                    undefined
+                ) {
+                    const costPrice =
+                        Number(
+                            item.costPrice
+                        );
+
+                    if (
+                        isNaN(costPrice) ||
+                        costPrice < 0
+                    ) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Invalid cost price"
+                        });
+                        continue;
+                    }
+
+                    product.costPrice =
+                        costPrice;
+                }
+
+                // -------------------------
+                // SELLING PRICE
+                // -------------------------
+
+                if (
+                    item.sellingPrice !==
+                    undefined
+                ) {
+                    const sellingPrice =
+                        Number(
+                            item.sellingPrice
+                        );
+
+                    if (
+                        isNaN(sellingPrice) ||
+                        sellingPrice < 0
+                    ) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Invalid selling price"
+                        });
+                        continue;
+                    }
+
+                    product.sellingPrice =
+                        sellingPrice;
+                }
+
+                // -------------------------
+                // LOW STOCK
+                // -------------------------
+
+                if (
+                    item.lowStockQty !==
+                    undefined
+                ) {
+                    const lowStockQty =
+                        Number(
+                            item.lowStockQty
+                        );
+
+                    if (
+                        isNaN(lowStockQty) ||
+                        lowStockQty < 0
+                    ) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Invalid low stock quantity"
+                        });
+                        continue;
+                    }
+
+                    product.lowStockQty =
+                        lowStockQty;
+                }
+
+                // -------------------------
+                // UNIT
+                // -------------------------
+
+                if (item.unit !== undefined) {
+                    let unit =
+                        String(item.unit)
+                            .trim()
+                            .toLowerCase();
+
+                    if (
+                        unit === "gram" ||
+                        unit === "grams"
+                    ) {
+                        unit = "g";
+                    }
+
+                    if (
+                        ![
+                            "pcs",
+                            "kg",
+                            "g"
+                        ].includes(unit)
+                    ) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Unit must be pcs, kg or g"
+                        });
+                        continue;
+                    }
+
+                    product.unit = unit;
+                }
+
+                // -------------------------
+                // UNIT VALUE
+                // -------------------------
+
+                if (
+                    item.unitValue !==
+                    undefined
+                ) {
+                    const unitValue =
+                        Number(
+                            item.unitValue
+                        );
+
+                    if (
+                        isNaN(unitValue) ||
+                        unitValue <= 0
+                    ) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Invalid unit value"
+                        });
+                        continue;
+                    }
+
+                    product.unitValue =
+                        unitValue;
+                }
+
+                await product.save();
+
+                // -------------------------
+                // UPDATE BARCODE DATA
+                // -------------------------
+
+                const barcode =
+                    await Barcode.findOne({
+                        productId:
+                            product._id,
+                        superAdminId:
+                            hierarchy.superAdminId
+                    });
+
+                if (barcode) {
+                    barcode.mrp =
+                        product.mrp;
+
+                    barcode.unit =
+                        product.unit;
+
+                    barcode.unitValue =
+                        product.unitValue;
+
+                    barcode.costPrice =
+                        product.costPrice;
+
+                    barcode.sellingPrice =
+                        product.sellingPrice;
+
+                    barcode.gstRate =
+                        product.gstRate;
+
+                    await barcode.save();
+                }
+
+                updatedProducts.push({
+                    row: i + 1,
+                    product
+                });
+
+            } catch (err) {
+                errors.push({
+                    row: i + 1,
+                    message:
+                        err.message
+                });
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message:
+                "Bulk product update completed",
+
+            bulkId,
+
+            total:
+                products.length,
+
+            updatedCount:
+                updatedProducts.length,
+
+            errorCount:
+                errors.length,
+
+            data:
+                updatedProducts,
+
+            errors
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: err.message
+        });
+    }
+};
+
 
 
 exports.deleteAllProducts = async (req, res) => {

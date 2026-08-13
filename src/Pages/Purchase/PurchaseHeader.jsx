@@ -92,68 +92,56 @@ export default function PurchaseHeader({
         });
     }, [form.supplierId, suppliers]);
 
-    const createInlineSupplier = async () => {
-        const supplierPayload = {
-            supplierName: String(supplierSearch || "").trim(),
-            mobile: String(supplierDetails.number || "").trim(),
-            gstNumber: String(supplierDetails.gstNumber || "").trim(),
-            address: String(supplierDetails.address || "").trim(),
-            city: String(supplierDetails.city || "").trim(),
-            state: String(supplierDetails.state || "").trim(),
-            pincode: String(supplierDetails.pincode || "").trim(),
+   const createInlineSupplier = async () => {
+    const supplierPayload = {
+        supplierName: String(supplierSearch || "").trim(),
+        mobile: String(supplierDetails.number || "").trim(),
 
-            panNumber: "",
-            email: "",
-
-            bankDetails: {
-                accountHolderName: "",
-                bankName: "",
-                accountNumber: "",
-                ifscCode: "",
-                branchName: "",
-            },
-        };
-
-        const res = await fetch(API.createsupplier, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(supplierPayload),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || data.success === false) {
-            throw new Error(
-                data.message || "Failed to create supplier"
-            );
-        }
-
-        const createdSupplier =
-            data.data?.supplier ||
-            data.data?.createdSupplier ||
-            data.supplier ||
-            data.data;
-
-        const createdSupplierId =
-            createdSupplier?._id ||
-            createdSupplier?.supplierId ||
-            data.data?.supplierId ||
-            data.supplierId;
-
-        if (!createdSupplierId) {
-            throw new Error(
-                "Supplier created but supplier ID was not returned"
-            );
-        }
-
-        return {
-            supplierId: String(createdSupplierId),
-            supplier: createdSupplier,
-        };
+        // Optional fields
+        address: String(supplierDetails.address || "").trim(),
+        gstNumber: String(supplierDetails.gstNumber || "").trim(),
     };
+
+    const res = await fetch(API.createsupplier, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(supplierPayload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.success === false) {
+        throw new Error(
+            data.message || "Failed to create supplier"
+        );
+    }
+
+    const createdSupplier =
+        data.data?.supplier ||
+        data.data?.createdSupplier ||
+        data.supplier ||
+        data.data;
+
+    const createdSupplierId =
+        createdSupplier?._id ||
+        createdSupplier?.supplierId ||
+        data.data?.supplierId ||
+        data.supplierId;
+
+    if (!createdSupplierId) {
+        throw new Error(
+            "Supplier created but supplier ID was not returned"
+        );
+    }
+
+    return {
+        supplierId: String(createdSupplierId),
+        supplier: createdSupplier,
+    };
+};
 
     const updateSupplierDetail = (field, value) => {
         const updatedDetails = {
@@ -187,11 +175,7 @@ export default function PurchaseHeader({
 
         const emptyDetails = {
             number: "",
-            address: "",
-            gstNumber: "",
-            city: "",
-            state: "",
-            pincode: "",
+
         };
 
         setSupplierDetails(emptyDetails);
@@ -325,18 +309,11 @@ export default function PurchaseHeader({
                         <label>Address</label>
 
                         <input
-                            value={supplierDetails.address}
+                            value={supplierDetails.address || ""}
                             readOnly={Boolean(form.supplierId)}
-                            placeholder={
-                                form.supplierId
-                                    ? ""
-                                    : "Enter address"
-                            }
+                            placeholder="Enter address"
                             onChange={(e) =>
-                                updateSupplierDetail(
-                                    "address",
-                                    e.target.value
-                                )
+                                updateSupplierDetail("address", e.target.value)
                             }
                         />
                     </div>
@@ -345,18 +322,11 @@ export default function PurchaseHeader({
                         <label>GST no</label>
 
                         <input
-                            value={supplierDetails.gstNumber}
+                            value={supplierDetails.gstNumber || ""}
                             readOnly={Boolean(form.supplierId)}
-                            placeholder={
-                                form.supplierId
-                                    ? ""
-                                    : "Enter GST no"
-                            }
+                            placeholder="Enter GST no"
                             onChange={(e) =>
-                                updateSupplierDetail(
-                                    "gstNumber",
-                                    e.target.value
-                                )
+                                updateSupplierDetail("gstNumber", e.target.value)
                             }
                         />
                     </div>

@@ -27,8 +27,8 @@ import SessionManagement from "./Pages/SessionHandling/SessionManagement";
 import Payment from "./Pages/Payment/Payment";
 import StockManagement from "./Pages/Stock/StockManagement";
 import GST from "./Pages/GST/GST";
-import BillReports from "./Pages/GST/BillReports";
-import PurchaseReports from "./Pages/GST/PurchaseReports";
+import BillReports from "./Pages/GST/PurchaseReport";
+import SalesBillWiseAudit from "./Pages/GST/BillReports/BillReports";
 import Analytics from "./Pages/Analytics/Analytics";
 import Offers from "./Pages/Offers/Offers";
 import CreateOffer from "./Pages/Offers/CreateOffer";
@@ -82,6 +82,7 @@ import PrintSettings from "./Pages/Settings/PrintSetting/PrintSettings";
 import ManageUsers from "./Pages/Settings/ManageUsers/ManageUsers";
 import HelpSupport from "./Pages/Settings/Help/HelpSupport";
 import BulkAction from "./Pages/Items/BulkAction";
+import PurchaseReport from "./Pages/GST/PurchaseReport";
 
 function MainLayout() {
   const [collapsed, setCollapsed] =
@@ -163,12 +164,12 @@ function MainLayout() {
 
           <Route
             path="/Bill-reports"
-            element={<BillReports />}
+            element={<SalesBillWiseAudit />}
           />
 
           <Route
             path="/Purchase-reports"
-            element={<PurchaseReports />}
+            element={<PurchaseReport />}
           />
 
           <Route

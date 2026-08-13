@@ -9,6 +9,10 @@ const { attachHierarchy } = require("../utils/hierarchy");
 
 const{
     getAuditLogs,
+    getBillWiseItemAudit,
+    getPurchaseBillWiseItemAudit,
+    getPurchaseItemWiseAudit,
+    getBillItemWiseAudit,
     getAuditLogsByid,
     deleteAuditLog
 } = require("../controllers/audit_logs");
@@ -21,6 +25,34 @@ router.get(
        
 );
 
+router.get(
+    "/bill/bill-wise",
+    verifyToken,
+    authorize("super_admin", "admin"),
+    getBillWiseItemAudit
+);
+
+router.get(
+    "/Purchase/bill-wise",
+    verifyToken,
+    authorize("super_admin", "admin"),
+    getPurchaseBillWiseItemAudit
+);
+
+router.get(
+    "/purchase/item-wise",
+     verifyToken,
+    authorize("super_admin", "admin"),
+    getPurchaseItemWiseAudit
+);
+
+
+router.get(
+    "/bill/item-wise",
+    verifyToken,
+    authorize("super_admin", "admin"),
+    getBillItemWiseAudit
+);
 
 router.get(
     "/:id",

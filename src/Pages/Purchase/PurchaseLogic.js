@@ -259,13 +259,13 @@ export const calculateNewPurchaseTotals = ({
 };
 
 export const calculatePurchase = async ({
-  items,
-  currentForm,
-  token,
-  setBillItems,
-  setPurchaseTotals,
-  setForm,
-  showToast,
+    items,
+    currentForm,
+    token,
+    setBillItems,
+    setPurchaseTotals,
+    setForm,
+    showToast,
 }) => {
     const validItems = items.filter(
         (item) => item.productId && String(item.qty).trim() !== ""
@@ -405,26 +405,26 @@ export const calculatePurchase = async ({
 };
 
 export const handlePurchaseSubmit = async ({
-  form,
-  billItems,
-  purchaseTotals,
-  token,
-  isEditMode,
-  editPurchaseId,
-  navigate,
-  showToast,
-  setForm,
-  setBillItems,
-  setLoading,
-  emptyItem,
-  addDays,
-  formatDateToDDMMYYYY,
-  createInlineSupplier,
-  createInlineProduct,
-  calculatePurchase,
-  setSuppliers,
-  supplierSearch,
-  supplierDetails,
+    form,
+    billItems,
+    purchaseTotals,
+    token,
+    isEditMode,
+    editPurchaseId,
+    navigate,
+    showToast,
+    setForm,
+    setBillItems,
+    setLoading,
+    emptyItem,
+    addDays,
+    formatDateToDDMMYYYY,
+    createInlineSupplier,
+    createInlineProduct,
+    calculatePurchase,
+    setSuppliers,
+    supplierSearch,
+    supplierDetails,
 }) => {
 
     if (
@@ -521,9 +521,6 @@ export const handlePurchaseSubmit = async ({
                 throw new Error("Enter supplier mobile number");
             }
 
-            if (!String(supplierDetails.address || "").trim()) {
-                throw new Error("Enter supplier address");
-            }
 
             showToast(
                 `Creating ${supplierSearch}...`,
@@ -550,18 +547,9 @@ export const handlePurchaseSubmit = async ({
                     supplierName:
                         createdSupplier.supplier?.supplierName ||
                         supplierSearch,
-
                     mobile:
                         createdSupplier.supplier?.mobile ||
                         supplierDetails.number,
-
-                    address:
-                        createdSupplier.supplier?.address ||
-                        supplierDetails.address,
-
-                    gstNumber:
-                        createdSupplier.supplier?.gstNumber ||
-                        supplierDetails.gstNumber,
                 },
             ]);
         }

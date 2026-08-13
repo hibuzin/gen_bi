@@ -5,6 +5,8 @@ import Toast from "../../components/Toast";
 import { API } from "../../constants/api";
 import AppBar from "../../components/AppBar/AppBar";
 import { FaShieldAlt } from "react-icons/fa";
+import loginImage from "../../assets/loginicon.png";
+import topRightImage from "../../assets/loginicon1.png";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -43,146 +45,183 @@ function Login() {
 
   //Login fetch 
   const handleLogin = async () => {
-  if (!email) {
-    showToast("Email is required", "error");
-    return;
-  }
+    if (!email) {
+      showToast("Email is required", "error");
+      return;
+    }
 
-  if (!password) {
-    showToast("Password is required", "error");
-    return;
-  }
+    if (!password) {
+      showToast("Password is required", "error");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await fetch(API.login, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    });
+      const res = await fetch(API.login, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    console.log("LOGIN RESPONSE:", data);
+      console.log("LOGIN RESPONSE:", data);
 
-    if (!res.ok || !data.success) {
+      if (!res.ok || !data.success) {
+        showToast(
+          data.message || "Invalid email or password",
+          "error"
+        );
+        return;
+      }
+
+      const token =
+        data.token ||
+        data.data?.token;
+
+      const user =
+        data.user ||
+        data.data?.user;
+
+      if (!token) {
+        console.error("Token missing:", data);
+        showToast("Login failed: Token not received", "error");
+        return;
+      }
+
+      localStorage.setItem("token", token);
+
+      if (user) {
+        localStorage.setItem(
+          "user",
+          JSON.stringify(user)
+        );
+      }
+
+      showToast("Login successful!", "success");
+
+      setTimeout(() => {
+        navigate("/home", { replace: true });
+      }, 1000);
+
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
       showToast(
-        data.message || "Invalid email or password",
+        "Server error. Try again later",
         "error"
       );
-      return;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const token =
-      data.token ||
-      data.data?.token;
-
-    const user =
-      data.user ||
-      data.data?.user;
-
-    if (!token) {
-      console.error("Token missing:", data);
-      showToast("Login failed: Token not received", "error");
-      return;
-    }
-
-    localStorage.setItem("token", token);
-
-    if (user) {
-      localStorage.setItem(
-        "user",
-        JSON.stringify(user)
-      );
-    }
-
-    showToast("Login successful!", "success");
-
-    setTimeout(() => {
-      navigate("/home", { replace: true });
-    }, 1000);
-
-  } catch (error) {
-    console.error("LOGIN ERROR:", error);
-    showToast(
-      "Server error. Try again later",
-      "error"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
 
   return (
-    <div className={styles.container}>
-      <AppBar
-        lang={lang}
-        setLang={setLang}
+  <div className={styles.container}>
+
+    {message && (
+      <Toast message={message} type={messageType} />
+    )}
+
+    {/* LEFT SIDE IMAGE */}
+    <div className={styles.imageSection}>
+      <img
+        src={loginImage}
+        alt="Billing"
+        className={styles.loginImage}
       />
+    </div>
 
+    {/* RIGHT SIDE */}
+    <div className={styles.rightSection}>
 
-      {message && <Toast message={message} type={messageType} />}
+    
 
-      <div className={styles.formBox}>
+      {/* LOGIN FORM */}
+      <div className={styles.formSection}>
+        <div className={styles.formBox}>
+
         <div className={styles.brand}>
-          BILLING
-        </div>
-        <h1>Login</h1>
+  <img
+    src={topRightImage}
+    alt="Hibuz Billing"
+  />
+</div>
+          <h1>Login</h1>
 
-        <label className={styles.label}>Enter your email</label>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          ref={emailRef}
-          onChange={(e) => setEmail(e.target.value)}
-          onKeyDown={handleKeyDownEmail}
-        />
+          <label className={styles.label}>
+            Enter your email
+          </label>
 
-        <label className={styles.label}>Enter your password</label>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          ref={passwordRef}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={handleKeyDownPassword}
-        />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            ref={emailRef}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={handleKeyDownEmail}
+          />
 
-        <button onClick={handleLogin} disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
+          <label className={styles.label}>
+            Enter your password
+          </label>
 
-        <p className={styles.signupText}>
-          <span onClick={() => navigate("/register")}>
-            Forgot password?
-          </span>
-        </p>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            ref={passwordRef}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyDownPassword}
+          />
 
-        {/* TRUST ROW */}
-        <div className={styles.securityWrapper}>
-          <div className={styles.securityBox}>
-            <div className={styles.secureItem}>
-              <FaShieldAlt className={styles.secureIcon} />
-              <span>100% Secure</span>
-            </div>
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
 
-            <div className={styles.secureItem}>
-              <div className={styles.isoCircle}>ISO</div>
-              <span>Certified</span>
+          <p className={styles.signupText}>
+            <span onClick={() => navigate("/register")}>
+              Forgot password?
+            </span>
+          </p>
+
+          <div className={styles.securityWrapper}>
+            <div className={styles.securityBox}>
+
+              <div className={styles.secureItem}>
+                <FaShieldAlt className={styles.secureIcon} />
+                <span>100% Secure</span>
+              </div>
+
+              <div className={styles.secureItem}>
+                <div className={styles.isoCircle}>
+                  ISO
+                </div>
+
+                <span>Certified</span>
+              </div>
+
             </div>
           </div>
+
         </div>
       </div>
 
     </div>
-  );
+
+  </div>
+);
+
+
 }
 
 export default Login;

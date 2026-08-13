@@ -104,7 +104,7 @@ function CreatePurchaseReturn() {
         })),
       };
 
-      const res = await fetch(API.purchaseReturn, {
+      const res = await fetch(API.purchaseReturnpost, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
