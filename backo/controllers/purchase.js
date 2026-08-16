@@ -824,6 +824,72 @@ const gstPurchaseItems = purchase.items.filter(
 
 if (gstPurchaseItems.length > 0) {
 
+  
+    const productIds = gstPurchaseItems
+        .map((item) => item.productId)
+        .filter(Boolean);
+
+    const products = await Product.find({
+        _id: { $in: productIds }
+    })
+       .select("_id itemCode hsnCode sellingPrice mrp unit unitValue")
+        .lean();
+
+    const productMap = new Map(
+        products.map((product) => [
+            product._id.toString(),
+            product
+        ])
+    );
+
+    
+
+const gstItemsTotal = gstPurchaseItems.reduce(
+    (total, item) => {
+        const qty = Number(item.qty || 0);
+
+        const rate = Number(
+            item.Rate ??
+            item.netcost ??
+            item.rate ??
+            0
+        );
+
+        return total + (qty * rate);
+    },
+    0
+);
+
+const gstTotalCgstAmount = gstPurchaseItems.reduce(
+    (total, item) => {
+        const taxAmount = Number(item.taxAmount || 0);
+
+        return total + Number(
+            (taxAmount / 2).toFixed(2)
+        );
+    },
+    0
+);
+
+const gstTotalSgstAmount = gstPurchaseItems.reduce(
+    (total, item) => {
+        const taxAmount = Number(item.taxAmount || 0);
+
+        return total + Number(
+            (taxAmount / 2).toFixed(2)
+        );
+    },
+    0
+);
+
+const gstTotalGstAmount =
+    gstTotalCgstAmount +
+    gstTotalSgstAmount;
+
+const gstBillTotalAmount =
+    gstItemsTotal +
+    gstTotalGstAmount;
+
     await AuditLog.create({
         ...hierarchy,
 
@@ -841,6 +907,8 @@ if (gstPurchaseItems.length > 0) {
             invoiceNo: purchase.invoiceNo || "",
             grnDate: purchase.grnDate || null,
 
+
+    
             supplierName:
                 supplier.supplierName || "",
 
@@ -855,6 +923,26 @@ if (gstPurchaseItems.length > 0) {
                 supplier.placeOfSupply ||
                 "",
 
+                itemsTotal: Number(
+    gstItemsTotal.toFixed(2)
+),
+
+totalCgstAmount: Number(
+    gstTotalCgstAmount.toFixed(2)
+),
+
+totalSgstAmount: Number(
+    gstTotalSgstAmount.toFixed(2)
+),
+
+totalGstAmount: Number(
+    gstTotalGstAmount.toFixed(2)
+),
+
+totalTaxAmount: Number(
+    gstTotalGstAmount.toFixed(2)
+),
+
             items: gstPurchaseItems.map((item) => {
 
                 const gstRate =
@@ -867,10 +955,28 @@ if (gstPurchaseItems.length > 0) {
                         item.taxAmount || 0
                     );
 
-                return {
-                    hsnCode:
-                        item.hsnCode || "",
+                    
 
+                    
+                     const product = item.productId
+        ? productMap.get(item.productId.toString())
+        : null;
+
+        
+
+                return {
+                            productId:
+                        item.productId || null,
+
+                    itemCode:
+                        product?.itemCode || "",
+
+                    hsnCode:
+                        item.hsnCode ||
+                        product?.hsnCode ||
+                        "",
+
+                   
                     itemName:
                         item.productName || "",
 
@@ -885,6 +991,15 @@ if (gstPurchaseItems.length > 0) {
                         item.netcost ??
                         0
                     ),
+
+                    mrp:
+                        Number(item.mrp || 0),
+
+                            sellingPrice: Number(
+        item.sellingPrice ??
+        product?.sellingPrice ??
+        0
+    ),
 
                     gst:
                         gstRate,
@@ -901,8 +1016,6 @@ if (gstPurchaseItems.length > 0) {
     sgstAmount:
         Number((taxAmount / 2).toFixed(2)),
 
-                    mrp:
-                        Number(item.mrp || 0),
 
                     taxAmount
                 };
@@ -910,6 +1023,7 @@ if (gstPurchaseItems.length > 0) {
         }
     });
 }
+
 
         const responsePurchase = await Purchase.findById(purchase._id)
             .populate("items.productId", "name brand");
@@ -2922,6 +3036,7 @@ const sellingPrice = Number(
                 totalAmount: round2(purchase.totalAmount),
                 totalGrossAmount: round2(totalGrossAmount),
                 totalTaxAmount: round2(totalTaxAmount),
+                
 
                 items: processedItems
             }

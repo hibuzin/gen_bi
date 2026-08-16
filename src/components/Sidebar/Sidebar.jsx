@@ -17,6 +17,11 @@ import { FaBars } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { APP_VERSION } from "../../version";
 import { FaSignOutAlt } from "react-icons/fa";
+import {
+    getSavedAccounts,
+    getActiveAccount,
+    switchAccount,
+} from "../../utils/accountManager";
 
 
 
@@ -32,12 +37,28 @@ const getRoleFromToken = () => {
 };
 
 
+
+
 function Sidebar({ collapsed, setCollapsed, lang }) {
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState(null);
   const [settingsMode, setSettingsMode] = useState(false);
+
+const [savedAccounts, setSavedAccounts] = useState(
+    () => getSavedAccounts()
+);
+
+const [activeAccountId, setActiveAccountId] = useState(
+    () => getActiveAccount()?.accountId || null
+);
+
+const [showAccountSwitcher, setShowAccountSwitcher] =
+    useState(false);
+
   const role = getRoleFromToken();
   const location = useLocation();
+
+  
 
   const [business, setBusiness] = useState(() => {
     return JSON.parse(localStorage.getItem("user")) || {};
@@ -45,6 +66,40 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
 
   const businessName = business.CompanyName || "";
   const phone = business.CompanyPhone || "";
+
+  useEffect(() => {
+    const updateAccounts = () => {
+        setSavedAccounts(
+            getSavedAccounts()
+        );
+
+        setActiveAccountId(
+            getActiveAccount()?.accountId || null
+        );
+    };
+
+    window.addEventListener(
+        "accountSwitched",
+        updateAccounts
+    );
+
+    window.addEventListener(
+        "accountsUpdated",
+        updateAccounts
+    );
+
+    return () => {
+        window.removeEventListener(
+            "accountSwitched",
+            updateAccounts
+        );
+
+        window.removeEventListener(
+            "accountsUpdated",
+            updateAccounts
+        );
+    };
+}, []);
 
   useEffect(() => {
     const updateBusiness = () => {
@@ -97,6 +152,16 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
       path: "/settings/support",
       icon: <FaHeadset />,
     },
+
+    {
+    name:
+        lang === "ta"
+            ? "கணக்கை மாற்றவும்"
+            : "Switch Account",
+    path: "/switch-account",
+    icon: <FaUserCircle />,
+    switchAccount: true,
+},
 
     {
       divider: true
@@ -192,6 +257,35 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
     },
   ];
 
+  const handleSwitchAccount = (accountId) => {
+  try {
+    const account = switchAccount(accountId);
+
+    console.log("SWITCHED ACCOUNT:", account);
+
+    setShowAccountSwitcher(false);
+    setSettingsMode(false);
+
+    // Notify the application
+    window.dispatchEvent(
+      new Event("accountSwitched")
+    );
+
+    window.dispatchEvent(
+      new Event("businessUpdated")
+    );
+
+    // Reload the application so every page
+    // uses the new Super Admin token/data
+    window.location.reload();
+
+  } catch (error) {
+    console.error(
+      "ACCOUNT SWITCH ERROR:",
+      error
+    );
+  }
+};
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -385,11 +479,16 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
                     onClick={() => {
 
                       if (item.logout) {
-                        handleLogout();
-                        return;
-                      }
+  handleLogout();
+  return;
+}
 
-                      navigate(item.path);
+if (item.switchAccount) {
+  setShowAccountSwitcher(true);
+  return;
+}
+
+navigate(item.path);
                     }}
                   >
                     <div className={styles.menuItem}>

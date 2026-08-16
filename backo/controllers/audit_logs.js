@@ -389,381 +389,664 @@ exports.getBillWiseItemAudit = async (req, res) => {
     }
 };
 
-
 exports.getPurchaseBillWiseItemAudit = async (req, res) => {
-      try {
-    const hierarchy = attachHierarchy(req.user);
+    try {
+        const hierarchy = attachHierarchy(req.user);
 
-    const {
-      fromDate,
-      toDate,
-      action,
-      search
-    } = req.query;
+        const {
+            fromDate,
+            toDate,
+            action,
+            search
+        } = req.query;
 
-    // ==========================================
-    // BASE FILTER
-    // ==========================================
-    const filter = {
-      superAdminId: hierarchy.superAdminId,
-      module: "Purchase"
-    };
+        // ==========================================
+        // BASE FILTER
+        // ==========================================
 
-    if (action) {
-      filter.action = action;
-    }
+        const filter = {
+            superAdminId: hierarchy.superAdminId,
+            module: "Purchase"
+        };
 
+        if (action) {
+            filter.action = action;
+        }
+
+        // ==========================================
+        // DATE FILTER
+        // ==========================================
+
+        if (fromDate || toDate) {
+            filter.createdAt = {};
+
+            if (fromDate) {
+                const startDate = new Date(fromDate);
+                startDate.setHours(0, 0, 0, 0);
+
+                filter.createdAt.$gte = startDate;
+            }
+
+            if (toDate) {
+                const endDate = new Date(toDate);
+                endDate.setHours(23, 59, 59, 999);
+
+                filter.createdAt.$lte = endDate;
+            }
+        }
+
+        // ==========================================
+        // GET AUDIT LOGS
+        // ==========================================
+
+        const logs = await AuditLog.find(filter)
+            .populate("userId", "name email role")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // ==========================================
+        // BILL-WISE DATA
+        // ==========================================
+
+        const billWiseData = [];
+
+        for (const log of logs) {
+
+            const purchaseData =
+                log.newData ||
+                log.oldData ||
+                {};
+
+            const items =
+                purchaseData.items ||
+                purchaseData.products ||
+                purchaseData.purchaseItems ||
+                [];
+
+            if (!Array.isArray(items) || items.length === 0) {
+                continue;
+            }
+
+            // ==========================================
+            // BUILD ITEMS
+            // ==========================================
+
+            const billItems = items.map((item, index) => {
+
+                // ==========================================
+                // GST RATES
+                // ==========================================
+
+                const gstRate = Number(
+                    item.gst ??
+                    item.gstRate ??
+                    0
+                );
+
+                const cgstRate = Number(
+                    item.cgst ??
+                    item.cgstRate ??
+                    0
+                );
+
+                const sgstRate = Number(
+                    item.sgst ??
+                    item.sgstRate ??
+                    0
+                );
+
+                const igstRate = Number(
+                    item.igst ??
+                    item.igstRate ??
+                    0
+                );
+
+                // ==========================================
+                // GST AMOUNTS
+                // ==========================================
+
+                const cgstAmount = Number(
+                    item.cgstAmount || 0
+                );
+
+                const sgstAmount = Number(
+                    item.sgstAmount || 0
+                );
+
+                const igstAmount = Number(
+                    item.igstAmount || 0
+                );
+
+                const taxAmount = Number(
+                    item.taxAmount ??
+                    item.totalTaxAmount ??
+                    (
+                        cgstAmount +
+                        sgstAmount +
+                        igstAmount
+                    )
+                );
+
+                // ==========================================
+                // QTY
+                // ==========================================
+
+                const qty = Number(
+                    item.qty ??
+                    item.quantity ??
+                    item.purchaseQty ??
+                    0
+                );
+
+                // ==========================================
+                // RATE
+                // ==========================================
+
+                const rate = Number(
+                    item.rate ??
+                    item.Rate ??
+                    item.netcost ??
+                    item.costPrice ??
+                    item.purchasePrice ??
+                    0
+                );
+
+                // ==========================================
+                // GROSS AMOUNT
+                // ==========================================
+
+                const grossAmount = Number(
+                    item.grossAmount ??
+                    item.amount ??
+                    item.total ??
+                    (qty * rate)
+                );
+
+                
+
+                const taxableAmount = Number(
+                    item.taxableAmount ??
+                    grossAmount
+                );
+
+                
+
+                const itemTotalAmount = Number(
+                    (
+                        taxableAmount +
+                        taxAmount
+                    ).toFixed(2)
+                );
+
+               
+
+                return {
+
+                    itemIndex: index + 1,
+
+                    productId:
+                        item.productId?._id ||
+                        item.productId ||
+                        item._id ||
+                        null,
+
+                    itemCode:
+                        item.itemCode ||
+                        item.productCode ||
+                        item.code ||
+                        "",
+
+                    itemName:
+                        item.itemName ||
+                        item.productName ||
+                        item.name ||
+                        "",
+
+                    hsnCode:
+                        item.hsnCode ||
+                        item.hsn ||
+                        "",
+
+                    unit:
+                        item.unit ||
+                        "",
+
+                    unitValue:
+                        Number(
+                            item.unitValue || 0
+                        ),
+
+                    qty,
+
+                    freeQty:
+                        Number(
+                            item.freeQty || 0
+                        ),
+
+                    mrp:
+                        Number(
+                            item.mrp || 0
+                        ),
+
+                    costPrice:
+                        rate,
+
+                    purchasePrice:
+                        rate,
+
+                    sellingPrice:
+                        Number(
+                            item.sellingPrice || 0
+                        ),
+
+                    rate,
+
+                    grossAmount,
+
+                    discountPercent:
+                        Number(
+                            item.discountPercent || 0
+                        ),
+
+                    discountAmount:
+                        Number(
+                            item.discountAmount || 0
+                        ),
+
+                    taxableAmount,
+
+                    // ==========================================
+                    // GST
+                    // ==========================================
+
+                    gstRate,
+
+                    cgstRate,
+
+                    cgstAmount,
+
+                    sgstRate,
+
+                    sgstAmount,
+
+                    igstRate,
+
+                    igstAmount,
+
+                    taxAmount,
+
+                    // ==========================================
+                    // TOTAL
+                    // ==========================================
+
+                    totalAmount:
+                        itemTotalAmount,
+
+                    itemTotalAmount,
+
+                    netAmount:
+                        Number(
+                            item.netAmount ??
+                            item.totalAmount ??
+                            itemTotalAmount
+                        )
+                };
+            });
+
+            // ==========================================
+            // CALCULATE BILL TOTALS
+            // ==========================================
+
+            const calculatedItemsTotal = Number(
+                billItems
+                    .reduce(
+                        (sum, item) =>
+                            sum +
+                            Number(
+                                item.taxableAmount || 0
+                            ),
+                        0
+                    )
+                    .toFixed(2)
+            );
+
+            const calculatedTotalTaxAmount = Number(
+                billItems
+                    .reduce(
+                        (sum, item) =>
+                            sum +
+                            Number(
+                                item.taxAmount || 0
+                            ),
+                        0
+                    )
+                    .toFixed(2)
+            );
+
+            const calculatedCgstAmount = Number(
+    billItems
+        .reduce(
+            (sum, item) =>
+                sum +
+                Number(item.cgstAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const calculatedSgstAmount = Number(
+    billItems
+        .reduce(
+            (sum, item) =>
+                sum +
+                Number(item.sgstAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const calculatedTotalGstAmount = Number(
+    (
+        calculatedCgstAmount +
+        calculatedSgstAmount +
+        billItems.reduce(
+            (sum, item) =>
+                sum +
+                Number(item.igstAmount || 0),
+            0
+        )
+    ).toFixed(2)
+);
+
+            const calculatedBillTotal = Number(
+                billItems
+                    .reduce(
+                        (sum, item) =>
+                            sum +
+                            Number(
+                                item.itemTotalAmount || 0
+                            ),
+                        0
+                    )
+                    .toFixed(2)
+            );
+
+            // ==========================================
+            // ONE BILL OBJECT
+            // ==========================================
+
+            billWiseData.push({
+
+                auditId: log._id,
+
+                documentId:
+                    log.documentId ||
+                    log.referenceId ||
+                    purchaseData._id ||
+                    null,
+
+                action:
+                    log.action,
+
+                description:
+                    log.description || "",
+
+                date:
+                    log.createdAt,
+
+                // ==========================================
+                // USER
+                // ==========================================
+
+                user: {
+
+                    id:
+                        log.userId?._id ||
+                        log.userId ||
+                        null,
+
+                    name:
+                        log.userId?.name ||
+                        "",
+
+                    email:
+                        log.userId?.email ||
+                        "",
+
+                    role:
+                        log.userId?.role ||
+                        log.role ||
+                        ""
+                },
+
+               
+
+                grnNo:
+                    purchaseData.grnNo ||
+                    purchaseData.grnNumber ||
+                    "",
+
+                invoiceNo:
+                    purchaseData.invoiceNo ||
+                    purchaseData.supplierInvoiceNo ||
+                    purchaseData.originalInvoiceNo ||
+                    "",
+
+                grnDate:
+                    purchaseData.grnDate ||
+                    purchaseData.purchaseDate ||
+                    purchaseData.invoiceDate ||
+                    null,
+
+                    
     
-    if (fromDate || toDate) {
-      filter.createdAt = {};
 
-      if (fromDate) {
-        const startDate = new Date(fromDate);
-        startDate.setHours(0, 0, 0, 0);
 
-        filter.createdAt.$gte = startDate;
-      }
+                supplierId:
+                    purchaseData.supplierId?._id ||
+                    purchaseData.supplierId ||
+                    null,
 
-      if (toDate) {
-        const endDate = new Date(toDate);
-        endDate.setHours(23, 59, 59, 999);
+                supplierName:
+                    purchaseData.supplierName ||
+                    purchaseData.supplier?.name ||
+                    "",
 
-        filter.createdAt.$lte = endDate;
-      }
-    }
+                supplierGstNumber:
+                    purchaseData.supplierGstNumber ||
+                    purchaseData.supplierGST ||
+                    purchaseData.supplier?.gstNumber ||
+                    "",
 
-    const logs = await AuditLog.find(filter)
-      .populate("userId", "name email role")
-      .sort({ createdAt: -1 })
-      .lean();
+                placeOfSupply:
+                    purchaseData.placeOfSupply ||
+                    "",
 
-    const itemWiseData = [];
+                // ==========================================
+                // ITEMS
+                // ==========================================
 
-    for (const log of logs) {
+                items: billItems,
+
+              
+
+                itemsTotal: Number(
+                    purchaseData.itemsTotal ??
+                    purchaseData.subTotal ??
+                    calculatedItemsTotal
+                ),
+
+               cgstAmount: Number(
+    purchaseData.totalCgstAmount ??
+    purchaseData.cgstAmount ??
+    calculatedCgstAmount
+),
+
+sgstAmount: Number(
+    purchaseData.totalSgstAmount ??
+    purchaseData.sgstAmount ??
+    calculatedSgstAmount
+),
+
+totalGstAmount: Number(
+    purchaseData.totalGstAmount ??
+    purchaseData.totalTaxAmount ??
+    purchaseData.totalTax ??
+    calculatedTotalTaxAmount
+),
+
+                totalTaxAmount: Number(
+                    purchaseData.totalTaxAmount ??
+                    purchaseData.totalTax ??
+                    calculatedTotalTaxAmount
+                ),
+
+                
+                freightCharge:
+                    Number(
+                        purchaseData.freightCharge || 0
+                    ),
+
+                packagingCharge:
+                    Number(
+                        purchaseData.packagingCharge || 0
+                    ),
+
+                billDiscountPercent:
+                    Number(
+                        purchaseData.billDiscountPercent || 0
+                    ),
+
+                billDiscountAmount:
+                    Number(
+                        purchaseData.billDiscountAmount || 0
+                    ),
+
+                paidAmount:
+                    Number(
+                        purchaseData.paidAmount || 0
+                    ),
+
+                balanceAmount:
+                    Number(
+                        purchaseData.balanceAmount ??
+                        purchaseData.pendingAmount ??
+                        0
+                    ),
+
+                paymentStatus:
+                    purchaseData.paymentStatus ||
+                    "",
+
+                paymentMode:
+                    purchaseData.paymentMode ||
+                    purchaseData.paymentMethod ||
+                    ""
+            });
+        }
+
+        // ==========================================
+        // SEARCH
+        // ==========================================
+
+        let finalData = billWiseData;
+
+        if (search) {
+
+            const keyword =
+                search.toLowerCase().trim();
+
+            finalData =
+                billWiseData.filter((bill) => {
+
+                    // BILL SEARCH
+                    const billMatch =
+                        String(
+                            bill.grnNo || ""
+                        )
+                            .toLowerCase()
+                            .includes(keyword) ||
+
+                        String(
+                            bill.invoiceNo || ""
+                        )
+                            .toLowerCase()
+                            .includes(keyword) ||
+
+                        String(
+                            bill.supplierName || ""
+                        )
+                            .toLowerCase()
+                            .includes(keyword) ||
+
+                        String(
+                            bill.action || ""
+                        )
+                            .toLowerCase()
+                            .includes(keyword);
+
+                    // ITEM SEARCH
+                    const itemMatch =
+                        bill.items.some((item) => {
+
+                            return (
+                                String(
+                                    item.itemName || ""
+                                )
+                                    .toLowerCase()
+                                    .includes(keyword) ||
+
+                                String(
+                                    item.itemCode || ""
+                                )
+                                    .toLowerCase()
+                                    .includes(keyword) ||
+
+                                String(
+                                    item.hsnCode || ""
+                                )
+                                    .toLowerCase()
+                                    .includes(keyword)
+                            );
+                        });
+
+                    return (
+                        billMatch ||
+                        itemMatch
+                    );
+                });
+        }
+
       
-      const purchaseData =
-        log.newData ||
-        log.oldData ||
-        {};
+        return res.status(200).json({
 
-      const items =
-        purchaseData.items ||
-        purchaseData.products ||
-        purchaseData.purchaseItems ||
-        [];
+            success: true,
 
-     
-      if (Array.isArray(items) && items.length > 0) {
-        items.forEach((item, index) => {
-          itemWiseData.push({
-            auditId: log._id,
-            documentId:
-              log.documentId ||
-              log.referenceId ||
-              purchaseData._id ||
-              null,
+            count:
+                finalData.length,
 
-            action: log.action,
-
-            description: log.description || "",
-
-            date: log.createdAt,
-
-            
-            user: {
-              id: log.userId?._id || log.userId || null,
-              name: log.userId?.name || "",
-              email: log.userId?.email || "",
-              role: log.userId?.role || log.role || ""
-            },
-
-            
-            grnNo:
-              purchaseData.grnNo ||
-              purchaseData.grnNumber ||
-              "",
-
-            invoiceNo:
-              purchaseData.invoiceNo ||
-              purchaseData.supplierInvoiceNo ||
-              purchaseData.originalInvoiceNo ||
-              "",
-
-            grnDate:
-              purchaseData.grnDate ||
-              purchaseData.purchaseDate ||
-              purchaseData.invoiceDate ||
-              null,
-
-            supplierId:
-              purchaseData.supplierId?._id ||
-              purchaseData.supplierId ||
-              null,
-
-            supplierName:
-              purchaseData.supplierName ||
-              purchaseData.supplier?.name ||
-              "",
-
-            supplierGstNumber:
-              purchaseData.supplierGstNumber ||
-              purchaseData.supplierGST ||
-              purchaseData.supplier?.gstNumber ||
-              "",
-
-            placeOfSupply:
-              purchaseData.placeOfSupply || "",
-
-           
-            itemIndex: index + 1,
-
-            productId:
-              item.productId?._id ||
-              item.productId ||
-              item._id ||
-              null,
-
-            itemCode:
-              item.itemCode ||
-              item.productCode ||
-              item.code ||
-              "",
-
-            itemName:
-              item.itemName ||
-              item.productName ||
-              item.name ||
-              "",
-
-            hsnCode:
-              item.hsnCode ||
-              item.hsn ||
-              "",
-
-            unit:
-              item.unit || "",
-
-            unitValue:
-              Number(item.unitValue || 0),
-
-            qty:
-              Number(
-                item.qty ??
-                item.quantity ??
-                item.purchaseQty ??
-                0
-              ),
-
-            freeQty:
-              Number(item.freeQty || 0),
-
-            
-            mrp:
-              Number(item.mrp || 0),
-
-            costPrice:
-              Number(
-                item.costPrice ??
-                item.purchasePrice ??
-                item.rate ??
-                0
-              ),
-
-            purchasePrice:
-              Number(
-                item.purchasePrice ??
-                item.costPrice ??
-                item.rate ??
-                0
-              ),
-
-            sellingPrice:
-              Number(item.sellingPrice || 0),
-
-            grossAmount:
-              Number(
-                item.grossAmount ??
-                item.amount ??
-                item.total ??
-                0
-              ),
-
-            discountPercent:
-              Number(item.discountPercent || 0),
-
-            discountAmount:
-              Number(item.discountAmount || 0),
-
-            taxableAmount:
-              Number(item.taxableAmount || 0),
-
-            
-            gstRate:
-              Number(item.gstRate || 0),
-
-            cgstRate:
-              Number(item.cgstRate || 0),
-
-            cgstAmount:
-              Number(item.cgstAmount || 0),
-
-            sgstRate:
-              Number(item.sgstRate || 0),
-
-            sgstAmount:
-              Number(item.sgstAmount || 0),
-
-            igstRate:
-              Number(item.igstRate || 0),
-
-            igstAmount:
-              Number(item.igstAmount || 0),
-
-            taxAmount:
-              Number(
-                item.taxAmount ??
-                item.totalTaxAmount ??
-                (
-                  Number(item.cgstAmount || 0) +
-                  Number(item.sgstAmount || 0) +
-                  Number(item.igstAmount || 0)
-                )
-              ),
-
-                   totalAmount: Number(
-        Number(
-            item.totalAmount ??
-            item.netAmount ??
-            (
-                Number(item.taxableAmount || 0) +
-                Number(item.taxAmount || 0)
-            )
-        ).toFixed(2)
-    ),
-
-            netAmount:
-              Number(
-                item.netAmount ??
-                item.totalAmount ??
-                item.finalAmount ??
-                0
-              ),
-
-           
-            freightCharge:
-              Number(purchaseData.freightCharge || 0),
-
-            packagingCharge:
-              Number(purchaseData.packagingCharge || 0),
-
-            billDiscountPercent:
-              Number(purchaseData.billDiscountPercent || 0),
-
-            billDiscountAmount:
-              Number(purchaseData.billDiscountAmount || 0),
-
-            itemsTotal:
-              Number(
-                purchaseData.itemsTotal ??
-                purchaseData.subTotal ??
-                0
-              ),
-
-            totalTaxAmount:
-              Number(
-                purchaseData.totalTaxAmount ??
-                purchaseData.totalTax ??
-                0
-              ),
-
-            supplierBillAmount:
-              Number(
-                purchaseData.supplierBillAmount ??
-                purchaseData.grandTotal ??
-                purchaseData.totalAmount ??
-                0
-              ),
-
-            paidAmount:
-              Number(purchaseData.paidAmount || 0),
-
-            balanceAmount:
-              Number(
-                purchaseData.balanceAmount ??
-                purchaseData.pendingAmount ??
-                0
-              ),
-
-            paymentStatus:
-              purchaseData.paymentStatus || "",
-
-            paymentMode:
-              purchaseData.paymentMode ||
-              purchaseData.paymentMethod ||
-              ""
-          });
+            data:
+                finalData
         });
-      }
-    }
 
-   
-    let finalData = itemWiseData;
+    } catch (error) {
 
-    if (search) {
-      const keyword = search.toLowerCase().trim();
-
-      finalData = itemWiseData.filter((row) => {
-        return (
-          String(row.grnNo || "")
-            .toLowerCase()
-            .includes(keyword) ||
-
-          String(row.invoiceNo || "")
-            .toLowerCase()
-            .includes(keyword) ||
-
-          String(row.supplierName || "")
-            .toLowerCase()
-            .includes(keyword) ||
-
-          String(row.itemName || "")
-            .toLowerCase()
-            .includes(keyword) ||
-
-          String(row.itemCode || "")
-            .toLowerCase()
-            .includes(keyword) ||
-
-          String(row.hsnCode || "")
-            .toLowerCase()
-            .includes(keyword) ||
-
-          String(row.action || "")
-            .toLowerCase()
-            .includes(keyword)
+        console.error(
+            "PURCHASE BILL ITEM-WISE AUDIT ERROR:",
+            error
         );
-      });
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Server error",
+
+            error:
+                error.message
+        });
     }
-
-   
-    return res.status(200).json({
-      success: true,
-      count: finalData.length,
-      data: finalData
-    });
-
-  } catch (error) {
-    console.error(
-      "PURCHASE BILL ITEM-WISE AUDIT ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: error.message
-    });
-  }
 };
 
 

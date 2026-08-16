@@ -134,11 +134,18 @@ exports.createBill = async (req, res) => {
                 });
             }
 
-           const normalSellingPrice = Number(
+          const normalSellingPrice = Number(
     barcode?.sellingPrice ?? product.sellingPrice ?? 0
 );
 
-            let price = normalSellingPrice;
+// Billing-time edited selling price
+const billSellingPrice = Number(
+    billItem.sellingPrice ?? 
+    billItem.price ?? 
+    normalSellingPrice
+);
+
+let price = billSellingPrice;
             let slabPrice = null;
             let discountPerItem = 0;
             let totalDiscount = 0;
@@ -309,11 +316,20 @@ unitValue: Number(
 
 
 
-            const normalSellingPrice = Number(
+           const hasBillSellingPrice =
+    billItem.sellingPrice !== undefined &&
+    billItem.sellingPrice !== null &&
+    billItem.sellingPrice !== "";
+
+const normalSellingPrice = Number(
     barcode?.sellingPrice ?? product.sellingPrice ?? 0
 );
 
-            let price = normalSellingPrice;
+const billSellingPrice = hasBillSellingPrice
+    ? Number(billItem.sellingPrice)
+    : normalSellingPrice;
+
+let price = billSellingPrice;
             let slabPrice = null;
             let discountPerItem = 0;
             let totalDiscount = 0;
@@ -327,7 +343,7 @@ unitValue: Number(
                 isActive: true
             });
 
-            if (productPriceLevel) {
+         if (productPriceLevel && !hasBillSellingPrice) {
 
                 if (
                     priceLevel === "manual" &&

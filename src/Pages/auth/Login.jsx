@@ -7,6 +7,7 @@ import AppBar from "../../components/AppBar/AppBar";
 import { FaShieldAlt } from "react-icons/fa";
 import loginImage from "../../assets/loginicon.png";
 import topRightImage from "../../assets/loginicon1.png";
+import { saveAccount } from "../../utils/accountManager";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -95,14 +96,26 @@ function Login() {
         return;
       }
 
-      localStorage.setItem("token", token);
+     if (!user) {
+    showToast("Login failed: User information not received", "error");
+    return;
+}
 
-      if (user) {
-        localStorage.setItem(
-          "user",
-          JSON.stringify(user)
-        );
-      }
+try {
+    saveAccount({
+        token,
+        user,
+    });
+} catch (error) {
+    console.error("ACCOUNT SAVE ERROR:", error);
+
+    showToast(
+        "Login failed: Unable to save account",
+        "error"
+    );
+
+    return;
+}
 
       showToast("Login successful!", "success");
 

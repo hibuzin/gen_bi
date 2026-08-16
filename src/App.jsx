@@ -342,8 +342,41 @@ function MainLayout() {
 }
 
 function AppRoutes() {
-  const location = useLocation();
-  const token = localStorage.getItem("token");
+    const location = useLocation();
+
+    const [token, setToken] = useState(
+        () => localStorage.getItem("token")
+    );
+
+    useEffect(() => {
+        const updateAuth = () => {
+            setToken(
+                localStorage.getItem("token")
+            );
+        };
+
+        window.addEventListener(
+            "accountSwitched",
+            updateAuth
+        );
+
+        window.addEventListener(
+            "storage",
+            updateAuth
+        );
+
+        return () => {
+            window.removeEventListener(
+                "accountSwitched",
+                updateAuth
+            );
+
+            window.removeEventListener(
+                "storage",
+                updateAuth
+            );
+        };
+    }, []);
 
   // ROOT
   if (location.pathname === "/") {
