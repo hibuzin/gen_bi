@@ -202,22 +202,28 @@ function BulkAction() {
           excelRows
         );
 
+        console.log("FIRST EXCEL ROW:", excelRows[0]);
+
         if (excelRows.length === 0) {
           alert("Excel file is empty");
           return;
         }
 
-        const getValue = (
-          row,
-          possibleKeys
-        ) => {
+        const getValue = (row, possibleKeys) => {
           for (const key of possibleKeys) {
+            const actualKey = Object.keys(row).find(
+              (rowKey) =>
+                String(rowKey).trim().toLowerCase() ===
+                String(key).trim().toLowerCase()
+            );
+
             if (
-              row[key] !== undefined &&
-              row[key] !== null &&
-              String(row[key]).trim() !== ""
+              actualKey &&
+              row[actualKey] !== undefined &&
+              row[actualKey] !== null &&
+              String(row[actualKey]).trim() !== ""
             ) {
-              return row[key];
+              return row[actualKey];
             }
           }
 
@@ -354,42 +360,31 @@ function BulkAction() {
               );
 
             // COST PRICE
-            const costPrice =
-              getValue(
-                item,
-                [
-                  "Cost Price",
-                  "Purchase Price",
-                  "Cost",
-                  "Buy Price",
-                ]
-              );
+            const costPrice = getValue(item, [
+              "Purchase Price",
+              "Cost Price",
+              "PurchasePrice",
+              "Cost",
+              "Buy Price",
+            ]);
 
             // SELLING PRICE
-            const sellingPrice =
-              getValue(
-                item,
-                [
-                  "Selling Price",
-                  "Sale Price",
-                  "Sales Price",
-                  "SellingPrice",
-                  "Rate",
-                ]
-              );
+            const sellingPrice = getValue(item, [
+              "Sale Price",
+              "Selling Price",
+              "Sales Price",
+              "SellingPrice",
+              "Rate",
+            ]);
 
             // OPENING STOCK
-            const openingStock =
-              getValue(
-                item,
-                [
-                  "Opening Stock",
-                  "Stock",
-                  "Current Stock",
-                  "Qty",
-                  "Quantity",
-                ]
-              );
+            const openingStock = getValue(item, [
+              "Stock",
+              "Opening Stock",
+              "Current Stock",
+              "Qty",
+              "Quantity",
+            ]);
 
             // LOW STOCK
             const lowStockQty =
@@ -559,152 +554,151 @@ function BulkAction() {
   // Submit Bulk Products
   // --------------------------------------------------
 
-  const submitBulk = async () => {
-    if (isSubmitting) return;
+const submitBulk = async () => {
+  if (isSubmitting) return;
 
-    try {
-      setIsSubmitting(true);
+  try {
+    setIsSubmitting(true);
 
-      const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-      // Only submit rows that contain at least one value
-      const products = data
-        .filter((row) =>
-          row.some((cell) => String(cell).trim() !== "")
-        )
-        .map((row) => ({
-          name: row[0]?.trim() || "",
-          brand: row[1]?.trim() || "",
-          description: row[2]?.trim() || "",
+    const products = data
+      .filter((row) =>
+        row.some((cell) => String(cell).trim() !== "")
+      )
+      .map((row) => ({
+        name: row[0]?.trim() || "",
+        brand: row[1]?.trim() || "",
+        description: row[2]?.trim() || "",
 
-          categoryId: row[3] || "",
+        categoryId: row[3] || "",
 
-          hsnCode: row[4]?.trim() || "",
+        hsnCode: row[4]?.trim() || "",
 
-          gstRate: Number(row[5] || 0),
+        gstRate: Number(row[5] || 0),
+        mrp: Number(row[6] || 0),
 
-          mrp: Number(row[6] || 0),
+        unit: row[7]?.trim() || "",
 
-          unit: row[7]?.trim() || "",
+        unitValue:
+          row[8] !== undefined &&
+          String(row[8]).trim() !== ""
+            ? Number(row[8])
+            : undefined,
 
-          // IMPORTANT: empty Unit Value should NOT become 0
-          unitValue:
-            row[8] !== undefined &&
-              String(row[8]).trim() !== ""
-              ? Number(row[8])
-              : undefined,
+        costPrice: Number(row[9] || 0),
+        sellingPrice: Number(row[10] || 0),
+        openingStock: Number(row[11] || 0),
+        lowStockQty: Number(row[12] || 0),
 
-          costPrice: Number(row[9] || 0),
+        barcode: row[13]?.trim() || "",
+      }));
 
-          sellingPrice: Number(row[10] || 0),
-
-          openingStock: Number(row[11] || 0),
-
-          lowStockQty: Number(row[12] || 0),
-
-          barcode: row[13]?.trim() || "",
-        }));
-
-      if (products.length === 0) {
-        alert("Please enter at least one product");
-        return;
-      }
-
-      const payload = {
-        products,
-      };
-
-      console.log(
-        "========== BULK PRODUCT PAYLOAD =========="
-      );
-
-      console.log(
-        JSON.stringify(payload, null, 2)
-      );
-
-      const res = await fetch(
-        API.createBulkProduct,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const result = await res.json();
-
-      console.log(
-        "========== BULK PRODUCT RESPONSE =========="
-      );
-
-      console.log(result);
-
-      if (res.ok && result.success) {
-        const createdCount =
-          result.createdCount || 0;
-
-        const errorCount =
-          result.errorCount || 0;
-
-        alert(
-          `Bulk product upload completed!\n\n` +
-          `Total: ${result.total || products.length}\n` +
-          `Created: ${createdCount}\n` +
-          `Errors: ${errorCount}`
-        );
-
-        // Clear entered rows after successful upload
-        setData(
-          Array.from(
-            { length: INITIAL_ROWS },
-            createRow
-          )
-        );
-
-        // Scroll back to top
-        if (containerRef.current) {
-          containerRef.current.scrollTop = 0;
-        }
-
-        setScrollTop(0);
-      } else {
-        alert(
-          result.message ||
-          "Failed to add products"
-        );
-
-        // Show individual row errors if backend provides them
-        if (
-          Array.isArray(result.errors) &&
-          result.errors.length > 0
-        ) {
-          console.error(
-  "========== BULK PRODUCT ERRORS =========="
-);
-
-console.error(
-  JSON.stringify(result.errors, null, 2)
-);
-        }
-      }
-    } catch (error) {
-      console.error(
-        "Bulk submit error:",
-        error
-      );
-
-      alert(
-        "Error while adding products"
-      );
-    } finally {
-      setIsSubmitting(false);
+    if (products.length === 0) {
+      alert("Please enter at least one product");
+      return;
     }
-  };
+
+    // ============================================
+    // BATCH UPLOAD
+    // ============================================
+
+    const BATCH_SIZE = 500;
+
+    let totalCreated = 0;
+    let totalErrors = 0;
+
+    for (let i = 0; i < products.length; i += BATCH_SIZE) {
+      const batch = products.slice(i, i + BATCH_SIZE);
+
+      console.log(
+        `Uploading ${i + 1} - ${Math.min(
+          i + BATCH_SIZE,
+          products.length
+        )} of ${products.length}`
+      );
+
+      const res = await fetch(API.createBulkProduct, {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+
+        body: JSON.stringify({
+          products: batch,
+        }),
+      });
+
+      // Don't blindly call res.json()
+      const contentType = res.headers.get("content-type");
+
+      let result;
+
+      if (contentType?.includes("application/json")) {
+        result = await res.json();
+      } else {
+        const text = await res.text();
+
+        console.error("Server returned non-JSON:", text);
+
+        throw new Error(
+          `Server error (${res.status}) while uploading batch`
+        );
+      }
+
+      console.log("Batch response:", result);
+
+      if (!res.ok || !result.success) {
+        console.error("Batch failed:", result);
+
+        throw new Error(
+          result.message ||
+            `Batch upload failed with status ${res.status}`
+        );
+      }
+
+      totalCreated += result.createdCount || 0;
+      totalErrors += result.errorCount || 0;
+    }
+
+    // ============================================
+    // SUCCESS
+    // ============================================
+
+    alert(
+      `Bulk product upload completed!\n\n` +
+      `Total: ${products.length}\n` +
+      `Created: ${totalCreated}\n` +
+      `Errors: ${totalErrors}`
+    );
+
+    setData(
+      Array.from(
+        { length: INITIAL_ROWS },
+        createRow
+      )
+    );
+
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+
+    setScrollTop(0);
+
+  } catch (error) {
+    console.error("Bulk submit error:", error);
+
+    alert(
+      error.message ||
+        "Error while adding products"
+    );
+
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // --------------------------------------------------
   // Render

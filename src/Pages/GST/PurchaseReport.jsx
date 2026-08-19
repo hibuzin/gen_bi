@@ -26,6 +26,51 @@ function PurchaseReport() {
   // ==========================================
   // FETCH PURCHASE ITEM-WISE AUDIT
   // ==========================================
+ const flattenPurchaseData = (data = []) => {
+  return data.flatMap((audit) => {
+    if (!Array.isArray(audit.items) || audit.items.length === 0) {
+      return [
+        {
+          ...audit,
+          item: null,
+        },
+      ];
+    }
+
+    return audit.items.map((item, index) => {
+      const isFirstItem = index === 0;
+
+      return {
+        ...audit,
+
+        // Bill-level fields → FIRST ITEM ONLY
+        date: isFirstItem ? audit.date : "",
+        action: isFirstItem ? audit.action : "",
+        grnNo: isFirstItem ? audit.grnNo : "",
+        invoiceNo: isFirstItem ? audit.invoiceNo : "",
+        grnDate: isFirstItem ? audit.grnDate : "",
+        supplierName: isFirstItem ? audit.supplierName : "",
+        supplierGstNumber: isFirstItem
+          ? audit.supplierGstNumber
+          : "",
+        placeOfSupply: isFirstItem
+          ? audit.placeOfSupply
+          : "",
+        paymentMode: isFirstItem
+          ? audit.paymentMode
+          : "",
+        user: isFirstItem ? audit.user : null,
+
+        // Product-level fields → EVERY ITEM
+        item: {
+          ...item,
+          itemIndex: index + 1,
+        },
+      };
+    });
+  });
+};
+
   const fetchPurchaseReport = async () => {
     try {
       setLoading(true);
@@ -69,7 +114,9 @@ function PurchaseReport() {
       }
 
       if (data.success) {
-        setPurchaseData(data.data || []);
+        setPurchaseData(
+          flattenPurchaseData(data.data || [])
+        );
       } else {
         setPurchaseData([]);
       }
@@ -126,7 +173,9 @@ function PurchaseReport() {
       const data = await response.json();
 
       if (data.success) {
-        setPurchaseData(data.data || []);
+        setPurchaseData(
+          flattenPurchaseData(data.data || [])
+        );
       } else {
         setPurchaseData([]);
       }
@@ -148,19 +197,22 @@ function PurchaseReport() {
 
     const value = search.toLowerCase().trim();
 
-    return purchaseData.filter((item) => {
+    return purchaseData.filter((row) => {
+      const product = row.item || {};
+
       return (
-        item.grnNo?.toLowerCase().includes(value) ||
-        item.invoiceNo?.toLowerCase().includes(value) ||
-        item.supplierName?.toLowerCase().includes(value) ||
-        item.supplierGstNumber?.toLowerCase().includes(value) ||
-        item.itemName?.toLowerCase().includes(value) ||
-        item.itemCode?.toLowerCase().includes(value) ||
-        item.hsnCode?.toLowerCase().includes(value) ||
-        item.unit?.toLowerCase().includes(value) ||
-        item.action?.toLowerCase().includes(value) ||
-        item.user?.name?.toLowerCase().includes(value) ||
-        item.user?.role?.toLowerCase().includes(value)
+        row.grnNo?.toLowerCase().includes(value) ||
+        row.invoiceNo?.toLowerCase().includes(value) ||
+        row.supplierName?.toLowerCase().includes(value) ||
+        row.supplierGstNumber?.toLowerCase().includes(value) ||
+        row.placeOfSupply?.toLowerCase().includes(value) ||
+        product.itemName?.toLowerCase().includes(value) ||
+        product.itemCode?.toLowerCase().includes(value) ||
+        product.hsnCode?.toLowerCase().includes(value) ||
+        product.unit?.toLowerCase().includes(value) ||
+        row.action?.toLowerCase().includes(value) ||
+        row.user?.name?.toLowerCase().includes(value) ||
+        row.user?.role?.toLowerCase().includes(value)
       );
     });
   }, [purchaseData, search]);
@@ -183,7 +235,8 @@ function PurchaseReport() {
   // ==========================================
   const totalQty = useMemo(() => {
     return filteredData.reduce(
-      (total, item) => total + Number(item.qty || 0),
+      (total, row) =>
+        total + Number(row.item?.qty || 0),
       0
     );
   }, [filteredData]);
@@ -193,7 +246,8 @@ function PurchaseReport() {
   // ==========================================
   const totalTax = useMemo(() => {
     return filteredData.reduce(
-      (total, item) => total + Number(item.taxAmount || 0),
+      (total, row) =>
+        total + Number(row.item?.taxAmount || 0),
       0
     );
   }, [filteredData]);
@@ -392,18 +446,21 @@ function PurchaseReport() {
               <th>Invoice No</th>
               <th>GRN Date</th>
               <th>Supplier</th>
-              <th>GST No</th>
-              <th>Item</th>
-              <th>HSN</th>
+              <th>Supplier GST No</th>
+              <th>Place of Supply</th>
+              <th>HSN Code</th>
+              <th>Item Name</th>
+              <th>Quantity</th>
               <th>Unit</th>
-              <th>Qty</th>
-              <th>Free Qty</th>
-              <th>MRP</th>
-              <th>Purchase Price</th>
-              <th>CGST</th>
-              <th>SGST</th>
-              <th>IGST</th>
+              <th>Cost Price</th>
+              <th>GST Rate</th>
+              <th>CGST Rate</th>
+              <th>SGST Rate</th>
+              <th>CGST Amount</th>
+              <th>SGST Amount</th>
               <th>Tax Amount</th>
+              <th>Item Total</th>
+              <th>Payment Mode</th>
               <th>User</th>
               <th>Role</th>
             </tr>
@@ -412,122 +469,181 @@ function PurchaseReport() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="21" className={styles.messageCell}>
+                <td colSpan="24" className={styles.messageCell}>
                   <div className={styles.loader}></div>
                   <span>Loading purchase report...</span>
                 </td>
               </tr>
             ) : filteredData.length === 0 ? (
               <tr>
-                <td colSpan="21" className={styles.messageCell}>
+                <td colSpan="24" className={styles.messageCell}>
                   No purchase audit records found
                 </td>
               </tr>
             ) : (
-              filteredData.map((item, index) => (
-                <tr
-                  key={`${item.auditId}-${item.itemIndex}-${index}`}
-                >
-                  <td className={styles.serialNo}>
-                    {index + 1}
-                  </td>
+              filteredData.map((row, index) => {
+                const product = row.item || {};
 
-                  <td className={styles.dateCell}>
-                    {formatDateTime(item.date)}
-                  </td>
+                return (
+                  <tr
+                    key={`${row.auditId}-${product.itemIndex || index}-${index}`}
+                  >
+                    <td className={styles.serialNo}>
+                      {index + 1}
+                    </td>
 
-                  <td>
-                    <span
-                      className={`${styles.actionBadge} ${getActionClass(
-                        item.action
-                      )}`}
-                    >
-                      {item.action || "-"}
-                    </span>
-                  </td>
+                    <td className={styles.dateCell}>
+                      {formatDateTime(row.date)}
+                    </td>
 
-                  <td>
-                    <span className={styles.grnNo}>
-                      {item.grnNo || "-"}
-                    </span>
-                  </td>
+                    <td>
+                      <span
+                        className={`${styles.actionBadge} ${getActionClass(
+                          row.action
+                        )}`}
+                      >
+                        {row.action || "-"}
+                      </span>
+                    </td>
 
-                  <td>{item.invoiceNo || "-"}</td>
+                    <td>
+                      <span className={styles.grnNo}>
+                        {row.grnNo || "-"}
+                      </span>
+                    </td>
 
-                  <td>{formatDate(item.grnDate)}</td>
+                    <td>{row.invoiceNo || "-"}</td>
 
-                  <td>
-                    <div className={styles.supplierCell}>
-                      <strong>{item.supplierName || "-"}</strong>
-                    </div>
-                  </td>
+                    <td>{formatDate(row.grnDate)}</td>
 
-                  <td className={styles.gstNo}>
-                    {item.supplierGstNumber || "-"}
-                  </td>
+                    <td>
+                      <div className={styles.supplierCell}>
+                        <strong>{row.supplierName || "-"}</strong>
+                      </div>
+                    </td>
 
-                  <td>
-                    <div className={styles.itemCell}>
-                      <strong>{item.itemName || "-"}</strong>
+                    {/* Supplier GST */}
+                    <td className={styles.gstNo}>
+                      {row.supplierGstNumber || "-"}
+                    </td>
 
-                      {item.itemIndex ? (
-                        <span>Item {item.itemIndex}</span>
-                      ) : null}
-                    </div>
-                  </td>
+                    {/* Place of Supply */}
+                    <td>
+                      {row.placeOfSupply || "-"}
+                    </td>
 
-                  <td>{item.hsnCode || "-"}</td>
+                    {/* HSN */}
+                    <td>
+                      {product.hsnCode || "-"}
+                    </td>
 
-                  <td>
-                    <span className={styles.unitBadge}>
-                      {item.unit || "-"}
-                    </span>
-                  </td>
+                    {/* Item Name */}
+                    <td>
+                      <div className={styles.itemCell}>
+                        <strong>
+                          {product.itemName || "-"}
+                        </strong>
 
-                  <td className={styles.numberCell}>
-                    {Number(item.qty || 0)}
-                  </td>
+                        {product.itemIndex ? (
+                          <span>
+                            Item {product.itemIndex}
+                          </span>
+                        ) : null}
+                      </div>
+                    </td>
 
-                  <td className={styles.numberCell}>
-                    {Number(item.freeQty || 0)}
-                  </td>
+                    {/* Quantity */}
+                    <td className={styles.numberCell}>
+                      {product.qty !== undefined &&
+                        product.qty !== null &&
+                        product.qty !== ""
+                        ? Number(product.qty)
+                        : "-"}
+                    </td>
 
-                  <td className={styles.amountCell}>
-                    ₹{formatAmount(item.mrp)}
-                  </td>
+                    {/* Unit */}
+                    <td>
+                      <span className={styles.unitBadge}>
+                        {product.unit || "-"}
+                      </span>
+                    </td>
 
-                  <td className={styles.amountCell}>
-                    ₹{formatAmount(
-                      item.purchasePrice || item.costPrice
-                    )}
-                  </td>
+                    {/* Cost Price */}
+                    <td className={styles.amountCell}>
+                      ₹{formatAmount(product.costPrice)}
+                    </td>
 
-                  <td className={styles.amountCell}>
-                    ₹{formatAmount(item.cgstAmount)}
-                  </td>
+                    {/* GST Rate */}
+                    <td className={styles.numberCell}>
+                      {product.gstRate !== undefined &&
+                        product.gstRate !== null &&
+                        product.gstRate !== ""
+                        ? `${product.gstRate}%`
+                        : "-"}
+                    </td>
 
-                  <td className={styles.amountCell}>
-                    ₹{formatAmount(item.sgstAmount)}
-                  </td>
+                    {/* CGST Rate */}
+                    <td className={styles.numberCell}>
+                      {product.cgstRate !== undefined &&
+                        product.cgstRate !== null &&
+                        product.cgstRate !== ""
+                        ? `${product.cgstRate}%`
+                        : "-"}
+                    </td>
 
-                  <td className={styles.amountCell}>
-                    ₹{formatAmount(item.igstAmount)}
-                  </td>
+                    {/* SGST Rate */}
+                    <td className={styles.numberCell}>
+                      {product.sgstRate !== undefined &&
+                        product.sgstRate !== null &&
+                        product.sgstRate !== ""
+                        ? `${product.sgstRate}%`
+                        : "-"}
+                    </td>
 
-                  <td className={styles.taxAmount}>
-                    ₹{formatAmount(item.taxAmount)}
-                  </td>
+                    {/* CGST Amount */}
+                    <td className={styles.amountCell}>
+                      ₹{formatAmount(product.cgstAmount)}
+                    </td>
 
-                  <td>{item.user?.name || "-"}</td>
+                    {/* SGST Amount */}
+                    <td className={styles.amountCell}>
+                      ₹{formatAmount(product.sgstAmount)}
+                    </td>
 
-                  <td>
-                    <span className={styles.roleBadge}>
-                      {item.user?.role || "-"}
-                    </span>
-                  </td>
-                </tr>
-              ))
+                    {/* Tax Amount */}
+                    <td className={styles.taxAmount}>
+                      ₹{formatAmount(product.taxAmount)}
+                    </td>
+
+                    {/* Item Total */}
+                    <td className={styles.amountCell}>
+                      ₹{formatAmount(product.itemTotalAmount)}
+                    </td>
+
+                    {/* Payment Mode */}
+                    <td>
+                      {row.paymentMode || "-"}
+                    </td>
+
+                    <td>
+                      {row.user?.name || "-"}
+                    </td>
+
+                    <td>
+                      <span className={styles.roleBadge}>
+                        {row.user?.role || "-"}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })
             )}
+
+
+
+
+
+
           </tbody>
         </table>
       </div>

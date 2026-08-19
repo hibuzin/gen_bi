@@ -98,14 +98,12 @@ exports.getBillWiseItemAudit = async (req, res) => {
             if (fromDate) {
                 const startDate = new Date(fromDate);
                 startDate.setHours(0, 0, 0, 0);
-
                 filter.createdAt.$gte = startDate;
             }
 
             if (toDate) {
                 const endDate = new Date(toDate);
                 endDate.setHours(23, 59, 59, 999);
-
                 filter.createdAt.$lte = endDate;
             }
         }
@@ -124,115 +122,205 @@ exports.getBillWiseItemAudit = async (req, res) => {
                 ? auditData.items
                 : [];
 
+            
             // GST ITEMS ONLY
-            const gstItems = items
-                .filter((item) =>
-                    Number(item.gstRate || 0) > 0 &&
-                    Number(item.gstAmount || 0) > 0
-                )
-                .map((item) => ({
-                    productId:
-                        item.productId || null,
+const gstItems = items
+    .filter(
+        (item) =>
+            Number(item.gstRate || 0) > 0 &&
+            Number(item.gstAmount || 0) > 0
+    )
+    .map((item) => ({
+        productId: item.productId || null,
+         barcodeId: item.barcodeId || null,
+        barcode: item.barcode || "",
 
-                    barcode:
-                        item.barcode || "",
+        itemName: item.itemName || "",
+        hsnCode: item.hsnCode || "",
 
-                    itemName:
-                        item.itemName || "",
+        qty: Number(item.qty || 0),
+        freeQty: Number(item.freeQty || 0),
 
-                    hsnCode:
-                        item.hsnCode || "",
+        totalGivenQty: Number(
+            item.totalGivenQty ??
+            (Number(item.qty || 0) + Number(item.freeQty || 0))
+        ),
 
-                    qty:
-                        Number(item.qty || 0),
+        unit: item.unit || "pcs",
+        unitValue: Number(item.unitValue || 1),
+        unitText: item.unitText || "",
+        totalKg: item.totalKg || "",
 
-                    freeQty:
-                        Number(item.freeQty || 0),
+        mrp: Number(item.mrp || 0),
 
-                    totalGivenQty:
-                        Number(item.totalGivenQty || 0),
+        // IMPORTANT
+        sellingPrice: Number(item.sellingPrice || 0),
 
-                    unit:
-                        item.unit || "",
+        rate: Number(item.rate || 0),
 
-                    unitValue:
-                        Number(item.unitValue || 1),
+        appliedPriceLevel:
+            item.appliedPriceLevel || "normal",
 
-                    unitText:
-                        item.unitText || "",
+        appliedSlab:
+            item.appliedSlab || null,
 
-                    totalKg:
-                        item.totalKg || "",
+        discountAmount:
+            Number(item.discountAmount || 0),
 
-                    mrp:
-                        Number(item.mrp || 0),
+        taxableAmount:
+            Number(item.taxableAmount || 0),
 
-                    rate:
-                        Number(item.rate || 0),
+        gstRate:
+            Number(item.gstRate || 0),
 
-                    discountAmount:
-                        Number(item.discountAmount || 0),
+        cgstRate:
+            Number(
+                item.cgstRate ??
+                (Number(item.gstRate || 0) / 2)
+            ),
 
-                    taxableAmount:
-                        Number(item.taxableAmount || 0),
+        sgstRate:
+            Number(
+                item.sgstRate ??
+                (Number(item.gstRate || 0) / 2)
+            ),
 
-                    gstRate:
-                        Number(item.gstRate || 0),
+        gstAmount:
+            Number(item.gstAmount || 0),
 
-                    cgstRate:
-                        Number(item.cgstRate || 0),
+        cgstAmount:
+            Number(
+                item.cgstAmount ??
+                (Number(item.gstAmount || 0) / 2)
+            ),
 
-                    sgstRate:
-                        Number(item.sgstRate || 0),
+        sgstAmount:
+            Number(
+                item.sgstAmount ??
+                (Number(item.gstAmount || 0) / 2)
+            ),
 
-                    gstAmount:
-                        Number(item.gstAmount || 0),
+        totalAmount:
+            Number(item.totalAmount || 0),
 
-                    cgstAmount:
-                        Number(item.cgstAmount || 0),
+        finalAmount:
+            Number(item.finalAmount || 0),
 
-                    sgstAmount:
-                        Number(item.sgstAmount || 0),
+        itemTotalAmount:
+            Number(
+                item.itemTotalAmount ??
+                item.finalAmount ??
+                0
+            )
+    }));
 
-                    totalAmount:
-                        Number(item.totalAmount || 0),
 
-                    finalAmount:
-                        Number(item.finalAmount || 0),
 
-                    appliedPriceLevel:
-                        item.appliedPriceLevel || "normal"
-                }));
+if (gstItems.length === 0) {
+    continue;
+}
 
-            // GST item illa na bill skip
-            if (gstItems.length === 0) {
-                continue;
-            }
+
+
+
+// =====================================================
+// GST ITEMS ONLY SUMMARY
+// =====================================================
+
+const gstSubTotal = Number(
+    gstItems
+        .reduce(
+            (total, item) =>
+                total + Number(item.taxableAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const gstTotalGST = Number(
+    gstItems
+        .reduce(
+            (total, item) =>
+                total + Number(item.gstAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const gstTotalCGST = Number(
+    gstItems
+        .reduce(
+            (total, item) =>
+                total + Number(item.cgstAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const gstTotalSGST = Number(
+    gstItems
+        .reduce(
+            (total, item) =>
+                total + Number(item.sgstAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const gstTotalCGSTRate = Number(
+    gstItems
+        .reduce(
+            (total, item) =>
+                total + Number(item.cgstRate || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const gstTotalSGSTRate = Number(
+    gstItems
+        .reduce(
+            (total, item) =>
+                total + Number(item.sgstRate || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const gstItemDiscount = Number(
+    gstItems
+        .reduce(
+            (total, item) =>
+                total + Number(item.discountAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
+
+const gstGrandTotal = Number(
+    gstItems
+        .reduce(
+            (total, item) =>
+                total + Number(item.itemTotalAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
 
             billWiseData.push({
-                auditId:
-                    log._id,
+                auditId: log._id,
+                documentId: log.documentId,
 
-                documentId:
-                    log.documentId,
+                action: log.action,
+                description: log.description || "",
 
-                action:
-                    log.action,
-
-                date:
-                    log.createdAt,
+                date: log.createdAt,
 
                 user: log.userId
                     ? {
-                        id:
-                            log.userId._id,
-
-                        name:
-                            log.userId.name || "",
-
-                        email:
-                            log.userId.email || "",
-
+                        id: log.userId._id,
+                        name: log.userId.name || "",
+                        email: log.userId.email || "",
                         role:
                             log.userId.role ||
                             log.role ||
@@ -245,12 +333,14 @@ exports.getBillWiseItemAudit = async (req, res) => {
                         role: log.role || ""
                     },
 
-                // BILL
-                invoiceNo:
-                    auditData.invoiceNo || "",
+                
+                invoiceNo: auditData.invoiceNo || "",
 
                 invoiceDate:
                     auditData.invoiceDate || null,
+
+                customerId:
+                    auditData.customerId || null,
 
                 customerName:
                     auditData.customerName ||
@@ -262,81 +352,51 @@ exports.getBillWiseItemAudit = async (req, res) => {
                 placeOfSupply:
                     auditData.placeOfSupply || "",
 
-                // ITEMS
-                itemCount:
-                    gstItems.length,
+               
+                itemCount: gstItems.length,
 
-                items:
-                    gstItems,
+                items: gstItems,
 
-                // SUMMARY
-                summary: {
-                    subTotal:
-                        Number(
-                            auditData.summary?.subTotal || 0
-                        ),
+                
+               summary: {
+    subTotal: gstSubTotal,
 
-                    totalGST:
-                        Number(
-                            auditData.summary?.totalGST || 0
-                        ),
+    totalGST: gstTotalGST,
 
-                    itemDiscountAmount:
-                        Number(
-                            auditData.summary?.itemDiscountAmount || 0
-                        ),
+    totalCGST: gstTotalCGST,
 
-                    billDiscountAmount:
-                        Number(
-                            auditData.summary?.billDiscountAmount || 0
-                        ),
+    totalSGST: gstTotalSGST,
 
-                    billDiscountPercentage:
-                        Number(
-                            auditData.summary?.billDiscountPercentage || 0
-                        ),
+    totalCGSTRate: gstTotalCGSTRate,
 
-                    loyaltyDiscount:
-                        Number(
-                            auditData.summary?.loyaltyDiscount || 0
-                        ),
+    totalSGSTRate: gstTotalSGSTRate,
 
-                    grandTotal:
-                        Number(
-                            auditData.summary?.grandTotal || 0
-                        )
-                },
+    itemDiscountAmount: gstItemDiscount,
 
-                // PAYMENT
-                paidAmount:
-                    Number(auditData.paidAmount || 0),
+    billDiscountAmount: 0,
 
-                pendingAmount:
-                    Number(auditData.pendingAmount || 0),
+    billDiscountPercentage: 0,
+
+    loyaltyDiscount: 0,
+
+    grandTotal: gstGrandTotal
+},
 
                 paymentMethod:
                     auditData.paymentMethod || "",
 
-                paymentStatus:
-                    auditData.paymentStatus || "",
-
-                payments:
-                    Array.isArray(auditData.payments)
-                        ? auditData.payments
-                        : []
             });
         }
 
-        // SEARCH
+        
         if (search && String(search).trim()) {
             const searchText = String(search)
                 .trim()
                 .toLowerCase();
 
             billWiseData = billWiseData.filter((bill) => {
-
-                const itemMatch =
-                    bill.items.some((item) =>
+                const itemMatch = bill.items.some(
+                    (item) =>
                         String(item.itemName || "")
                             .toLowerCase()
                             .includes(searchText) ||
@@ -348,7 +408,7 @@ exports.getBillWiseItemAudit = async (req, res) => {
                         String(item.barcode || "")
                             .toLowerCase()
                             .includes(searchText)
-                    );
+                );
 
                 return (
                     String(bill.invoiceNo || "")
@@ -366,16 +426,11 @@ exports.getBillWiseItemAudit = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-
-            count:
-                billWiseData.length,
-
-            data:
-                billWiseData
+            count: billWiseData.length,
+            data: billWiseData
         });
 
     } catch (error) {
-
         console.error(
             "BILL WISE ITEM AUDIT ERROR:",
             error
@@ -389,6 +444,7 @@ exports.getBillWiseItemAudit = async (req, res) => {
     }
 };
 
+
 exports.getPurchaseBillWiseItemAudit = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
@@ -400,9 +456,7 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
             search
         } = req.query;
 
-        // ==========================================
-        // BASE FILTER
-        // ==========================================
+       
 
         const filter = {
             superAdminId: hierarchy.superAdminId,
@@ -413,9 +467,7 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
             filter.action = action;
         }
 
-        // ==========================================
-        // DATE FILTER
-        // ==========================================
+        
 
         if (fromDate || toDate) {
             filter.createdAt = {};
@@ -435,18 +487,13 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
             }
         }
 
-        // ==========================================
-        // GET AUDIT LOGS
-        // ==========================================
-
+       
         const logs = await AuditLog.find(filter)
             .populate("userId", "name email role")
             .sort({ createdAt: -1 })
             .lean();
 
-        // ==========================================
-        // BILL-WISE DATA
-        // ==========================================
+        
 
         const billWiseData = [];
 
@@ -467,16 +514,9 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
                 continue;
             }
 
-            // ==========================================
-            // BUILD ITEMS
-            // ==========================================
-
             const billItems = items.map((item, index) => {
 
-                // ==========================================
-                // GST RATES
-                // ==========================================
-
+                
                 const gstRate = Number(
                     item.gst ??
                     item.gstRate ??
@@ -501,9 +541,7 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
                     0
                 );
 
-                // ==========================================
-                // GST AMOUNTS
-                // ==========================================
+               
 
                 const cgstAmount = Number(
                     item.cgstAmount || 0
@@ -527,9 +565,7 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
                     )
                 );
 
-                // ==========================================
-                // QTY
-                // ==========================================
+              
 
                 const qty = Number(
                     item.qty ??
@@ -538,9 +574,7 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
                     0
                 );
 
-                // ==========================================
-                // RATE
-                // ==========================================
+              
 
                 const rate = Number(
                     item.rate ??
@@ -551,9 +585,9 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
                     0
                 );
 
-                // ==========================================
-                // GROSS AMOUNT
-                // ==========================================
+               const costPriceWithGst = Number(
+    (rate + (rate * gstRate / 100)).toFixed(2)
+);
 
                 const grossAmount = Number(
                     item.grossAmount ??
@@ -628,8 +662,7 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
                             item.mrp || 0
                         ),
 
-                    costPrice:
-                        rate,
+                    costPrice: costPriceWithGst,
 
                     purchasePrice:
                         rate,
@@ -655,10 +688,7 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
 
                     taxableAmount,
 
-                    // ==========================================
-                    // GST
-                    // ==========================================
-
+                   
                     gstRate,
 
                     cgstRate,
@@ -675,10 +705,6 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
 
                     taxAmount,
 
-                    // ==========================================
-                    // TOTAL
-                    // ==========================================
-
                     totalAmount:
                         itemTotalAmount,
 
@@ -693,22 +719,18 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
                 };
             });
 
-            // ==========================================
-            // CALCULATE BILL TOTALS
-            // ==========================================
+          
 
             const calculatedItemsTotal = Number(
-                billItems
-                    .reduce(
-                        (sum, item) =>
-                            sum +
-                            Number(
-                                item.taxableAmount || 0
-                            ),
-                        0
-                    )
-                    .toFixed(2)
-            );
+    billItems
+        .reduce(
+            (sum, item) =>
+                sum +
+                Number(item.itemTotalAmount || 0),
+            0
+        )
+        .toFixed(2)
+);
 
             const calculatedTotalTaxAmount = Number(
                 billItems
@@ -771,10 +793,7 @@ const calculatedTotalGstAmount = Number(
                     .toFixed(2)
             );
 
-            // ==========================================
-            // ONE BILL OBJECT
-            // ==========================================
-
+           
             billWiseData.push({
 
                 auditId: log._id,
@@ -794,9 +813,7 @@ const calculatedTotalGstAmount = Number(
                 date:
                     log.createdAt,
 
-                // ==========================================
-                // USER
-                // ==========================================
+                
 
                 user: {
 

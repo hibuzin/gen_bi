@@ -50,53 +50,136 @@ const amount = (value) => {
 // ==========================================
 
 const preparePurchaseRows = (data = []) => {
-  return data.map((item, index) => ({
-    "S.No": index + 1,
+  const seenPurchases = new Set();
 
-    "Audit Date": formatDateTime(item.date),
+  return data.map((row, index) => {
+    const item = row.item || {};
 
-    Action: item.action || "-",
+    // Same purchase/bill identification
+    const purchaseKey =
+      row.documentId ||
+      row.grnNo ||
+      row.invoiceNo ||
+      row.auditId;
 
-    "GRN No": item.grnNo || "-",
+    // First product of this purchase only
+    const isFirstProduct = !seenPurchases.has(purchaseKey);
 
-    "Invoice No": item.invoiceNo || "-",
+    if (isFirstProduct) {
+      seenPurchases.add(purchaseKey);
+    }
 
-    "GRN Date": formatDate(item.grnDate),
+    return {
+      "S.No": index + 1,
 
-    Supplier: item.supplierName || "-",
+      "Audit Date": isFirstProduct
+        ? formatDateTime(row.date)
+        : "",
 
-    "Supplier GST No": item.supplierGstNumber || "-",
+      Action: isFirstProduct
+        ? row.action || "-"
+        : "",
 
-    "Item Name": item.itemName || "-",
+      "GRN No": isFirstProduct
+        ? row.grnNo || "-"
+        : "",
 
-    "Item Index": item.itemIndex || "-",
+      "Invoice No": isFirstProduct
+        ? row.invoiceNo || "-"
+        : "",
 
-    "HSN Code": item.hsnCode || "-",
+      "GRN Date": isFirstProduct
+        ? formatDate(row.grnDate)
+        : "",
 
-    Unit: item.unit || "-",
+      // Supplier only for first product
+      Supplier: isFirstProduct
+        ? row.supplierName || "-"
+        : "",
 
-    Qty: Number(item.qty || 0),
+      "Supplier GST No": isFirstProduct
+        ? row.supplierGstNumber || "-"
+        : "",
 
-    "Free Qty": Number(item.freeQty || 0),
+      "Place of Supply": isFirstProduct
+        ? row.placeOfSupply || "-"
+        : "",
 
-    MRP: amount(item.mrp),
+      "HSN Code": item.hsnCode || "-",
 
-    "Purchase Price": amount(
-      item.purchasePrice || item.costPrice
-    ),
+      "Item Name": item.itemName || "-",
 
-    "CGST Amount": amount(item.cgstAmount),
+      Quantity:
+        item.qty !== undefined &&
+          item.qty !== null &&
+          item.qty !== ""
+          ? Number(item.qty)
+          : "-",
 
-    "SGST Amount": amount(item.sgstAmount),
+      Unit: item.unit || "-",
 
-    "IGST Amount": amount(item.igstAmount),
+      "Cost Price": amount(item.costPrice),
 
-    "Tax Amount": amount(item.taxAmount),
+      "GST Rate":
+        item.gstRate !== undefined &&
+          item.gstRate !== null &&
+          item.gstRate !== ""
+          ? `${item.gstRate}%`
+          : "-",
 
-    User: item.user?.name || "-",
+      "CGST Rate":
+        item.cgstRate !== undefined &&
+          item.cgstRate !== null &&
+          item.cgstRate !== ""
+          ? `${item.cgstRate}%`
+          : "-",
 
-    Role: item.user?.role || "-",
-  }));
+      "SGST Rate":
+        item.sgstRate !== undefined &&
+          item.sgstRate !== null &&
+          item.sgstRate !== ""
+          ? `${item.sgstRate}%`
+          : "-",
+
+      "CGST Amount": amount(item.cgstAmount),
+
+      "SGST Amount": amount(item.sgstAmount),
+
+      "Tax Amount": amount(item.taxAmount),
+
+      "Item Total": amount(item.itemTotalAmount),
+
+
+      "Total CGST": isFirstProduct
+        ? amount(row.cgstAmount)
+        : "",
+
+      "Total SGST": isFirstProduct
+        ? amount(row.sgstAmount)
+        : "",
+
+      "Total GST": isFirstProduct
+        ? amount(row.totalGstAmount)
+        : "",
+
+      "Total Item Amount": isFirstProduct
+        ? amount(row.itemsTotal)
+        : "",
+
+      // These are bill-level too, so optionally first row only
+      "Payment Mode": isFirstProduct
+        ? row.paymentMode || "-"
+        : "",
+
+      User: isFirstProduct
+        ? row.user?.name || "-"
+        : "",
+
+      Role: isFirstProduct
+        ? row.user?.role || "-"
+        : "",
+    };
+  });
 };
 
 // ==========================================
@@ -187,78 +270,42 @@ export const exportPurchaseReportPDF = (data = []) => {
 
   doc.text(`Total Records: ${data.length}`, 14, 26);
 
-  // ==========================================
-  // SUMMARY
-  // ==========================================
-
-  const totalQty = data.reduce(
-    (sum, item) => sum + Number(item.qty || 0),
-    0
-  );
-
-  const totalTax = data.reduce(
-    (sum, item) => sum + Number(item.taxAmount || 0),
-    0
-  );
-
-  doc.text(
-    `Total Qty: ${totalQty.toFixed(2)}`,
-    80,
-    26
-  );
-
-  doc.text(
-    `Total Tax: Rs. ${totalTax.toFixed(2)}`,
-    125,
-    26
-  );
 
   // ==========================================
   // TABLE
   // ==========================================
 
-  const tableBody = data.map((item, index) => [
-    index + 1,
+  const rows = preparePurchaseRows(data);
 
-    formatDateTime(item.date),
-
-    item.action || "-",
-
-    item.grnNo || "-",
-
-    item.invoiceNo || "-",
-
-    formatDate(item.grnDate),
-
-    item.supplierName || "-",
-
-    item.itemName || "-",
-
-    item.hsnCode || "-",
-
-    item.unit || "-",
-
-    Number(item.qty || 0),
-
-    Number(item.freeQty || 0),
-
-    amount(item.mrp),
-
-    amount(
-      item.purchasePrice || item.costPrice
-    ),
-
-    amount(item.cgstAmount),
-
-    amount(item.sgstAmount),
-
-    amount(item.igstAmount),
-
-    amount(item.taxAmount),
-
-    item.user?.name || "-",
-
-    item.user?.role || "-",
+  const tableBody = rows.map((row) => [
+    row["S.No"],
+    row["Audit Date"],
+    row["Action"],
+    row["GRN No"],
+    row["Invoice No"],
+    row["GRN Date"],
+    row["Supplier"],
+    row["Supplier GST No"],
+    row["Place of Supply"],
+    row["HSN Code"],
+    row["Item Name"],
+    row["Quantity"],
+    row["Unit"],
+    row["Cost Price"],
+    row["GST Rate"],
+    row["CGST Rate"],
+    row["SGST Rate"],
+    row["CGST Amount"],
+    row["SGST Amount"],
+    row["Tax Amount"],
+    row["Item Total"],
+    row["Total CGST"],
+    row["Total SGST"],
+    row["Total GST"],
+    row["Total Item Amount"],
+    row["Payment Mode"],
+    row["User"],
+    row["Role"],
   ]);
 
   autoTable(doc, {
@@ -273,22 +320,29 @@ export const exportPurchaseReportPDF = (data = []) => {
         "Invoice",
         "GRN Date",
         "Supplier",
-        "Item",
+        "Supplier GST",
+        "Place of Supply",
         "HSN",
-        "Unit",
+        "Item Name",
         "Qty",
-        "Free",
-        "MRP",
-        "Purchase",
-        "CGST",
-        "SGST",
-        "IGST",
-        "Tax",
+        "Unit",
+        "Cost Price",
+        "GST Rate",
+        "CGST Rate",
+        "SGST Rate",
+        "CGST Amount",
+        "SGST Amount",
+        "Tax Amount",
+        "Item Total",
+        "Total CGST",
+        "Total SGST",
+        "Total GST",
+        "Total Item Amount",
+        "Payment Mode",
         "User",
         "Role",
       ],
     ],
-
     body: tableBody,
 
     theme: "grid",

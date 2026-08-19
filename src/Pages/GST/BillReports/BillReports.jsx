@@ -1,501 +1,1005 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   FaSearch,
-  FaFileExcel,
-  FaFilePdf,
-  FaEye,
-  FaTimes,
-  FaReceipt,
-  FaRupeeSign,
-  FaClock,
+  FaShoppingCart,
 } from "react-icons/fa";
 import styles from "./BillReports.module.css";
-import {
-  exportPurchaseBillWiseExcel,
-  exportPurchaseBillWisePdf,
-} from "./BillWiseExport";
 import { API } from "../../../constants/api";
+import {
+  exportSalesReportExcel,
+  exportSalesReportPDF,
+} from "./BillWiseExport";
 
-const PURCHASE_BILL_WISE_URL = API.gstbillreport;
-const money = (value) =>
-  `₹${Number(value || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+const SALES_GST_URL = API.gstbillreport;
 
-const formatDate = (value) => {
-  if (!value) return "-";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return date.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-};
-
-const formatDateTime = (value) => {
-  if (!value) return "-";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return date.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-export default function SalesBillWiseAudit() {
-  const [records, setRecords] = useState([]);
+function SalesGSTReport() {
+  const [salesData, setSalesData] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
-  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [action, setAction] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
-  useEffect(() => {
-    fetchBillWiseAudit();
-  }, []);
+  // ==========================================
+  // FLATTEN SALES BILL DATA
+  // ==========================================
+  const flattenSalesData = (data = []) => {
+    return data.flatMap((audit) => {
+      if (!Array.isArray(audit.items) || audit.items.length === 0) {
+        return [
+          {
+            ...audit,
+            item: null,
+          },
+        ];
+      }
 
-  const fetchBillWiseAudit = async () => {
+      return audit.items.map((item, index) => {
+        const isFirstItem = index === 0;
+
+        return {
+          ...audit,
+
+          // ==========================================
+          // BILL LEVEL FIELDS - FIRST ITEM ONLY
+          // ==========================================
+          invoiceNo: isFirstItem ? audit.invoiceNo : "",
+          invoiceDate: isFirstItem ? audit.invoiceDate : "",
+
+          customerId: isFirstItem ? audit.customerId : null,
+          customerName: isFirstItem ? audit.customerName : "",
+          customerGstNumber: isFirstItem
+            ? audit.customerGstNumber
+            : "",
+          placeOfSupply: isFirstItem
+            ? audit.placeOfSupply
+            : "",
+          paymentMethod: isFirstItem
+            ? audit.paymentMethod
+            : "",
+          paymentStatus: isFirstItem
+            ? audit.paymentStatus
+            : "",
+
+          // ==========================================
+          // PRODUCT LEVEL
+          // ==========================================
+          item: {
+            ...item,
+            itemIndex: index + 1,
+          },
+        };
+      });
+    });
+  };
+
+  // ==========================================
+  // FETCH SALES GST REPORT
+  // ==========================================
+  const fetchSalesReport = async () => {
     try {
       setLoading(true);
 
       const token = localStorage.getItem("token");
 
-      const res = await fetch(PURCHASE_BILL_WISE_URL, {
+      const params = new URLSearchParams();
+
+      if (action) {
+        params.append("action", action);
+      }
+
+      if (fromDate) {
+        params.append("fromDate", fromDate);
+      }
+
+      if (toDate) {
+        params.append("toDate", toDate);
+      }
+
+      if (search.trim()) {
+        params.append("search", search.trim());
+      }
+
+      const url = params.toString()
+        ? `${SALES_GST_URL}?${params.toString()}`
+        : SALES_GST_URL;
+
+      const response = await fetch(url, {
         method: "GET",
         headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.message || "Failed to fetch bill-wise audit");
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to fetch sales GST report"
+        );
       }
 
-      setRecords(Array.isArray(data.data) ? data.data : []);
+      if (data.success) {
+        setSalesData(
+          flattenSalesData(data.data || [])
+        );
+      } else {
+        setSalesData([]);
+      }
     } catch (error) {
-      console.error("Purchase bill-wise audit error:", error);
-      setRecords([]);
+      console.error("Sales GST report error:", error);
+      setSalesData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredRecords = useMemo(() => {
-    const q = search.trim().toLowerCase();
+  // ==========================================
+  // INITIAL LOAD
+  // ==========================================
+  useEffect(() => {
+    fetchSalesReport();
+  }, []);
 
-    if (!q) return records;
+  // ==========================================
+  // APPLY FILTER
+  // ==========================================
+  const handleApplyFilter = () => {
+    fetchSalesReport();
+  };
 
-    return records.filter((row) => {
-      const itemNames = (row.items || [])
-        .map((item) => item.itemName || "")
-        .join(" ");
+  // ==========================================
+  // CLEAR FILTER
+  // ==========================================
+  const handleClearFilter = () => {
+    setSearch("");
+    setAction("");
+    setFromDate("");
+    setToDate("");
 
-      return [
-        row.invoiceNo,
-        row.customerName,
-        row.customerGstNumber,
-        row.placeOfSupply,
-        row.action,
-        row.paymentMethod,
-        row.paymentStatus,
-        row.user?.name,
-        row.user?.email,
-        row.user?.role,
-        itemNames,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-  }, [records, search]);
+    setTimeout(() => {
+      fetchSalesReportWithoutFilter();
+    }, 0);
+  };
 
-  const stats = useMemo(() => {
-    return filteredRecords.reduce(
-      (acc, row) => {
-        acc.totalBills += 1;
-        acc.totalSales += Number(row.summary?.grandTotal || 0);
-        acc.pendingAmount += Number(row.pendingAmount || 0);
-        return acc;
-      },
-      {
-        totalBills: 0,
-        totalSales: 0,
-        pendingAmount: 0,
+  // ==========================================
+  // FETCH WITHOUT FILTER
+  // ==========================================
+  const fetchSalesReportWithoutFilter = async () => {
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(SALES_GST_URL, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSalesData(
+          flattenSalesData(data.data || [])
+        );
+      } else {
+        setSalesData([]);
       }
+    } catch (error) {
+      console.error("Sales GST report error:", error);
+      setSalesData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==========================================
+  // FRONTEND SEARCH
+  // ==========================================
+  const filteredData = useMemo(() => {
+    if (!search.trim()) {
+      return salesData;
+    }
+
+    const value = search.toLowerCase().trim();
+
+    return salesData.filter((row) => {
+      const product = row.item || {};
+
+      return (
+        row.invoiceNo
+          ?.toLowerCase()
+          .includes(value) ||
+
+        row.customerName
+          ?.toLowerCase()
+          .includes(value) ||
+
+        row.customerGstNumber
+          ?.toLowerCase()
+          .includes(value) ||
+
+        row.placeOfSupply
+          ?.toLowerCase()
+          .includes(value) ||
+
+        row.paymentMethod
+          ?.toLowerCase()
+          .includes(value) ||
+
+        row.paymentStatus
+          ?.toLowerCase()
+          .includes(value) ||
+
+        product.itemName
+          ?.toLowerCase()
+          .includes(value) ||
+
+        product.itemCode
+          ?.toLowerCase()
+          .includes(value) ||
+
+        product.barcode
+          ?.toLowerCase()
+          .includes(value) ||
+
+        product.hsnCode
+          ?.toLowerCase()
+          .includes(value) ||
+
+        product.unit
+          ?.toLowerCase()
+          .includes(value) ||
+
+        row.action
+          ?.toLowerCase()
+          .includes(value) ||
+
+        row.user?.name
+          ?.toLowerCase()
+          .includes(value) ||
+
+        row.user?.role
+          ?.toLowerCase()
+          .includes(value)
+      );
+    });
+  }, [salesData, search]);
+
+  // ==========================================
+  // TOTAL BILLS
+  // ==========================================
+  const totalBills = useMemo(() => {
+    const bills = new Set(
+      filteredData
+        .map(
+          (item) =>
+            item.documentId ||
+            item.invoiceNo
+        )
+        .filter(Boolean)
     );
-  }, [filteredRecords]);
+
+    return bills.size;
+  }, [filteredData]);
+
+  // ==========================================
+  // TOTAL QUANTITY
+  // ==========================================
+  const totalQty = useMemo(() => {
+    return filteredData.reduce(
+      (total, row) =>
+        total + Number(row.item?.qty || 0),
+      0
+    );
+  }, [filteredData]);
+
+  // ==========================================
+  // TOTAL GST
+  // ==========================================
+  const totalTax = useMemo(() => {
+    return filteredData.reduce(
+      (total, row) =>
+        total +
+        Number(row.item?.gstAmount || 0),
+      0
+    );
+  }, [filteredData]);
+
+  // ==========================================
+  // DATE FORMAT
+  // ==========================================
+  const formatDate = (date) => {
+    if (!date) return "-";
+
+    const value = new Date(date);
+
+    if (Number.isNaN(value.getTime())) {
+      return "-";
+    }
+
+    return value.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  // ==========================================
+  // DATE TIME FORMAT
+  // ==========================================
+  const formatDateTime = (date) => {
+    if (!date) return "-";
+
+    const value = new Date(date);
+
+    if (Number.isNaN(value.getTime())) {
+      return "-";
+    }
+
+    return value.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // ==========================================
+  // AMOUNT FORMAT
+  // ==========================================
+  const formatAmount = (value) => {
+    const number = Number(value || 0);
+
+    return number.toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  // ==========================================
+  // ACTION CLASS
+  // ==========================================
+  const getActionClass = (value) => {
+    const type = value?.toLowerCase();
+
+    if (type === "create") {
+      return styles.createBadge;
+    }
+
+    if (type === "update") {
+      return styles.updateBadge;
+    }
+
+    if (type === "delete") {
+      return styles.deleteBadge;
+    }
+
+    return styles.defaultBadge;
+  };
 
   return (
     <div className={styles.container}>
+
+      {/* =====================================
+          HEADER
+      ====================================== */}
       <div className={styles.header}>
-        <div>
-          <h2>Bill Wise Audit</h2>
-          <p className={styles.subtitle}>
-            Purchase audit bill-wise transaction history
-          </p>
+
+        <div className={styles.headerLeft}>
+
+          <div className={styles.titleIcon}>
+            <FaShoppingCart />
+          </div>
+
+          <div>
+            <h2>Sales GST Report</h2>
+
+            <p>
+              Sales bill item-wise GST audit report
+            </p>
+          </div>
+
         </div>
 
         <div className={styles.headerActions}>
+
           <button
+            type="button"
             className={styles.excelBtn}
-            onClick={() => exportPurchaseBillWiseExcel(filteredRecords)}
-            disabled={!filteredRecords.length}
+            onClick={() =>
+              exportSalesReportExcel(filteredData)
+            }
+            disabled={
+              loading ||
+              filteredData.length === 0
+            }
           >
-            <FaFileExcel />
             Excel
           </button>
 
           <button
+            type="button"
             className={styles.pdfBtn}
-            onClick={() => exportPurchaseBillWisePdf(filteredRecords)}
-            disabled={!filteredRecords.length}
+            onClick={() =>
+              exportSalesReportPDF(filteredData)
+            }
+            disabled={
+              loading ||
+              filteredData.length === 0
+            }
           >
-            <FaFilePdf />
             PDF
           </button>
+
+          <button
+            type="button"
+            onClick={fetchSalesReport}
+            disabled={loading}
+          >
+            Refresh
+          </button>
+
         </div>
+
       </div>
 
-      <div className={styles.cardsRow}>
-        <div className={styles.infoCard}>
-          <div className={styles.cardRow}>
-            <div className={`${styles.cardTitle} ${styles.billCard}`}>
-              <FaReceipt />
-              <p>Total Bills</p>
-            </div>
-          </div>
-          <h2>{stats.totalBills}</h2>
+      {/* =====================================
+          SUMMARY CARDS
+      ====================================== */}
+      <div className={styles.cards}>
+
+        <div className={styles.card}>
+          <span className={styles.cardLabel}>
+            Total Bills
+          </span>
+
+          <strong>
+            {totalBills}
+          </strong>
         </div>
 
-        <div className={styles.infoCard}>
-          <div className={styles.cardRow}>
-            <div className={`${styles.cardTitle} ${styles.amountCard}`}>
-              <FaRupeeSign />
-              <p>Total Amount</p>
-            </div>
-          </div>
-          <h2>{money(stats.totalSales)}</h2>
+        <div className={styles.card}>
+          <span className={styles.cardLabel}>
+            Total Items
+          </span>
+
+          <strong>
+            {filteredData.length}
+          </strong>
         </div>
 
-        <div className={styles.infoCard}>
-          <div className={styles.cardRow}>
-            <div className={`${styles.cardTitle} ${styles.pendingCard}`}>
-              <FaClock />
-              <p>Pending Amount</p>
-            </div>
-          </div>
-          <h2>{money(stats.pendingAmount)}</h2>
+        <div className={styles.card}>
+          <span className={styles.cardLabel}>
+            Total Quantity
+          </span>
+
+          <strong>
+            {totalQty.toFixed(2)}
+          </strong>
         </div>
+
+        <div className={styles.card}>
+          <span className={styles.cardLabel}>
+            Total GST
+          </span>
+
+          <strong>
+            ₹{formatAmount(totalTax)}
+          </strong>
+        </div>
+
       </div>
 
-      <div className={styles.searchRow}>
+      {/* =====================================
+          FILTER SECTION
+      ====================================== */}
+      <div className={styles.filterSection}>
+
         <div className={styles.searchBox}>
-          <FaSearch className={styles.searchIcon} />
-          <input
-            className={styles.searchInput}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search invoice, customer, item, payment..."
+
+          <FaSearch
+            className={styles.searchIcon}
           />
+
+          <input
+            type="text"
+            placeholder="Search invoice, customer, item, HSN..."
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleApplyFilter();
+              }
+            }}
+          />
+
         </div>
 
-        <div className={styles.resultCount}>
-          Showing {filteredRecords.length} of {records.length} records
-        </div>
       </div>
 
+      {/* =====================================
+          RESULT INFO
+      ====================================== */}
+      <div className={styles.tableHeader}>
+
+        <div>
+
+          <h3>
+            Sales Item GST Audit
+          </h3>
+
+          <span>
+            {filteredData.length} item
+            {filteredData.length !== 1
+              ? "s"
+              : ""}
+          </span>
+
+        </div>
+
+      </div>
+
+      {/* =====================================
+          TABLE
+      ====================================== */}
       <div className={styles.tableWrapper}>
+
         <table className={styles.table}>
+
           <thead>
+
             <tr>
+
               <th>S.No</th>
-              <th>Date</th>
-              <th>Invoice No</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Taxable Amount</th>
-              <th>GST</th>
-              <th>Grand Total</th>
-              <th>Paid</th>
-              <th>Pending</th>
-              <th>Payment</th>
-              <th>Status</th>
+
+              <th>Audit Date</th>
+
               <th>Action</th>
-              <th>View</th>
+
+              <th>Invoice No</th>
+
+              <th>Invoice Date</th>
+
+              <th>Customer</th>
+
+              <th>Customer GST No</th>
+
+              <th>Place of Supply</th>
+
+              <th>HSN Code</th>
+
+              <th>Item Name</th>
+
+              <th>Barcode</th>
+
+              <th>Quantity</th>
+
+              <th>Unit</th>
+
+              <th>Rate</th>
+
+              <th>Discount</th>
+
+              <th>Taxable Amount</th>
+
+              <th>GST Rate</th>
+
+              <th>CGST Rate</th>
+
+              <th>SGST Rate</th>
+
+              <th>CGST Amount</th>
+
+              <th>SGST Amount</th>
+
+              <th>GST Amount</th>
+
+              <th>Item Total</th>
+
+              <th>Payment Mode</th>
+
+              <th>User</th>
+
+              <th>Role</th>
             </tr>
           </thead>
-
           <tbody>
+            
             {loading ? (
+
               <tr>
-                <td colSpan="14">
-                  <div className={styles.tableLoader}>
-                    <div className={styles.spinner}></div>
-                    <p>Loading bill-wise audit...</p>
-                  </div>
+
+                <td
+                  colSpan="26"
+                  className={styles.messageCell}
+                >
+
+                  <div
+                    className={styles.loader}
+                  ></div>
+
+                  <span>
+                    Loading sales GST report...
+                  </span>
+
                 </td>
+
               </tr>
-            ) : filteredRecords.length === 0 ? (
+
+            ) : filteredData.length === 0 ? (
+
               <tr>
-                <td colSpan="14">
-                  <div className={styles.emptyState}>No records found</div>
+
+                <td
+                  colSpan="26"
+                  className={styles.messageCell}
+                >
+                  No sales GST audit records found
                 </td>
+
               </tr>
+
             ) : (
-              filteredRecords.map((row, index) => (
-                <tr key={row.auditId || `${row.invoiceNo}-${index}`}>
-                  <td>{index + 1}</td>
-                  <td>{formatDate(row.invoiceDate || row.date)}</td>
-                  <td className={styles.invoiceCell}>{row.invoiceNo || "-"}</td>
-                  <td>{row.customerName || "-"}</td>
-                  <td>{row.itemCount ?? row.items?.length ?? 0}</td>
-                  <td>{money(row.summary?.subTotal)}</td>
-                  <td>{money(row.summary?.totalGST)}</td>
-                  <td className={styles.totalCell}>
-                    {money(row.summary?.grandTotal)}
-                  </td>
-                  <td>{money(row.paidAmount)}</td>
-                  <td
-                    className={
-                      Number(row.pendingAmount || 0) > 0
-                        ? styles.dueCell
-                        : undefined
-                    }
-                  >
-                    {money(row.pendingAmount)}
-                  </td>
-                  <td className={styles.capitalize}>
-                    {row.paymentMethod || "-"}
-                  </td>
-                  <td>
-                    <span
-                      className={`${styles.statusBadge} ${
-                        String(row.paymentStatus).toLowerCase() === "paid"
-                          ? styles.paid
-                          : String(row.paymentStatus).toLowerCase() === "due"
-                          ? styles.due
-                          : styles.partial
-                      }`}
+
+              filteredData.map(
+                (row, index) => {
+
+                  const product =
+                    row.item || {};
+
+                  return (
+
+                    <tr
+                      key={`${row.auditId}-${product.itemIndex ||
+                        index
+                        }-${index}`}
                     >
-                      {row.paymentStatus || "-"}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={styles.actionBadge}>
-                      {row.action || "-"}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className={styles.viewBtn}
-                      onClick={() => setSelectedRecord(row)}
-                      title="View details"
-                    >
-                      <FaEye />
-                    </button>
-                  </td>
-                </tr>
-              ))
+
+                      {/* S.NO */}
+                      <td
+                        className={
+                          styles.serialNo
+                        }
+                      >
+                        {index + 1}
+                      </td>
+
+                      {/* AUDIT DATE */}
+                      <td
+                        className={
+                          styles.dateCell
+                        }
+                      >
+                        {formatDateTime(
+                          row.date
+                        )}
+                      </td>
+
+                      {/* ACTION */}
+                      <td>
+
+                        <span
+                          className={`${styles.actionBadge} ${getActionClass(
+                            row.action
+                          )
+                            }`}
+                        >
+                          {row.action || "-"}
+                        </span>
+
+                      </td>
+
+                      {/* INVOICE NO */}
+                      <td>
+
+                        <span
+                          className={
+                            styles.grnNo
+                          }
+                        >
+                          {row.invoiceNo || "-"}
+                        </span>
+
+                      </td>
+
+                      {/* INVOICE DATE */}
+                      <td>
+                        {formatDate(
+                          row.invoiceDate
+                        )}
+                      </td>
+
+                      {/* CUSTOMER */}
+                      <td>
+
+                        <div
+                          className={
+                            styles.supplierCell
+                          }
+                        >
+
+                          <strong>
+                            {row.customerName ||
+                              "-"}
+                          </strong>
+
+                        </div>
+
+                      </td>
+
+                      {/* CUSTOMER GST */}
+                      <td
+                        className={
+                          styles.gstNo
+                        }
+                      >
+                        {row.customerGstNumber ||
+                          "-"}
+                      </td>
+
+                      {/* PLACE OF SUPPLY */}
+                      <td>
+                        {row.placeOfSupply ||
+                          "-"}
+                      </td>
+
+                      {/* HSN */}
+                      <td>
+                        {product.hsnCode ||
+                          "-"}
+                      </td>
+
+                      {/* ITEM NAME */}
+                      <td>
+
+                        <div
+                          className={
+                            styles.itemCell
+                          }
+                        >
+
+                          <strong>
+                            {product.itemName ||
+                              "-"}
+                          </strong>
+
+                          {product.itemIndex ? (
+                            <span>
+                              Item{" "}
+                              {
+                                product.itemIndex
+                              }
+                            </span>
+                          ) : null}
+
+                        </div>
+
+                      </td>
+
+                      {/* BARCODE */}
+                      <td>
+                        {product.barcode ||
+                          "-"}
+                      </td>
+
+                      {/* QUANTITY */}
+                      <td
+                        className={
+                          styles.numberCell
+                        }
+                      >
+
+                        {product.qty !==
+                          undefined &&
+                          product.qty !== null &&
+                          product.qty !== ""
+                          ? Number(
+                            product.qty
+                          )
+                          : "-"}
+
+                      </td>
+
+                      {/* UNIT */}
+                      <td>
+
+                        <span
+                          className={
+                            styles.unitBadge
+                          }
+                        >
+                          {product.unit ||
+                            "-"}
+                        </span>
+
+                      </td>
+
+                      {/* RATE */}
+                      <td
+                        className={
+                          styles.amountCell
+                        }
+                      >
+                        ₹
+                        {formatAmount(
+                          product.rate
+                        )}
+                      </td>
+
+                      {/* DISCOUNT */}
+                      <td
+                        className={
+                          styles.amountCell
+                        }
+                      >
+                        ₹
+                        {formatAmount(
+                          product.discountAmount
+                        )}
+                      </td>
+
+                      {/* TAXABLE AMOUNT */}
+                      <td
+                        className={
+                          styles.amountCell
+                        }
+                      >
+                        ₹
+                        {formatAmount(
+                          product.taxableAmount
+                        )}
+                      </td>
+
+                      {/* GST RATE */}
+                      <td
+                        className={
+                          styles.numberCell
+                        }
+                      >
+
+                        {product.gstRate !==
+                          undefined &&
+                          product.gstRate !== null &&
+                          product.gstRate !== ""
+                          ? `${product.gstRate}%`
+                          : "-"}
+
+                      </td>
+
+                      {/* CGST RATE */}
+                      <td
+                        className={
+                          styles.numberCell
+                        }
+                      >
+
+                        {product.cgstRate !==
+                          undefined &&
+                          product.cgstRate !== null &&
+                          product.cgstRate !== ""
+                          ? `${product.cgstRate}%`
+                          : "-"}
+
+                      </td>
+
+                      {/* SGST RATE */}
+                      <td
+                        className={
+                          styles.numberCell
+                        }
+                      >
+
+                        {product.sgstRate !==
+                          undefined &&
+                          product.sgstRate !== null &&
+                          product.sgstRate !== ""
+                          ? `${product.sgstRate}%`
+                          : "-"}
+
+                      </td>
+
+                      {/* CGST AMOUNT */}
+                      <td
+                        className={
+                          styles.amountCell
+                        }
+                      >
+                        ₹
+                        {formatAmount(
+                          product.cgstAmount
+                        )}
+                      </td>
+
+                      {/* SGST AMOUNT */}
+                      <td
+                        className={
+                          styles.amountCell
+                        }
+                      >
+                        ₹
+                        {formatAmount(
+                          product.sgstAmount
+                        )}
+                      </td>
+
+                      {/* GST AMOUNT */}
+                      <td
+                        className={
+                          styles.taxAmount
+                        }
+                      >
+                        ₹
+                        {formatAmount(
+                          product.gstAmount
+                        )}
+                      </td>
+
+                      {/* ITEM TOTAL */}
+                      <td
+                        className={
+                          styles.amountCell
+                        }
+                      >
+                        ₹
+                        {formatAmount(
+                          product.itemTotalAmount ??
+                          product.finalAmount ??
+                          product.totalAmount
+                        )}
+                      </td>
+
+                      {/* PAYMENT MODE */}
+                      <td>
+                        {row.paymentMethod ||
+                          "-"}
+                      </td>
+
+                      {/* USER */}
+                      <td>
+                        {row.user?.name ||
+                          "-"}
+                      </td>
+
+                      {/* ROLE */}
+                      <td>
+
+                        <span
+                          className={
+                            styles.roleBadge
+                          }
+                        >
+                          {row.user?.role ||
+                            "-"}
+                        </span>
+
+                      </td>
+
+                    </tr>
+
+                  );
+                }
+              )
+
             )}
+
           </tbody>
+
         </table>
+
       </div>
 
-      {selectedRecord && (
-        <div
-          className={styles.modalOverlay}
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) setSelectedRecord(null);
-          }}
-        >
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <div>
-                <h3>Bill Audit Details</h3>
-                <p>{selectedRecord.invoiceNo || "-"}</p>
-              </div>
-
-              <button
-                className={styles.closeBtn}
-                onClick={() => setSelectedRecord(null)}
-              >
-                <FaTimes />
-              </button>
-            </div>
-
-            <div className={styles.modalBody}>
-              <div className={styles.detailGrid}>
-                <Detail
-                  label="Invoice No"
-                  value={selectedRecord.invoiceNo || "-"}
-                />
-                <Detail
-                  label="Invoice Date"
-                  value={formatDateTime(
-                    selectedRecord.invoiceDate || selectedRecord.date
-                  )}
-                />
-                <Detail
-                  label="Customer"
-                  value={selectedRecord.customerName || "-"}
-                />
-                <Detail
-                  label="Customer GST"
-                  value={selectedRecord.customerGstNumber || "-"}
-                />
-                <Detail
-                  label="Place of Supply"
-                  value={selectedRecord.placeOfSupply || "-"}
-                />
-                <Detail label="Action" value={selectedRecord.action || "-"} />
-                <Detail
-                  label="User Role"
-                  value={selectedRecord.user?.role || "-"}
-                />
-                <Detail
-                  label="Payment Method"
-                  value={selectedRecord.paymentMethod || "-"}
-                />
-                <Detail
-                  label="Payment Status"
-                  value={selectedRecord.paymentStatus || "-"}
-                />
-                <Detail
-                  label="Paid Amount"
-                  value={money(selectedRecord.paidAmount)}
-                />
-                <Detail
-                  label="Pending Amount"
-                  value={money(selectedRecord.pendingAmount)}
-                />
-                <Detail
-                  label="Grand Total"
-                  value={money(selectedRecord.summary?.grandTotal)}
-                />
-              </div>
-
-              <section className={styles.section}>
-                <h4>Items</h4>
-
-                <div className={styles.modalTableWrapper}>
-                  <table className={styles.modalTable}>
-                    <thead>
-                      <tr>
-                        <th>Item</th>
-                        <th>Barcode</th>
-                        <th>HSN</th>
-                        <th>Qty</th>
-                        <th>Unit</th>
-                        <th>MRP</th>
-                        <th>Rate</th>
-                        <th>Discount</th>
-                        <th>Taxable</th>
-                        <th>GST %</th>
-                        <th>GST Amount</th>
-                        <th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(selectedRecord.items || []).map((item, index) => (
-                        <tr key={item.productId || index}>
-                          <td>{item.itemName || "-"}</td>
-                          <td>{item.barcode || "-"}</td>
-                          <td>{item.hsnCode || "-"}</td>
-                          <td>{item.qty ?? 0}</td>
-                          <td>{item.totalKg || item.unitText || item.unit || "-"}</td>
-                          <td>{money(item.mrp)}</td>
-                          <td>{money(item.rate)}</td>
-                          <td>{money(item.discountAmount)}</td>
-                          <td>{money(item.taxableAmount)}</td>
-                          <td>{Number(item.gstRate || 0)}%</td>
-                          <td>{money(item.gstAmount)}</td>
-                          <td>{money(item.finalAmount ?? item.totalAmount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-
-              <section className={styles.section}>
-                <h4>Bill Summary</h4>
-
-                <div className={styles.summaryGrid}>
-                  <SummaryItem
-                    label="Sub Total"
-                    value={money(selectedRecord.summary?.subTotal)}
-                  />
-                  <SummaryItem
-                    label="Total GST"
-                    value={money(selectedRecord.summary?.totalGST)}
-                  />
-                  <SummaryItem
-                    label="Item Discount"
-                    value={money(selectedRecord.summary?.itemDiscountAmount)}
-                  />
-                  <SummaryItem
-                    label="Bill Discount"
-                    value={money(selectedRecord.summary?.billDiscountAmount)}
-                  />
-                  <SummaryItem
-                    label="Loyalty Discount"
-                    value={money(selectedRecord.summary?.loyaltyDiscount)}
-                  />
-                  <SummaryItem
-                    label="Grand Total"
-                    value={money(selectedRecord.summary?.grandTotal)}
-                    strong
-                  />
-                </div>
-              </section>
-
-              {!!selectedRecord.payments?.length && (
-                <section className={styles.section}>
-                  <h4>Payments</h4>
-
-                  <div className={styles.paymentList}>
-                    {selectedRecord.payments.map((payment, index) => (
-                      <div className={styles.paymentCard} key={index}>
-                        <span>{payment.method || "-"}</span>
-                        <strong>{money(payment.amount)}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function Detail({ label, value }) {
-  return (
-    <div className={styles.detailItem}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function SummaryItem({ label, value, strong = false }) {
-  return (
-    <div className={`${styles.summaryItem} ${strong ? styles.summaryStrong : ""}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
+export default SalesGSTReport;

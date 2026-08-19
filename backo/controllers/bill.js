@@ -966,234 +966,229 @@ let price = billSellingPrice;
 
         if (hasGSTItems) {
             await AuditLog.create({
-                ...hierarchy,
+    ...hierarchy,
 
-                userId: req.user.userId || req.user.id,
-                role: req.user.role,
+    userId: req.user.userId || req.user.id,
+    role: req.user.role,
 
-                module: "Bill",
-                action: "Create",
+    module: "Bill",
+    action: "Create",
 
-                documentId: bill._id,
-                oldData: null,
+    documentId: bill._id,
+    oldData: null,
 
-                newData: {
-                    invoiceNo: bill.invoiceNo || "",
-                    invoiceDate: bill.createdAt || new Date(),
+    newData: {
+        invoiceNo: bill.invoiceNo || "",
+        invoiceDate: bill.createdAt || new Date(),
 
-                    customerId: customer?._id || null,
-                    customerName: customer?.name || "Walk-in Customer",
+        customerId: customer?._id || null,
+        customerName: customer?.name || "Walk-in Customer",
 
-                    customerGstNumber:
-                        customer?.gstNumber ||
-                        customer?.gstnumber ||
-                        customer?.gstin ||
-                        "",
+        customerGstNumber:
+            customer?.gstNumber ||
+            customer?.gstnumber ||
+            customer?.gstin ||
+            "",
 
-                    placeOfSupply:
-                        customer?.state ||
-                        customer?.placeOfSupply ||
-                        "",
+        placeOfSupply:
+            customer?.state ||
+            customer?.placeOfSupply ||
+            "",
 
-                    items: bill.items
-                        .filter((item) =>
-                            Number(item.gstRate || 0) > 0 &&
-                            Number(item.gstAmount || 0) > 0
-                        )
-                        .map((item) => {
-                            const qty = Number(item.qty || 0);
-                            const freeQty = Number(item.freeQty || 0);
+       items: bill.items
+    .filter(
+        (item) =>
+            Number(item.gstRate || 0) > 0 &&
+            Number(item.gstAmount || 0) > 0
+    )
+    .map((item) => {
+            const qty = Number(item.qty || 0);
+            const freeQty = Number(item.freeQty || 0);
 
-                            const rate = Number(item.price || 0);
-                            const gstRate = Number(item.gstRate || 0);
-                            const gstAmount = Number(item.gstAmount || 0);
-                            const finalAmount = Number(item.finalPrice || 0);
+            const rate = Number(item.price || 0);
+            const gstRate = Number(item.gstRate || 0);
+            const gstAmount = Number(item.gstAmount || 0);
+            const finalAmount = Number(item.finalPrice || 0);
 
-                            const taxableAmount = Number(
-                                Number(
-                                    item.taxableAmount ??
-                                    Math.max(0, finalAmount - gstAmount)
-                                ).toFixed(2)
-                            );
+            const taxableAmount = Number(
+                Number(
+                    item.taxableAmount ??
+                    Math.max(0, finalAmount - gstAmount)
+                ).toFixed(2)
+            );
 
-                            return {
-                                productId: item.productId || null,
-                                barcodeId: item.barcodeId || null,
+            return {
+                productId: item.productId || null,
+                barcodeId: item.barcodeId || null,
 
-                                itemName: item.name || "",
-                                hsnCode: item.hsnCode || "",
-                                barcode: item.barcode || "",
+                itemName: item.name || "",
+                hsnCode: item.hsnCode || "",
+                barcode: item.barcode || "",
 
-                                qty,
-                                freeQty,
+                qty,
+                freeQty,
 
-                                totalGivenQty: Number(
-                                    item.totalGivenQty ?? (qty + freeQty)
-                                ),
+                totalGivenQty: Number(
+                    item.totalGivenQty ?? (qty + freeQty)
+                ),
 
-                                unit: item.unit || "pcs",
-                                unitValue: Number(item.unitValue || 1),
-                                unitText: item.unitText || "",
-                                totalKg: item.totalkg || "",
+                unit: item.unit || "pcs",
+                unitValue: Number(item.unitValue || 1),
+                unitText: item.unitText || "",
+                totalKg: item.totalkg || "",
 
-                                mrp: Number(item.mrp || 0),
-                                rate,
+                mrp: Number(item.mrp || 0),
+                rate,
 
-                                appliedPriceLevel:
-                                    item.appliedPriceLevel || "normal",
+                 sellingPrice: Number(
+    item.sellingPrice ??
+    item.price ??
+    0
+),
 
-                                appliedSlab:
-                                    item.appliedPriceLevel === "slab" &&
-                                        Number(item.appliedSlab?.price || 0) > 0
-                                        ? {
-                                            minQty: Number(
-                                                item.appliedSlab?.minQty || 0
-                                            ),
+price: Number(
+    item.price ??
+    0
+),
 
-                                            maxQty:
-                                                item.appliedSlab?.maxQty !== null &&
-                                                    item.appliedSlab?.maxQty !== undefined
-                                                    ? Number(
-                                                        item.appliedSlab.maxQty
-                                                    )
-                                                    : null,
+                appliedPriceLevel:
+                    item.appliedPriceLevel || "normal",
 
-                                            price: Number(
-                                                item.appliedSlab?.price || 0
-                                            )
-                                        }
-                                        : null,
+                appliedSlab:
+                    item.appliedPriceLevel === "slab" &&
+                    Number(item.appliedSlab?.price || 0) > 0
+                        ? {
+                            minQty: Number(
+                                item.appliedSlab?.minQty || 0
+                            ),
 
-                                gstRate,
+                            maxQty:
+                                item.appliedSlab?.maxQty !== null &&
+                                item.appliedSlab?.maxQty !== undefined
+                                    ? Number(item.appliedSlab.maxQty)
+                                    : null,
 
-                                cgstRate: Number(
-                                    (gstRate / 2).toFixed(2)
-                                ),
-
-                                sgstRate: Number(
-                                    (gstRate / 2).toFixed(2)
-                                ),
-
-                                gstAmount,
-
-                                cgstAmount: Number(
-                                    (gstAmount / 2).toFixed(2)
-                                ),
-
-                                sgstAmount: Number(
-                                    (gstAmount / 2).toFixed(2)
-                                ),
-
-                                discountAmount: Number(
-                                    item.discountAmount || 0
-                                ),
-
-                                taxableAmount,
-
-                                totalAmount: Number(
-                                    item.totalAmount || 0
-                                ),
-
-                                finalAmount
-                            };
-                        }),
-
-                    summary: {
-                        subTotal: Number(
-                            bill.summary?.subTotal || 0
-                        ),
-
-                        totalGST: Number(
-                            bill.summary?.totalGST || 0
-                        ),
-
-                        itemDiscountAmount: Number(
-                            bill.summary?.itemDiscountAmount || 0
-                        ),
-
-                        billDiscountAmount: Number(
-                            bill.summary?.billDiscountAmount || 0
-                        ),
-
-                        billDiscountPercentage: Number(
-                            bill.summary?.billDiscountPercentage || 0
-                        ),
-
-                        loyaltyDiscount: Number(
-                            bill.summary?.discount || 0
-                        ),
-
-                        grandTotal: Number(
-                            bill.summary?.grandTotal || 0
-                        )
-                    },
-
-                    offer: {
-                        offerId: bill.offer?.offerId || null,
-                        offerName: bill.offer?.offerName || "",
-                        discountAmount: Number(
-                            bill.offer?.discountAmount || 0
-                        )
-                    },
-
-                    paidAmount: Number(bill.paidAmount || 0),
-                    pendingAmount: Number(bill.pendingAmount || 0),
-
-                    paymentMethod: bill.paymentMethod || "due",
-                    paymentStatus: bill.paymentStatus || "due",
-
-                    payments: (bill.payments || []).map((payment) => ({
-                        method: payment.method || "",
-                        amount: Number(payment.amount || 0),
-
-                        details: {
-                            upiId: payment.details?.upiId || "",
-                            cardType: payment.details?.cardType || "",
-                            cardLast4: payment.details?.cardLast4 || "",
-                            chequeNo: payment.details?.chequeNo || "",
-                            chequeDate:
-                                payment.details?.chequeDate || null,
-                            bankName:
-                                payment.details?.bankName || "",
-                            accountHolder:
-                                payment.details?.accountHolder || ""
+                            price: Number(
+                                item.appliedSlab?.price || 0
+                            )
                         }
-                    }))
-                }
-            });
-        }
+                        : null,
 
+                gstRate,
 
+                cgstRate: Number(
+                    (gstRate / 2).toFixed(2)
+                ),
 
+                sgstRate: Number(
+                    (gstRate / 2).toFixed(2)
+                ),
 
+                gstAmount,
 
-        if (hasGSTItems) {
-            await AuditLog.create({
-                ...hierarchy,
+                cgstAmount: Number(
+                    (gstAmount / 2).toFixed(2)
+                ),
 
-                userId: req.user.userId || req.user.id,
-                role: req.user.role,
+                sgstAmount: Number(
+                    (gstAmount / 2).toFixed(2)
+                ),
 
-                module: "GST",
-                action: "Create",
+                discountAmount: Number(
+                    item.discountAmount || 0
+                ),
 
-                documentId: bill._id,
-                oldData: null,
+                taxableAmount,
 
-                newData: {
-                    invoiceNo: bill.invoiceNo || "",
+                totalAmount: Number(
+                    item.totalAmount || 0
+                ),
 
-                    customerId: customer?._id || null,
+                finalAmount,
 
-                    gstItems: gstAuditItems,
+                itemTotalAmount: Number(
+                    finalAmount.toFixed(2)
+                )
+            };
+        }),
 
-                    totalGST: Number(
-                        Number(totalGST || 0).toFixed(2)
-                    ),
+        summary: {
+            subTotal: Number(
+                bill.summary?.subTotal || 0
+            ),
 
-                    grandTotal: roundedGrandTotal
-                }
-            });
+            totalGST: Number(
+                bill.summary?.totalGST || 0
+            ),
+
+            itemDiscountAmount: Number(
+                bill.summary?.itemDiscountAmount || 0
+            ),
+
+            billDiscountAmount: Number(
+                bill.summary?.billDiscountAmount || 0
+            ),
+
+            billDiscountPercentage: Number(
+                bill.summary?.billDiscountPercentage || 0
+            ),
+
+            loyaltyDiscount: Number(
+                bill.summary?.discount || 0
+            ),
+
+            grandTotal: Number(
+                bill.summary?.grandTotal || 0
+            )
+        },
+
+        offer: {
+            offerId: bill.offer?.offerId || null,
+            offerName: bill.offer?.offerName || "",
+            discountAmount: Number(
+                bill.offer?.discountAmount || 0
+            )
+        },
+
+        paidAmount: Number(
+            bill.paidAmount || 0
+        ),
+
+        pendingAmount: Number(
+            bill.pendingAmount || 0
+        ),
+
+        paymentMethod:
+            bill.paymentMethod || "due",
+
+        paymentStatus:
+            bill.paymentStatus || "due",
+
+        payments: (bill.payments || []).map((payment) => ({
+            method: payment.method || "",
+            amount: Number(payment.amount || 0),
+
+            details: {
+                upiId: payment.details?.upiId || "",
+                cardType: payment.details?.cardType || "",
+                cardLast4: payment.details?.cardLast4 || "",
+
+                chequeNo:
+                    payment.details?.chequeNo || "",
+
+                chequeDate:
+                    payment.details?.chequeDate || null,
+
+                bankName:
+                    payment.details?.bankName || "",
+
+                accountHolder:
+                    payment.details?.accountHolder || ""
+            }
+        }))
+    }
+
+});
         }
 
 

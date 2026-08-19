@@ -83,6 +83,7 @@ import ManageUsers from "./Pages/Settings/ManageUsers/ManageUsers";
 import HelpSupport from "./Pages/Settings/Help/HelpSupport";
 import BulkAction from "./Pages/Items/BulkAction";
 import PurchaseReport from "./Pages/GST/PurchaseReport";
+import SalesGSTReport from "./Pages/GST/BillReports/BillReports";
 
 function MainLayout() {
   const [collapsed, setCollapsed] =
@@ -164,7 +165,7 @@ function MainLayout() {
 
           <Route
             path="/Bill-reports"
-            element={<SalesBillWiseAudit />}
+            element={<SalesGSTReport />}
           />
 
           <Route
@@ -342,41 +343,8 @@ function MainLayout() {
 }
 
 function AppRoutes() {
-    const location = useLocation();
-
-    const [token, setToken] = useState(
-        () => localStorage.getItem("token")
-    );
-
-    useEffect(() => {
-        const updateAuth = () => {
-            setToken(
-                localStorage.getItem("token")
-            );
-        };
-
-        window.addEventListener(
-            "accountSwitched",
-            updateAuth
-        );
-
-        window.addEventListener(
-            "storage",
-            updateAuth
-        );
-
-        return () => {
-            window.removeEventListener(
-                "accountSwitched",
-                updateAuth
-            );
-
-            window.removeEventListener(
-                "storage",
-                updateAuth
-            );
-        };
-    }, []);
+  const location = useLocation();
+  const token = localStorage.getItem("token");
 
   // ROOT
   if (location.pathname === "/") {

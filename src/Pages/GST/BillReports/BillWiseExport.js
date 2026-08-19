@@ -2,6 +2,10 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// ======================================================
+// HELPERS
+// ======================================================
+
 const number = (value) => Number(value || 0);
 
 const formatDate = (value) => {
@@ -21,223 +25,588 @@ const formatDate = (value) => {
 };
 
 // ======================================================
-// FLATTEN BILL DATA FOR EXCEL
+// SALES GST - EXCEL EXPORT
 // ======================================================
 
-const flattenRows = (records = []) =>
-  records.map((row, index) => ({
-    "S.No": index + 1,
+export const exportSalesReportExcel = (records = []) => {
+  if (!records.length) return;
 
-    Date: formatDate(row.invoiceDate || row.date),
+  const rows = records.map((row, index) => {
+    const item = row.item || {};
 
-    "Invoice No": row.invoiceNo || "-",
+    const isFirstRow =
+      index === 0 ||
+      records[index - 1]?.documentId !== row.documentId;
 
-    Customer: row.customerName || "-",
+    return {
+      "S.No": index + 1,
 
-    "Customer GST": row.customerGstNumber || "-",
+      "Audit Date": formatDate(row.date),
 
-    "Place of Supply": row.placeOfSupply || "-",
+      Action: row.action || "-",
 
-    "Item Count": row.itemCount ?? row.items?.length ?? 0,
+      "Invoice No": row.invoiceNo || "-",
 
-    "Item Names": (row.items || [])
-      .map((item) => item.itemName)
-      .filter(Boolean)
-      .join(", "),
+      "Invoice Date": formatDate(row.invoiceDate),
 
-    "Sub Total": number(row.summary?.subTotal),
+      Customer: row.customerName || "-",
 
-    GST: number(row.summary?.totalGST),
+      "Customer GST No": row.customerGstNumber || "-",
 
-    "Item Discount": number(
-      row.summary?.itemDiscountAmount
-    ),
+      "Place of Supply": row.placeOfSupply || "-",
 
-    "Bill Discount": number(
-      row.summary?.billDiscountAmount
-    ),
+      "HSN Code": item.hsnCode || "-",
 
-    "Loyalty Discount": number(
-      row.summary?.loyaltyDiscount
-    ),
+      "Item Name": item.itemName || "-",
 
-    "Grand Total": number(
-      row.summary?.grandTotal
-    ),
+      Barcode: item.barcode || "-",
 
-    "Paid Amount": number(row.paidAmount),
+      Quantity: number(item.qty),
 
-    "Pending Amount": number(row.pendingAmount),
+      Unit: item.unit || "-",
 
-    "Payment Method": row.paymentMethod || "-",
+      Rate: number(item.rate),
 
-    "Payment Status": row.paymentStatus || "-",
+      Discount: number(item.discountAmount),
 
-    Action: row.action || "-",
+      "Taxable Amount": number(item.taxableAmount),
 
-    "User Role": row.user?.role || "-",
-  }));
+      "GST Rate": number(item.gstRate),
+
+      "CGST Rate": number(item.cgstRate),
+
+      "SGST Rate": number(item.sgstRate),
+
+      "CGST Amount": number(item.cgstAmount),
+
+      "SGST Amount": number(item.sgstAmount),
+
+      "GST Amount": number(item.gstAmount),
+
+      "Item Total": number(
+        item.itemTotalAmount ??
+        item.finalAmount ??
+        item.totalAmount
+      ),
+
+      "Sub Total": isFirstRow
+        ? number(row.summary?.subTotal)
+        : "",
+
+      "Total GST": isFirstRow
+        ? number(row.summary?.totalGST)
+        : "",
+
+      "Total CGST": isFirstRow
+        ? number(row.summary?.totalCGST)
+        : "",
+
+      "Total SGST": isFirstRow
+        ? number(row.summary?.totalSGST)
+        : "",
+
+      "Total CGST Rate": isFirstRow
+        ? number(row.summary?.totalCGSTRate)
+        : "",
+
+      "Total SGST Rate": isFirstRow
+        ? number(row.summary?.totalSGSTRate)
+        : "",
+
+      "Item Discount": isFirstRow
+        ? number(row.summary?.itemDiscountAmount)
+        : "",
+
+      "Bill Discount": isFirstRow
+        ? number(row.summary?.billDiscountAmount)
+        : "",
+
+      "Bill Discount %": isFirstRow
+        ? number(row.summary?.billDiscountPercentage)
+        : "",
+
+      "Loyalty Discount": isFirstRow
+        ? number(row.summary?.loyaltyDiscount)
+        : "",
+
+      "Grand Total": isFirstRow
+        ? number(row.summary?.grandTotal)
+        : "",
+
+      "Payment Method": row.paymentMethod || "-",
+
+      User: row.user?.name || "-",
+
+      Role: row.user?.role || "-",
+    };
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+
+  worksheet["!cols"] = [
+    { wch: 7 },   // S.No
+    { wch: 15 },  // Audit Date
+    { wch: 12 },  // Action
+    { wch: 15 },  // Invoice
+    { wch: 15 },  // Invoice Date
+    { wch: 22 },  // Customer
+    { wch: 20 },  // Customer GST
+    { wch: 18 },  // Place
+    { wch: 14 },  // HSN
+    { wch: 24 },  // Item
+    { wch: 14 },  // Barcode
+    { wch: 12 },  // Qty
+    { wch: 12 },  // Unit
+    { wch: 14 },  // Rate
+    { wch: 14 },  // Discount
+    { wch: 18 },  // Taxable
+    { wch: 12 },  // GST Rate
+    { wch: 12 },  // CGST Rate
+    { wch: 12 },  // SGST Rate
+    { wch: 15 },  // CGST Amount
+    { wch: 15 },  // SGST Amount
+    { wch: 15 },  // GST Amount
+    { wch: 16 },  // Item Total
+    { wch: 16 },  // Payment
+    { wch: 18 },  // User
+    { wch: 15 },  // Role
+  ];
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Sales GST"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    `Sales_GST_Report_${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`
+  );
+};
 
 // ======================================================
-// EXCEL EXPORT
+// SALES GST - PDF EXPORT
 // ======================================================
+
+export const exportSalesReportPDF = (records = []) => {
+  if (!records.length) return;
+
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: "a4",
+  });
+
+  // ====================================================
+  // TITLE
+  // ====================================================
+
+  doc.setFontSize(15);
+
+  doc.text(
+    "Sales GST Report",
+    14,
+    15
+  );
+
+  doc.setFontSize(9);
+
+  doc.text(
+    `Generated: ${new Date().toLocaleString("en-IN")}`,
+    14,
+    21
+  );
+
+  // ====================================================
+  // TOTALS
+  // ====================================================
+
+  const totalQty = records.reduce(
+    (sum, row) =>
+      sum + number(row.item?.qty),
+    0
+  );
+
+  const totalGST = records.reduce(
+    (sum, row) =>
+      sum + number(row.item?.gstAmount),
+    0
+  );
+
+  const totalCGST = records.reduce(
+    (sum, row) =>
+      sum + number(row.item?.cgstAmount),
+    0
+  );
+
+  const totalSGST = records.reduce(
+    (sum, row) =>
+      sum + number(row.item?.sgstAmount),
+    0
+  );
+
+  const totalTaxable = records.reduce(
+    (sum, row) =>
+      sum + number(row.item?.taxableAmount),
+    0
+  );
+
+  const totalSubTotal = records.reduce(
+    (sum, row) =>
+      sum + number(row.summary?.subTotal),
+    0
+  );
+
+  const totalGrandTotal = records.reduce(
+    (sum, row) =>
+      sum + number(row.summary?.grandTotal),
+    0
+  );
+
+  const totalItemDiscount = records.reduce(
+    (sum, row) =>
+      sum + number(row.summary?.itemDiscountAmount),
+    0
+  );
+
+  const totalBillDiscount = records.reduce(
+    (sum, row) =>
+      sum + number(row.summary?.billDiscountAmount),
+    0
+  );
+
+  const totalLoyaltyDiscount = records.reduce(
+    (sum, row) =>
+      sum + number(row.summary?.loyaltyDiscount),
+    0
+  );
+
+  doc.text(
+    `Items: ${records.length}    ` +
+    `Quantity: ${totalQty.toFixed(2)}    ` +
+    `Sub Total: Rs. ${totalSubTotal.toFixed(2)}    ` +
+    `Taxable: Rs. ${totalTaxable.toFixed(2)}    ` +
+    `GST: Rs. ${totalGST.toFixed(2)}    ` +
+    `CGST: Rs. ${totalCGST.toFixed(2)}    ` +
+    `SGST: Rs. ${totalSGST.toFixed(2)}`,
+    14,
+    27
+  );
+
+  doc.text(
+    `Item Discount: Rs. ${totalItemDiscount.toFixed(2)}    ` +
+    `Bill Discount: Rs. ${totalBillDiscount.toFixed(2)}    ` +
+    `Loyalty Discount: Rs. ${totalLoyaltyDiscount.toFixed(2)}    ` +
+    `Grand Total: Rs. ${totalGrandTotal.toFixed(2)}`,
+    14,
+    32
+  );
+
+  // ====================================================
+  // TABLE
+  // ====================================================
+
+  autoTable(doc, {
+    startY: 37,
+
+    head: [
+      [
+        "S.No",
+        "Audit Date",
+        "Action",
+        "Invoice",
+        "Invoice Date",
+        "Customer",
+        "GST No",
+        "Place",
+        "HSN",
+        "Item",
+        "Barcode",
+        "Qty",
+        "Unit",
+        "Rate",
+        "Discount",
+        "Taxable",
+        "GST %",
+        "CGST %",
+        "SGST %",
+        "CGST",
+        "SGST",
+        "GST",
+        "Total",
+        "Sub Total",
+        "Total GST",
+        "Total CGST",
+        "Total SGST",
+        "Grand Total",
+        "Payment",
+        "User",
+        "Role",
+      ],
+    ],
+
+    body: records.map((row, index) => {
+      const item = row.item || {};
+
+      const isFirstRow =
+        index === 0 ||
+        records[index - 1]?.documentId !== row.documentId;
+
+      return [
+        index + 1,
+
+        formatDate(row.date),
+
+        row.action || "-",
+
+        row.invoiceNo || "-",
+
+        formatDate(row.invoiceDate),
+
+        row.customerName || "-",
+
+        row.customerGstNumber || "-",
+
+        row.placeOfSupply || "-",
+
+        item.hsnCode || "-",
+
+        item.itemName || "-",
+
+        item.barcode || "-",
+
+        number(item.qty),
+
+        item.unit || "-",
+
+        number(item.rate).toFixed(2),
+
+        number(item.discountAmount).toFixed(2),
+
+        number(item.taxableAmount).toFixed(2),
+
+        `${number(item.gstRate)}%`,
+
+        `${number(item.cgstRate)}%`,
+
+        `${number(item.sgstRate)}%`,
+
+        number(item.cgstAmount).toFixed(2),
+
+        number(item.sgstAmount).toFixed(2),
+
+        number(item.gstAmount).toFixed(2),
+
+        number(
+          item.itemTotalAmount ??
+          item.finalAmount ??
+          item.totalAmount
+        ).toFixed(2),
+
+        isFirstRow
+          ? number(row.summary?.subTotal).toFixed(2)
+          : "",
+
+        isFirstRow
+          ? number(row.summary?.totalGST).toFixed(2)
+          : "",
+
+        isFirstRow
+          ? number(row.summary?.totalCGST).toFixed(2)
+          : "",
+
+        isFirstRow
+          ? number(row.summary?.totalSGST).toFixed(2)
+          : "",
+
+        isFirstRow
+          ? number(row.summary?.grandTotal).toFixed(2)
+          : "",
+
+        row.paymentMethod || "-",
+
+        row.user?.name || "-",
+
+        row.user?.role || "-",
+      ];
+    }),
+
+    styles: {
+      fontSize: 5.5,
+      cellPadding: 1.5,
+      overflow: "linebreak",
+    },
+
+    headStyles: {
+      fontStyle: "bold",
+      fontSize: 5.5,
+    },
+
+    margin: {
+      left: 5,
+      right: 5,
+    },
+
+    tableWidth: "auto",
+  });
+
+  // ====================================================
+  // SAVE
+  // ====================================================
+
+  doc.save(
+    `Sales_GST_Report_${new Date()
+      .toISOString()
+      .slice(0, 10)}.pdf`
+  );
+};
+
+// ======================================================
+// PURCHASE BILL-WISE EXCEL EXPORT
+// ======================================================
+
+const flattenPurchaseBillRows = (records = []) =>
+  records.map((row, index) => {
+    const isFirstRow =
+      index === 0 ||
+      records[index - 1]?.documentId !== row.documentId;
+
+    return {
+      "S.No": index + 1,
+
+      Date: formatDate(
+        row.invoiceDate || row.date
+      ),
+
+      "Invoice No": row.invoiceNo || "-",
+
+      Customer: row.customerName || "-",
+
+      "Customer GST":
+        row.customerGstNumber || "-",
+
+      "Place of Supply":
+        row.placeOfSupply || "-",
+
+      "Item Count":
+        row.itemCount ??
+        row.items?.length ??
+        0,
+
+      "Item Names":
+        (row.items || [])
+          .map((item) => item.itemName)
+          .filter(Boolean)
+          .join(", "),
+
+      // ONLY FIRST ROW OF BILL
+      "Sub Total": isFirstRow
+        ? number(row.summary?.subTotal)
+        : "",
+
+      GST: isFirstRow
+        ? number(row.summary?.totalGST)
+        : "",
+
+      "Item Discount": isFirstRow
+        ? number(row.summary?.itemDiscountAmount)
+        : "",
+
+      "Bill Discount": isFirstRow
+        ? number(row.summary?.billDiscountAmount)
+        : "",
+
+      "Loyalty Discount": isFirstRow
+        ? number(row.summary?.loyaltyDiscount)
+        : "",
+
+      "Grand Total": isFirstRow
+        ? number(row.summary?.grandTotal)
+        : "",
+
+      "Paid Amount": isFirstRow
+        ? number(row.paidAmount)
+        : "",
+
+      "Pending Amount": isFirstRow
+        ? number(row.pendingAmount)
+        : "",
+
+      "Payment Method": isFirstRow
+        ? row.paymentMethod || "-"
+        : "",
+
+      "Payment Status": isFirstRow
+        ? row.paymentStatus || "-"
+        : "",
+
+      Action: isFirstRow
+        ? row.action || "-"
+        : "",
+
+      "User Role": isFirstRow
+        ? row.user?.role || "-"
+        : "",
+    };
+  });
 
 export const exportPurchaseBillWiseExcel = (
   records = []
 ) => {
   if (!records.length) return;
 
-  // -----------------------------
-  // BILL WISE SHEET
-  // -----------------------------
+  const rows =
+    flattenPurchaseBillRows(records);
 
-  const rows = flattenRows(records);
-
-  const summarySheet =
+  const worksheet =
     XLSX.utils.json_to_sheet(rows);
 
-  summarySheet["!cols"] = [
-    { wch: 7 },  // S.No
-    { wch: 13 }, // Date
-    { wch: 15 }, // Invoice
-    { wch: 24 }, // Customer
-    { wch: 18 }, // GST
-    { wch: 18 }, // Place
-    { wch: 11 }, // Item Count
-    { wch: 35 }, // Item Names
-    { wch: 14 }, // Sub Total
-    { wch: 12 }, // GST
-    { wch: 14 }, // Item Discount
-    { wch: 14 }, // Bill Discount
-    { wch: 16 }, // Loyalty
-    { wch: 14 }, // Grand Total
-    { wch: 14 }, // Paid
-    { wch: 15 }, // Pending
-    { wch: 16 }, // Payment Method
-    { wch: 15 }, // Payment Status
-    { wch: 12 }, // Action
-    { wch: 14 }, // User Role
+  worksheet["!cols"] = [
+    { wch: 7 },
+    { wch: 13 },
+    { wch: 15 },
+    { wch: 24 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 11 },
+    { wch: 35 },
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 15 },
+    { wch: 16 },
+    { wch: 15 },
+    { wch: 12 },
+    { wch: 14 },
   ];
-
-  // -----------------------------
-  // ITEM WISE SHEET
-  // -----------------------------
-
-  const itemRows = [];
-
-  records.forEach((row) => {
-    (row.items || []).forEach((item) => {
-      itemRows.push({
-        "Invoice No":
-          row.invoiceNo || "-",
-
-        Customer:
-          row.customerName || "-",
-
-        Item:
-          item.itemName || "-",
-
-        Barcode:
-          item.barcode || "-",
-
-        HSN:
-          item.hsnCode || "-",
-
-        Qty:
-          number(item.qty),
-
-        "Free Qty":
-          number(item.freeQty),
-
-        "Total Given Qty":
-          number(item.totalGivenQty),
-
-        Unit:
-          item.unit || "-",
-
-        "Unit Text":
-          item.unitText || "-",
-
-        "Total Qty":
-          item.totalKg || "-",
-
-        MRP:
-          number(item.mrp),
-
-        Rate:
-          number(item.rate),
-
-        Discount:
-          number(item.discountAmount),
-
-        "Taxable Amount":
-          number(item.taxableAmount),
-
-        "GST %":
-          number(item.gstRate),
-
-        CGST:
-          number(item.cgstAmount),
-
-        SGST:
-          number(item.sgstAmount),
-
-        "GST Amount":
-          number(item.gstAmount),
-
-        "Final Amount":
-          number(
-            item.finalAmount ??
-            item.totalAmount
-          ),
-      });
-    });
-  });
-
-  const itemSheet =
-    XLSX.utils.json_to_sheet(itemRows);
-
-  itemSheet["!cols"] =
-    Array.from(
-      { length: 20 },
-      () => ({ wch: 16 })
-    );
-
-  // -----------------------------
-  // CREATE WORKBOOK
-  // -----------------------------
 
   const workbook =
     XLSX.utils.book_new();
 
   XLSX.utils.book_append_sheet(
     workbook,
-    summarySheet,
+    worksheet,
     "Bill Wise"
   );
 
-  XLSX.utils.book_append_sheet(
-    workbook,
-    itemSheet,
-    "Items"
-  );
-
-  // -----------------------------
-  // DOWNLOAD
-  // -----------------------------
-
   XLSX.writeFile(
     workbook,
-    `Purchase_Bill_Wise_Audit_${
-      new Date()
-        .toISOString()
-        .slice(0, 10)
-    }.xlsx`
+    `Purchase_Bill_Wise_Audit_${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`
   );
 };
 
 // ======================================================
-// PDF EXPORT
+// PURCHASE BILL-WISE PDF EXPORT
 // ======================================================
 
 export const exportPurchaseBillWisePdf = (
@@ -251,10 +620,6 @@ export const exportPurchaseBillWisePdf = (
     format: "a4",
   });
 
-  // -----------------------------
-  // TITLE
-  // -----------------------------
-
   doc.setFontSize(15);
 
   doc.text(
@@ -266,48 +631,34 @@ export const exportPurchaseBillWisePdf = (
   doc.setFontSize(9);
 
   doc.text(
-    `Generated: ${
-      new Date().toLocaleString("en-IN")
-    }`,
+    `Generated: ${new Date().toLocaleString("en-IN")}`,
     14,
     21
   );
 
-  // -----------------------------
-  // TOTALS
-  // -----------------------------
+  const grandTotal = records.reduce(
+    (sum, row) =>
+      sum +
+      number(
+        row.summary?.grandTotal
+      ),
+    0
+  );
 
-  const grandTotal =
-    records.reduce(
-      (sum, row) =>
-        sum +
-        number(
-          row.summary?.grandTotal
-        ),
-      0
-    );
-
-  const pendingTotal =
-    records.reduce(
-      (sum, row) =>
-        sum +
-        number(
-          row.pendingAmount
-        ),
-      0
-    );
+  const pendingTotal = records.reduce(
+    (sum, row) =>
+      sum +
+      number(row.pendingAmount),
+    0
+  );
 
   doc.text(
     `Bills: ${records.length}    ` +
-      `Total: Rs. ${grandTotal.toFixed(2)}    ` +
-      `Pending: Rs. ${pendingTotal.toFixed(2)}`,
+    `Total: Rs. ${grandTotal.toFixed(2)}    ` +
+    `Pending: Rs. ${pendingTotal.toFixed(2)}`,
     14,
     27
   );
-
-  // -----------------------------
-  // PDF TABLE
-  // -----------------------------
 
   autoTable(doc, {
     startY: 32,
@@ -344,8 +695,8 @@ export const exportPurchaseBillWisePdf = (
         row.customerName || "-",
 
         row.itemCount ??
-          row.items?.length ??
-          0,
+        row.items?.length ??
+        0,
 
         number(
           row.summary?.subTotal
@@ -385,37 +736,15 @@ export const exportPurchaseBillWisePdf = (
       fontStyle: "bold",
     },
 
-    columnStyles: {
-      0: { cellWidth: 10 },
-      1: { cellWidth: 18 },
-      2: { cellWidth: 22 },
-      3: { cellWidth: 28 },
-      4: { cellWidth: 12 },
-      5: { cellWidth: 20 },
-      6: { cellWidth: 17 },
-      7: { cellWidth: 21 },
-      8: { cellWidth: 18 },
-      9: { cellWidth: 18 },
-      10: { cellWidth: 20 },
-      11: { cellWidth: 18 },
-      12: { cellWidth: 16 },
-    },
-
     margin: {
       left: 8,
       right: 8,
     },
   });
 
-  // -----------------------------
-  // DOWNLOAD PDF
-  // -----------------------------
-
   doc.save(
-    `Purchase_Bill_Wise_Audit_${
-      new Date()
-        .toISOString()
-        .slice(0, 10)
-    }.pdf`
+    `Purchase_Bill_Wise_Audit_${new Date()
+      .toISOString()
+      .slice(0, 10)}.pdf`
   );
 };

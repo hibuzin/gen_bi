@@ -141,5 +141,5 @@ export const API = {
   purchasereports: `${BASE_URL}/audit-logs?module=Purchase`,
   purchaseSummary: `${BASE_URL}/gst-reports/purchase-summary`,
   gstbillreport:`${BASE_URL}/audit-logs/bill/bill-wise`,
-  gstpurchasereport:`${BASE_URL}/audit-logs/purchase/bill-wise`,
+  gstpurchasereport:`${BASE_URL}/audit-logs/purchase/bill-wise`
 };

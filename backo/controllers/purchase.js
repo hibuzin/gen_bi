@@ -923,9 +923,10 @@ const gstBillTotalAmount =
                 supplier.placeOfSupply ||
                 "",
 
-                itemsTotal: Number(
-    gstItemsTotal.toFixed(2)
+          itemsTotal: Number(
+    gstBillTotalAmount.toFixed(2)
 ),
+
 
 totalCgstAmount: Number(
     gstTotalCgstAmount.toFixed(2)

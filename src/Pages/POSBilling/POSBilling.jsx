@@ -505,6 +505,9 @@ function POSBilling() {
       const billItems = scannedItems.map((item) => {
         const billItem = {
           productId: item.productId,
+          sellingPrice: Number(
+            item.sellingPrice ?? item.price ?? 0
+          ),
           qty: Number(item.qty || 1),
         };
 
@@ -695,6 +698,9 @@ function POSBilling() {
       const billItems = items.map((item) => {
         const billItem = {
           productId: item.productId,
+          sellingPrice: Number(
+            item.sellingPrice ?? item.price ?? 0
+          ),
           qty: Number(item.qty || 1),
         };
 
@@ -717,12 +723,8 @@ function POSBilling() {
           isWalkInCustomer,
 
           ...(!isWalkInCustomer &&
-            (selectedCustomer?._id || selectedCustomer?.id) && {
-            customerId: /^\d+$/.test(
-              String(selectedCustomer?._id || selectedCustomer?.id)
-            )
-              ? Number(selectedCustomer?._id || selectedCustomer?.id)
-              : selectedCustomer?._id || selectedCustomer?.id,
+            selectedCustomer?.id && {
+            customerId: Number(selectedCustomer.id),
           }),
 
           loyaltyPoints: isWalkInCustomer
@@ -793,15 +795,13 @@ function POSBilling() {
     scannedItems,
     paymentMethod,
     paymentStatus,
-
     receivedAmount,
     cashAmount,
     upiAmount,
     cardAmount,
-
     redeemPoints,
-    selectedCustomer,
-    isWalkInCustomer,
+    - selectedCustomer,
+    - isWalkInCustomer,
     billDiscountPercent,
     billDiscountAmount,
   ]);

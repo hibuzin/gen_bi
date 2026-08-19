@@ -30,6 +30,21 @@ function POSItemsTable({
     ...Array(extraRows).fill(null),
   ];
 
+  const updateSellingPrice = (rowIndex, value) => {
+    const cleanedValue = value.replace(/[^0-9.]/g, "");
+
+    setScannedItems((prev) =>
+      prev.map((item, index) =>
+        index === rowIndex
+          ? {
+            ...item,
+            sellingPrice: cleanedValue,
+          }
+          : item
+      )
+    );
+  };
+
   // UNIT
   const getUnit = (item) => {
     return item?.unit ? item.unit.toUpperCase() : "";
@@ -742,10 +757,24 @@ function POSItemsTable({
                   <td>{item ? `₹${item.mrp || 0}` : ""}</td>
 
                   <td>
-                    {item
-                      ? `₹${Number(item.sellingPrice || 0).toFixed(2)}`
-                      : ""}
+                    {item ? (
+                      <input
+                        className={styles.cellInput}
+                        type="text"
+                        inputMode="decimal"
+                        value={item.sellingPrice ?? ""}
+                        onChange={(e) =>
+                          updateSellingPrice(idx, e.target.value)
+                        }
+                        onFocus={() => {
+                          activeFocusedRowRef.current = idx;
+                        }}
+                      />
+                    ) : (
+                      ""
+                    )}
                   </td>
+
                   <td>
                     {item?.stock != null
                       ? `${Number(item.stock).toFixed(2)} ${getUnit(item)}`
