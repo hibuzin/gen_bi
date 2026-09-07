@@ -124,9 +124,10 @@ const productSchema = new mongoose.Schema({
     },
 
     gstRate: {
-        type: Number,
-        default: 0
-    },
+    type: String,
+    enum: ["none", "0", "5", "12", "18", "40"],
+    default: "none"
+},
 
     categoryId: {
         type: mongoose.Schema.Types.ObjectId,

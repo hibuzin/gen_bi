@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Bill = require("../models/bill");
 const Offer = require("../models/offer");
+const Session = require("../models/session");
 const counter = require("../models/counter");
 const Product = require("../models/product");
 const Barcode = require("../models/barcode");
@@ -154,10 +155,24 @@ let price = billSellingPrice;
             let appliedSlab = null;
 
 
-           const gstRate = Number(
-    barcode?.gstRate ?? product.gstRate ?? 0
-);
+           const rawGstRate = barcode?.gstRate ?? product.gstRate ?? "none";
 
+const isGstNone =
+    String(rawGstRate).trim().toLowerCase() === "none";
+
+const gstRate = isGstNone
+    ? "none"
+    : Number(rawGstRate);
+
+if (
+    gstRate !== "none" &&
+    (isNaN(gstRate) || gstRate < 0)
+) {
+    return res.status(400).json({
+        success: false,
+        message: `Invalid GST rate for product: ${product.name}`
+    });
+}
             const grossAmount = Number((price * qty).toFixed(2));
 
 
@@ -223,7 +238,7 @@ unitValue: Number(
                 appliedPriceLevel,
                 appliedSlab,
 
-                gstRate: Number(gstRate || 0),
+                gstRate: gstRate,
                 gstAmount: Number(gstAmount || 0),
 
                 discountAmount: Number(itemDiscount || 0),
@@ -413,9 +428,24 @@ let price = billSellingPrice;
             }
 
 
-            const gstRate = Number(
-    barcode?.gstRate ?? product.gstRate ?? 0
-);
+            const rawGstRate = barcode?.gstRate ?? product.gstRate ?? "none";
+
+const isGstNone =
+    String(rawGstRate).trim().toLowerCase() === "none";
+
+const gstRate = isGstNone
+    ? "none"
+    : Number(rawGstRate);
+
+if (
+    gstRate !== "none" &&
+    (isNaN(gstRate) || gstRate < 0)
+) {
+    return res.status(400).json({
+        success: false,
+        message: `Invalid GST rate for product: ${product.name}`
+    });
+}
 
             if (price <= 0) {
                 return res.status(400).json({
@@ -529,7 +559,7 @@ let price = billSellingPrice;
                     }
                     : null,
 
-                gstRate: Number(gstRate || 0),
+              gstRate: gstRate,
                 gstAmount: Number(gstAmount || 0),
 
                 discountAmount: Number(itemDiscount || 0),
@@ -1497,13 +1527,24 @@ exports.calculateBill = async (req, res) => {
                 superAdminId: hierarchy.superAdminId
             });
 
-            const normalSellingPrice = Number(
+           const normalSellingPrice = Number(
     barcode?.sellingPrice ??
     product.sellingPrice ??
     0
 );
 
-            let price = normalSellingPrice;
+const hasBillSellingPrice =
+    billItem.sellingPrice !== undefined &&
+    billItem.sellingPrice !== null &&
+    billItem.sellingPrice !== "";
+
+const billSellingPrice = hasBillSellingPrice
+    ? Number(billItem.sellingPrice)
+    : normalSellingPrice;
+
+let price = billSellingPrice;
+
+           
             let appliedPriceLevel = "normal";
             let appliedSlab = null;
             let discountPerItem = 0;
@@ -1643,8 +1684,8 @@ exports.calculateBill = async (req, res) => {
 
                 mrp: barcode?.mrp || 0,
 
-                sellingPrice: normalSellingPrice,
-                normalSellingPrice,
+               sellingPrice: price,
+normalSellingPrice,
 
                 slabPrice:
                     appliedPriceLevel === "slab"
@@ -2149,6 +2190,7 @@ exports.getBills = async (req, res) => {
         })
             .populate("customerId", "name phone customerId")
             .populate("createdBy", "name email role")
+            .populate("items.productId", "itemCode")
             .sort({ createdAt: -1 });
 
         const billsWithFormattedDates = bills.map((bill, index) => {
@@ -2250,6 +2292,9 @@ exports.getBills = async (req, res) => {
 
                 items: bill.items.map(item => ({
                     productId: item.productId,
+
+                   itemCode: item.productId?.itemCode || "",  
+                 
                     barcodeId: item.barcodeId,
                     barcode: item.barcode,
 
@@ -2352,6 +2397,7 @@ exports.getWalkInCustomerBills = async (req, res) => {
 
             items: bill.items.map(item => ({
                 productId: item.productId,
+
                 productName: item.productName || item.name,
                 barcode: item.barcode,
                 qty: item.qty,
@@ -3371,7 +3417,7 @@ exports.editBill = async (req, res) => {
             subTotal,
             totalGST,
 
-            // existing loyalty discount
+          
             discount: loyaltyDiscount,
 
             grandTotal,

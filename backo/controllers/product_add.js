@@ -72,10 +72,26 @@ exports.productcreate = async (req, res) => {
             }
         }
 
+const allowedGstRates = ["none", "0", "5", "12", "18", "40"];
 
-        const processedGstRate = Number(gstRate || 0);
+let processedGstRate;
 
-        const allowedGstRates = [0, 5, 12, 18, 28];
+if (
+    gstRate === undefined ||
+    gstRate === null ||
+    gstRate === ""
+) {
+    processedGstRate = "none";
+} else {
+    processedGstRate = String(gstRate).trim().toLowerCase();
+}
+
+if (!allowedGstRates.includes(processedGstRate)) {
+    return res.status(400).json({
+        success: false,
+        message: "GST rate must be none, 0, 5, 12, 18 or 40"
+    });
+}
 
         const allowedUnits = ["pcs", "kg", "g"];
 
@@ -109,15 +125,6 @@ exports.productcreate = async (req, res) => {
             });
         }
 
-        if (
-            isNaN(processedGstRate) ||
-            !allowedGstRates.includes(processedGstRate)
-        ) {
-            return res.status(400).json({
-                success: false,
-                message: "GST rate must be 0, 5, 12, 18 or 28"
-            });
-        }
 
         const processedMrp = Number(mrp || 0);
 
@@ -1076,7 +1083,7 @@ exports.allProducts = async (req, res) => {
                         mrp: barcode.mrp ?? product.mrp,
                         costPrice: barcode.costPrice ?? product.costPrice,
                         sellingPrice: barcode.sellingPrice ?? product.sellingPrice,
-                        gstRate: barcode.gstRate ?? product.gstRate
+                        gstRate: barcode.gstRate ?? product.gstRate ?? "none"
                     })),
 
                     priceLevel: priceLevel
@@ -1106,6 +1113,8 @@ exports.allProducts = async (req, res) => {
         });
     }
 };
+
+
 
 exports.searchProducts = async (req, res) => {
     try {
@@ -1333,7 +1342,7 @@ exports.ProductsById = async (req, res) => {
                     mrp: barcode.mrp ?? product.mrp,
                     costPrice: barcode.costPrice ?? product.costPrice,
                     sellingPrice: barcode.sellingPrice ?? product.sellingPrice,
-                    gstRate: barcode.gstRate ?? product.gstRate
+                    gstRate: barcode.gstRate ?? product.gstRate ?? "none"
                 })),
 
                 priceLevel: priceLevel || null

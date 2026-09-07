@@ -7,7 +7,7 @@ const offerSchema = new mongoose.Schema({
         required: true
     },
 
-    // Bill Discount Offer
+    
     minimumPurchase: {
         type: Number,
         default: 0

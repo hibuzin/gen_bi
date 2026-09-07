@@ -154,9 +154,137 @@ function POSRightPanel({
   };
 
   return (
-    <div className={styles.rightPanel}>
-      <div className={styles.customerBox}>
+  <div className={styles.rightPanel}>
 
+    {/* SAVE & PRINT - TOP */}
+    <div className={styles.bottomActions}>
+      <button
+        className={styles.saveBtn}
+        onClick={() => openPaymentModal(true)}
+      >
+        Save & print <kbd>[F6]</kbd>
+      </button>
+    </div>
+
+
+
+
+
+   
+
+
+
+
+      <div className={styles.billBox}>
+        <p className={styles.billBoxTitle}>Bill details</p>
+        <div className={styles.billRow}>
+          <span>Sub total</span>
+          <span className={styles.billVal}>₹ {Number(previewSummary.subTotal || 0).toFixed(2)}</span>
+        </div>
+        <div className={styles.billRow}>
+          <span>CGST</span>
+          <span className={styles.billVal}>
+            ₹ {Number(previewSummary.cgst || 0).toFixed(2)}
+          </span>
+        </div>
+
+        <div className={styles.billRow}>
+          <span>SGST</span>
+          <span className={styles.billVal}>
+            ₹ {Number(previewSummary.sgst || 0).toFixed(2)}
+          </span>
+        </div>
+        <div className={styles.billRow}>
+          <span>Tax</span>
+          <span className={styles.billVal}>₹ {Number(previewSummary.totalGST || 0).toFixed(2)}</span>
+        </div>
+
+        <div className={styles.billRow}>
+          <span>Bill discount (%)</span>
+
+          <input
+            type="text"
+            inputMode="decimal"
+            className={styles.billDiscountInput}
+            value={billDiscountPercent}
+            placeholder="0"
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+
+              if (Number(value) > 100) {
+                value = "100";
+              }
+
+              setBillDiscountPercent(value);
+
+              if (value !== "") {
+                setBillDiscountAmount("");
+              }
+            }}
+          />
+        </div>
+
+        <div className={styles.billRow}>
+          <span>Bill discount amount</span>
+
+          <input
+            type="text"
+            inputMode="decimal"
+            className={styles.billDiscountInput}
+            value={billDiscountAmount}
+            placeholder="0"
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9.]/g, "");
+
+              setBillDiscountAmount(value);
+
+              if (value !== "") {
+                setBillDiscountPercent("");
+              }
+            }}
+          />
+        </div>
+
+        <div className={styles.billRow}>
+          <span>Bill discount</span>
+
+          <span className={styles.billVal}>
+            ₹ {Number(previewSummary.billDiscountAmount || 0).toFixed(2)}
+          </span>
+        </div>
+
+        <div className={styles.billRow}>
+          <span>Discount amount</span>
+
+          <span className={styles.billVal}>
+            ₹ {Number(previewSummary.billDiscountAmount || 0).toFixed(2)}
+          </span>
+        </div>
+
+        <div className={styles.billRow}>
+          <span>Offer price</span>
+          <span className={styles.billVal}>
+            ₹{" "}
+            {Number(
+              previewSummary.offerPrice ??
+              previewSummary.offerAmount ??
+              previewSummary.offerDiscount ??
+              previewSummary.discountAmount ??
+              0
+            ).toFixed(2)}
+          </span>
+        </div>
+        <div className={styles.totalBox}>
+          <span>Total amount</span>
+
+          <span>
+            ₹ {Number(previewSummary.grandTotal ?? 0).toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+
+       <div className={styles.customerBox}>
         <div className={styles.recvLabel}>
           <span>Customer</span>
 
@@ -298,114 +426,20 @@ function POSRightPanel({
         )}
       </div>
 
-      <div className={styles.billBox}>
-        <p className={styles.billBoxTitle}>Bill details</p>
-        <div className={styles.billRow}>
-          <span>Sub total</span>
-          <span className={styles.billVal}>₹ {Number(previewSummary.subTotal || 0).toFixed(2)}</span>
-        </div>
-        <div className={styles.billRow}>
-          <span>CGST</span>
-          <span className={styles.billVal}>
-            ₹ {Number(previewSummary.cgst || 0).toFixed(2)}
-          </span>
-        </div>
 
-        <div className={styles.billRow}>
-          <span>SGST</span>
-          <span className={styles.billVal}>
-            ₹ {Number(previewSummary.sgst || 0).toFixed(2)}
-          </span>
-        </div>
-        <div className={styles.billRow}>
-          <span>Tax</span>
-          <span className={styles.billVal}>₹ {Number(previewSummary.totalGST || 0).toFixed(2)}</span>
-        </div>
 
-        <div className={styles.billRow}>
-          <span>Bill discount (%)</span>
 
-          <input
-            type="text"
-            inputMode="decimal"
-            className={styles.billDiscountInput}
-            value={billDiscountPercent}
-            placeholder="0"
-            onChange={(e) => {
-              let value = e.target.value.replace(/[^0-9.]/g, "");
 
-              if (Number(value) > 100) {
-                value = "100";
-              }
 
-              setBillDiscountPercent(value);
 
-              if (value !== "") {
-                setBillDiscountAmount("");
-              }
-            }}
-          />
-        </div>
 
-        <div className={styles.billRow}>
-          <span>Bill discount amount</span>
 
-          <input
-            type="text"
-            inputMode="decimal"
-            className={styles.billDiscountInput}
-            value={billDiscountAmount}
-            placeholder="0"
-            onChange={(e) => {
-              let value = e.target.value.replace(/[^0-9.]/g, "");
 
-              setBillDiscountAmount(value);
 
-              if (value !== "") {
-                setBillDiscountPercent("");
-              }
-            }}
-          />
-        </div>
 
-        <div className={styles.billRow}>
-          <span>Bill discount</span>
 
-          <span className={styles.billVal}>
-            ₹ {Number(previewSummary.billDiscountAmount || 0).toFixed(2)}
-          </span>
-        </div>
 
-        <div className={styles.billRow}>
-          <span>Discount amount</span>
-
-          <span className={styles.billVal}>
-            ₹ {Number(previewSummary.billDiscountAmount || 0).toFixed(2)}
-          </span>
-        </div>
-
-        <div className={styles.billRow}>
-          <span>Offer price</span>
-          <span className={styles.billVal}>
-            ₹{" "}
-            {Number(
-              previewSummary.offerPrice ??
-              previewSummary.offerAmount ??
-              previewSummary.offerDiscount ??
-              previewSummary.discountAmount ??
-              0
-            ).toFixed(2)}
-          </span>
-        </div>
-        <div className={styles.totalBox}>
-          <span>Total amount</span>
-
-          <span>
-            ₹ {Number(previewSummary.grandTotal ?? 0).toFixed(2)}
-          </span>
-        </div>
-      </div>
-
+ {/*
       <div className={styles.bottomActions}>
         <button
           className={styles.saveBtn}
@@ -413,15 +447,15 @@ function POSRightPanel({
         >
           Save & print <kbd>[F6]</kbd>
         </button>
-        {/*
+       
         <button
           className={styles.saveBtn}
           onClick={() => openPaymentModal(false)}
         >
           Save bill <kbd>[F7]</kbd>
-        </button>*/}
+        </button>
       </div>
-
+*/}
     </div>
   );
 }

@@ -125,6 +125,19 @@ function POSBilling() {
           item.itemCode ||
           "",
 
+        // IMPORTANT: GET bill response uses `price`
+        sellingPrice: Number(
+          item.sellingPrice ??
+          item.price ??
+          0
+        ),
+
+        price: Number(
+          item.price ??
+          item.sellingPrice ??
+          0
+        ),
+
         qty: Number(item.qty || 1),
 
         discountPercent:
@@ -133,13 +146,13 @@ function POSBilling() {
         discountAmount:
           Number(item.discountAmount || 0),
 
-        stock:
-          Number(
-            item.stock ??
-            item.currentStock ??
-            item.availableQty ??
-            0
-          ),
+        // Stock will be filled from stockList
+        stock: Number(
+          item.stock ??
+          item.currentStock ??
+          item.availableQty ??
+          0
+        ),
       }))
     );
 
@@ -379,6 +392,48 @@ function POSBilling() {
       console.log("Stock fetch error:", err);
     }
   };
+
+  useEffect(() => {
+    if (!isEditMode || !stockList.length || !scannedItems.length) return;
+
+    setScannedItems((prev) =>
+      prev.map((item) => {
+        const stockItem = stockList.find(
+          (stock) =>
+            String(
+              stock.productId?._id ||
+              stock.productId?.id ||
+              stock.productId
+            ) === String(item.productId) ||
+            String(stock.barcode || stock.barcodeId) ===
+            String(item.barcode)
+        );
+
+        if (!stockItem) return item;
+
+        return {
+          ...item,
+
+         stock: Number(
+  stockItem.totalAvailableQty ??
+  stockItem.availableQty ??
+  stockItem.currentStock ??
+  stockItem.stock ??
+  stockItem.quantity ??
+  0
+),
+
+          sellingPrice: Number(
+            item.sellingPrice ??
+            item.price ??
+            stockItem.sellingPrice ??
+            stockItem.salePrice ??
+            0
+          ),
+        };
+      })
+    );
+  }, [isEditMode, stockList]);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });

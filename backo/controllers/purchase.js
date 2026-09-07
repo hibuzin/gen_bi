@@ -320,7 +320,30 @@ if (isNaN(sellingPrice) || sellingPrice < 0) {
             }
 
 
-            const taxPercentage = Number(product.gstRate || 0);
+            const gstRate = String(product.gstRate ?? "none")
+    .trim()
+    .toLowerCase();
+
+const taxPercentage =
+    gstRate === "none"
+        ? "none"
+        : Number(gstRate);
+
+if (
+    taxPercentage !== "none" &&
+    ![0, 5, 12, 18, 40].includes(taxPercentage)
+) {
+    return res.status(400).json({
+        success: false,
+        message: "Invalid GST rate for product"
+    });
+}
+
+
+const gstRateForCalculation =
+    taxPercentage === "none"
+        ? 0
+        : taxPercentage;
 
             const discountPercent = Number(
                 item.discountPercent || item.disPercent || 0
@@ -380,15 +403,20 @@ if (isNaN(sellingPrice) || sellingPrice < 0) {
                 totalCostWithGST = amountAfterDiscount;
 
                 taxAmount = round2(
-                    amountAfterDiscount * taxPercentage / (100 + taxPercentage)
-                );
+    amountAfterDiscount *
+    gstRateForCalculation /
+    (100 + gstRateForCalculation)
+);
 
                 amount = round2(
                     amountAfterDiscount - taxAmount
                 );
             } else {
                 amount = amountAfterDiscount;
-                taxAmount = round2(amount * taxPercentage / 100);
+
+               taxAmount = round2(
+    amount * gstRateForCalculation / 100
+);
                 totalCostWithGST = round2(amount + taxAmount);
             }
 
@@ -445,7 +473,8 @@ if (isNaN(sellingPrice) || sellingPrice < 0) {
                             mrp: item.mrp || product.mrp || 0,
                             costPrice: item.costPrice || product.costPrice || 0,
                             sellingPrice: item.sellingPrice || product.sellingPrice || 0,
-                            gstRate: product.gstRate || 0,
+
+                            gstRate: product.gstRate || "none",
 
                             unit: purchaseUnit,
                             unitValue: purchaseUnitValue,
@@ -640,34 +669,37 @@ if (isNaN(sellingPrice) || sellingPrice < 0) {
                 finalBillDiscount * ratio
             );
 
-            const newTotal = round2(
+            let newTotal = round2(
                 item.totalCostWithGST - purchaseDiscount
             );
 
-            const gstRate = item.taxPercentage;
+            const gstRate =
+    item.taxPercentage === "none"
+        ? 0
+        : Number(item.taxPercentage);
 
-            let taxable = 0;
-            let gst = 0;
+let taxable = 0;
+let gst = 0;
 
-            if (item.isGstIncluded) {
+if (item.isGstIncluded) {
 
-                gst = round2(
-                    newTotal * gstRate /
-                    (100 + gstRate)
-                );
+    gst = round2(
+        newTotal * gstRate /
+        (100 + gstRate)
+    );
 
-                taxable = round2(newTotal - gst);
+    taxable = round2(newTotal - gst);
 
-            } else {
+} else {
 
-                taxable = newTotal;
+    taxable = newTotal;
 
-                gst = round2(
-                    taxable * gstRate / 100
-                );
+    gst = round2(
+        taxable * gstRate / 100
+    );
 
-                newTotal = round2(taxable + gst);
-            }
+    newTotal = round2(taxable + gst);
+}
 
             item.purchaseDiscount = purchaseDiscount;
             item.amount = taxable;
@@ -817,9 +849,7 @@ if (isNaN(sellingPrice) || sellingPrice < 0) {
         });
 
 const gstPurchaseItems = purchase.items.filter(
-    (item) =>
-        Number(item.taxPercentage || 0) > 0 &&
-        Number(item.taxAmount || 0) > 0
+    (item) => item.taxPercentage !== "none"
 );
 
 if (gstPurchaseItems.length > 0) {
@@ -1145,7 +1175,7 @@ totalTaxAmount: Number(
                     categoryName:
                         item.categoryName || "",
 
-                    taxPercentage: item.taxPercentage || 0,
+                   taxPercentage: item.taxPercentage ?? "none",
 
                     categoryName:
                         item.categoryName || "",
@@ -2063,7 +2093,7 @@ exports.getPurchases = async (req, res) => {
                     description: item.description || "",
 
                     hsnCode: item.hsnCode || "",
-                    taxPercentage: item.taxPercentage || 0,
+                   taxPercentage: item.taxPercentage ?? "none",
                     categoryName: item.categoryName || "",
 
                     qty: item.qty || 0,
@@ -2229,7 +2259,7 @@ exports.getPurchaseById = async (req, res) => {
                         "",
 
                     hsnCode: item.hsnCode || "",
-                    taxPercentage: item.taxPercentage || 0,
+taxPercentage: item.taxPercentage ?? "none",
                     categoryName: item.categoryName || "",
 
                     qty: item.qty || 0,

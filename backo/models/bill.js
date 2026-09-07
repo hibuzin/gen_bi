@@ -89,7 +89,10 @@ totalAmount: {
                 default: 0
             },
 
-            gstRate: Number,
+            gstRate: {
+                type: mongoose.Schema.Types.Mixed,
+                enum: [0, 5, 12, 18, 40, "none"]
+            },
             gstAmount: Number,
             finalPrice: Number
         }

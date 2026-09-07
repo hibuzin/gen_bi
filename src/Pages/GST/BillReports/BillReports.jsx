@@ -395,10 +395,6 @@ function SalesGSTReport() {
 
         <div className={styles.headerLeft}>
 
-          <div className={styles.titleIcon}>
-            <FaShoppingCart />
-          </div>
-
           <div>
             <h2>Sales GST Report</h2>
 
@@ -499,54 +495,35 @@ function SalesGSTReport() {
       </div>
 
       {/* =====================================
-          FILTER SECTION
-      ====================================== */}
-      <div className={styles.filterSection}>
+    TABLE HEADER + SEARCH
+===================================== */}
+      <div className={styles.tableToolbar}>
+        <div className={styles.tableHeader}>
+          <div>
+            <h3>Sales Item GST Audit</h3>
+
+            <span>
+              {filteredData.length} item
+              {filteredData.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
 
         <div className={styles.searchBox}>
-
-          <FaSearch
-            className={styles.searchIcon}
-          />
+          <FaSearch className={styles.searchIcon} />
 
           <input
             type="text"
             placeholder="Search invoice, customer, item, HSN..."
             value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
+            onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleApplyFilter();
               }
             }}
           />
-
         </div>
-
-      </div>
-
-      {/* =====================================
-          RESULT INFO
-      ====================================== */}
-      <div className={styles.tableHeader}>
-
-        <div>
-
-          <h3>
-            Sales Item GST Audit
-          </h3>
-
-          <span>
-            {filteredData.length} item
-            {filteredData.length !== 1
-              ? "s"
-              : ""}
-          </span>
-
-        </div>
-
       </div>
 
       {/* =====================================
@@ -614,7 +591,7 @@ function SalesGSTReport() {
             </tr>
           </thead>
           <tbody>
-            
+
             {loading ? (
 
               <tr>

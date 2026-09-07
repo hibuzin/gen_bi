@@ -65,9 +65,9 @@ const purchaseSchema = new mongoose.Schema({
 
 
             taxPercentage: {
-                type: Number,
-                default: 0
-            },
+    type: mongoose.Schema.Types.Mixed,
+    default: "none"
+},
 
             taxAmount: {
                 type: Number,

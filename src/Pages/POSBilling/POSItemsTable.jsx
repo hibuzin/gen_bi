@@ -265,7 +265,7 @@ function POSItemsTable({
 
     setScannedItems((prev) => {
       const updatedItems = prev.map((item, index) => {
-        // Cursor இருக்கும் row மட்டும் update
+       
         if (index !== rowIndex) {
           return item;
         }
@@ -562,12 +562,10 @@ function POSItemsTable({
               <th>No</th>
               <th>Item code</th>
               <th>Items</th>
-              <th>Quantity</th>
+              <th>Qty</th>
               <th>Mrp</th>
               <th>Sp (₹)</th>
               <th>Stock</th>
-              <th>Dis (₹)</th>
-              <th>Dis (%)</th>
               <th>Amount (₹)</th>
             </tr>
           </thead>
@@ -780,42 +778,7 @@ function POSItemsTable({
                       ? `${Number(item.stock).toFixed(2)} ${getUnit(item)}`
                       : ""}
                   </td>
-                  <td>
-                    {item ? (
-                      <input
-                        className={styles.cellInput}
-                        type="text"
-                        inputMode="decimal"
-                        value={item.discountAmount ?? ""}
-                        placeholder="0"
-                        onChange={(e) =>
-                          updateDiscountAmount(idx, e.target.value)
-                        }
-                      />
-                    ) : (
-                      ""
-                    )}
-                  </td>
-
-                  <td>
-                    {item ? (
-                      <input
-                        className={styles.cellInput}
-                        type="text"
-                        inputMode="decimal"
-                        value={item.discountPercent ?? ""}
-                        placeholder="0"
-                        onChange={(e) =>
-                          updateDiscountPercent(
-                            idx,
-                            e.target.value
-                          )
-                        }
-                      />
-                    ) : (
-                      ""
-                    )}
-                  </td>
+                 
 
                   <td>
                     {item ? (
