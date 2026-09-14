@@ -240,36 +240,36 @@ exports.createPurchase = async (req, res) => {
             const netAmount = round2(netcost * qty);
 
             const hasItemMrp =
-    item.mrp !== undefined &&
-    item.mrp !== null &&
-    String(item.mrp).trim() !== "";
+                item.mrp !== undefined &&
+                item.mrp !== null &&
+                String(item.mrp).trim() !== "";
 
-const existingProductMrp = Number(product.mrp || 0);
+            const existingProductMrp = Number(product.mrp || 0);
 
-const mrp = hasItemMrp
-    ? Number(item.mrp)
-    : existingProductMrp;
+            const mrp = hasItemMrp
+                ? Number(item.mrp)
+                : existingProductMrp;
 
-if (hasItemMrp && (isNaN(mrp) || mrp < 0)) {
-    return res.status(400).json({
-        success: false,
-        message: "Invalid MRP"
-    });
-}
+            if (hasItemMrp && (isNaN(mrp) || mrp < 0)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid MRP"
+                });
+            }
 
-const sellingPrice = Number(
-    item.sellingPrice ??
-    product.sellingPrice ??
-    mrp ??
-    0
-);
+            const sellingPrice = Number(
+                item.sellingPrice ??
+                product.sellingPrice ??
+                mrp ??
+                0
+            );
 
-if (isNaN(sellingPrice) || sellingPrice < 0) {
-    return res.status(400).json({
-        success: false,
-        message: "Invalid selling price"
-    });
-}
+            if (isNaN(sellingPrice) || sellingPrice < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid selling price"
+                });
+            }
 
             const purchaseUnit = product.unit || "pcs";
 
@@ -321,29 +321,29 @@ if (isNaN(sellingPrice) || sellingPrice < 0) {
 
 
             const gstRate = String(product.gstRate ?? "none")
-    .trim()
-    .toLowerCase();
+                .trim()
+                .toLowerCase();
 
-const taxPercentage =
-    gstRate === "none"
-        ? "none"
-        : Number(gstRate);
+            const taxPercentage =
+                gstRate === "none"
+                    ? "none"
+                    : Number(gstRate);
 
-if (
-    taxPercentage !== "none" &&
-    ![0, 5, 12, 18, 40].includes(taxPercentage)
-) {
-    return res.status(400).json({
-        success: false,
-        message: "Invalid GST rate for product"
-    });
-}
+            if (
+                taxPercentage !== "none" &&
+                ![0, 5, 12, 18, 40].includes(taxPercentage)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid GST rate for product"
+                });
+            }
 
 
-const gstRateForCalculation =
-    taxPercentage === "none"
-        ? 0
-        : taxPercentage;
+            const gstRateForCalculation =
+                taxPercentage === "none"
+                    ? 0
+                    : taxPercentage;
 
             const discountPercent = Number(
                 item.discountPercent || item.disPercent || 0
@@ -403,10 +403,10 @@ const gstRateForCalculation =
                 totalCostWithGST = amountAfterDiscount;
 
                 taxAmount = round2(
-    amountAfterDiscount *
-    gstRateForCalculation /
-    (100 + gstRateForCalculation)
-);
+                    amountAfterDiscount *
+                    gstRateForCalculation /
+                    (100 + gstRateForCalculation)
+                );
 
                 amount = round2(
                     amountAfterDiscount - taxAmount
@@ -414,9 +414,9 @@ const gstRateForCalculation =
             } else {
                 amount = amountAfterDiscount;
 
-               taxAmount = round2(
-    amount * gstRateForCalculation / 100
-);
+                taxAmount = round2(
+                    amount * gstRateForCalculation / 100
+                );
                 totalCostWithGST = round2(amount + taxAmount);
             }
 
@@ -459,39 +459,39 @@ const gstRateForCalculation =
                     });
                 }
 
-               await Barcode.findOneAndUpdate(
-        {
-            productId: product._id,
-            code: barcode,
-            superAdminId: hierarchy.superAdminId
-        },
-        {
-            $set: {
-                productId: product._id,
-                code: barcode,
+                await Barcode.findOneAndUpdate(
+                    {
+                        productId: product._id,
+                        code: barcode,
+                        superAdminId: hierarchy.superAdminId
+                    },
+                    {
+                        $set: {
+                            productId: product._id,
+                            code: barcode,
 
-                mrp: item.mrp || product.mrp || 0,
-                costPrice: item.costPrice || product.costPrice || 0,
-                sellingPrice: item.sellingPrice || product.sellingPrice || 0,
+                            mrp: item.mrp || product.mrp || 0,
+                            costPrice: item.costPrice || product.costPrice || 0,
+                            sellingPrice: item.sellingPrice || product.sellingPrice || 0,
 
-                gstRate: product.gstRate || "none",
+                            gstRate: product.gstRate || "none",
 
-                unit: purchaseUnit,
-                unitValue: purchaseUnitValue,
-                isCustomUnitValue,
+                            unit: purchaseUnit,
+                            unitValue: purchaseUnitValue,
+                            isCustomUnitValue,
 
-                isSold: false,
+                            isSold: false,
 
-                ...hierarchy,
-                createdBy: req.user.userId
+                            ...hierarchy,
+                            createdBy: req.user.userId
+                        }
+                    },
+                    {
+                        upsert: true,
+                        new: true
+                    }
+                );
             }
-        },
-        {
-            upsert: true,
-            new: true
-        }
-    );
-}
 
             if (priceLevel) {
                 await PriceLevel.findOneAndUpdate(
@@ -542,7 +542,7 @@ const gstRateForCalculation =
                 }
             );
 
-           
+
 
 
             totalAmount = round2(totalAmount + totalCostWithGST);
@@ -649,32 +649,32 @@ const gstRateForCalculation =
             );
 
             const gstRate =
-    item.taxPercentage === "none"
-        ? 0
-        : Number(item.taxPercentage);
+                item.taxPercentage === "none"
+                    ? 0
+                    : Number(item.taxPercentage);
 
-let taxable = 0;
-let gst = 0;
+            let taxable = 0;
+            let gst = 0;
 
-if (item.isGstIncluded) {
+            if (item.isGstIncluded) {
 
-    gst = round2(
-        newTotal * gstRate /
-        (100 + gstRate)
-    );
+                gst = round2(
+                    newTotal * gstRate /
+                    (100 + gstRate)
+                );
 
-    taxable = round2(newTotal - gst);
+                taxable = round2(newTotal - gst);
 
-} else {
+            } else {
 
-    taxable = newTotal;
+                taxable = newTotal;
 
-    gst = round2(
-        taxable * gstRate / 100
-    );
+                gst = round2(
+                    taxable * gstRate / 100
+                );
 
-    newTotal = round2(taxable + gst);
-}
+                newTotal = round2(taxable + gst);
+            }
 
             item.purchaseDiscount = purchaseDiscount;
             item.amount = taxable;
@@ -823,212 +823,212 @@ if (item.isGstIncluded) {
             createdBy: req.user.userId
         });
 
-const gstPurchaseItems = purchase.items.filter(
-    (item) => item.taxPercentage !== "none"
-);
-
-if (gstPurchaseItems.length > 0) {
-
-  
-    const productIds = gstPurchaseItems
-        .map((item) => item.productId)
-        .filter(Boolean);
-
-    const products = await Product.find({
-        _id: { $in: productIds }
-    })
-       .select("_id itemCode hsnCode sellingPrice mrp unit unitValue")
-        .lean();
-
-    const productMap = new Map(
-        products.map((product) => [
-            product._id.toString(),
-            product
-        ])
-    );
-
-    
-
-const gstItemsTotal = gstPurchaseItems.reduce(
-    (total, item) => {
-        const qty = Number(item.qty || 0);
-
-        const rate = Number(
-            item.Rate ??
-            item.netcost ??
-            item.rate ??
-            0
+        const gstPurchaseItems = purchase.items.filter(
+            (item) => item.taxPercentage !== "none"
         );
 
-        return total + (qty * rate);
-    },
-    0
-);
-
-const gstTotalCgstAmount = gstPurchaseItems.reduce(
-    (total, item) => {
-        const taxAmount = Number(item.taxAmount || 0);
-
-        return total + Number(
-            (taxAmount / 2).toFixed(2)
-        );
-    },
-    0
-);
-
-const gstTotalSgstAmount = gstPurchaseItems.reduce(
-    (total, item) => {
-        const taxAmount = Number(item.taxAmount || 0);
-
-        return total + Number(
-            (taxAmount / 2).toFixed(2)
-        );
-    },
-    0
-);
-
-const gstTotalGstAmount =
-    gstTotalCgstAmount +
-    gstTotalSgstAmount;
-
-const gstBillTotalAmount =
-    gstItemsTotal +
-    gstTotalGstAmount;
-
-    await AuditLog.create({
-        ...hierarchy,
-
-        userId: req.user.userId,
-        role: req.user.role,
-
-        module: "Purchase",
-        action: "Create",
-
-        documentId: purchase._id,
-        oldData: null,
-
-        newData: {
-            grnNo: purchase.grnNo || "",
-            invoiceNo: purchase.invoiceNo || "",
-            grnDate: purchase.grnDate || null,
+        if (gstPurchaseItems.length > 0) {
 
 
-    
-            supplierName:
-                supplier.supplierName || "",
+            const productIds = gstPurchaseItems
+                .map((item) => item.productId)
+                .filter(Boolean);
 
-            supplierGstNumber:
-                supplier.gstNumber ||
-                supplier.gstnumber ||
-                supplier.gstin ||
-                "",
+            const products = await Product.find({
+                _id: { $in: productIds }
+            })
+                .select("_id itemCode hsnCode sellingPrice mrp unit unitValue")
+                .lean();
 
-            placeOfSupply:
-                supplier.state ||
-                supplier.placeOfSupply ||
-                "",
-
-          itemsTotal: Number(
-    gstBillTotalAmount.toFixed(2)
-),
+            const productMap = new Map(
+                products.map((product) => [
+                    product._id.toString(),
+                    product
+                ])
+            );
 
 
-totalCgstAmount: Number(
-    gstTotalCgstAmount.toFixed(2)
-),
 
-totalSgstAmount: Number(
-    gstTotalSgstAmount.toFixed(2)
-),
+            const gstItemsTotal = gstPurchaseItems.reduce(
+                (total, item) => {
+                    const qty = Number(item.qty || 0);
 
-totalGstAmount: Number(
-    gstTotalGstAmount.toFixed(2)
-),
-
-totalTaxAmount: Number(
-    gstTotalGstAmount.toFixed(2)
-),
-
-            items: gstPurchaseItems.map((item) => {
-
-                const gstRate =
-                    Number(
-                        item.taxPercentage || 0
-                    );
-
-                const taxAmount =
-                    Number(
-                        item.taxAmount || 0
-                    );
-
-                    
-
-                    
-                     const product = item.productId
-        ? productMap.get(item.productId.toString())
-        : null;
-
-        
-
-                return {
-                            productId:
-                        item.productId || null,
-
-                    itemCode:
-                        product?.itemCode || "",
-
-                    hsnCode:
-                        item.hsnCode ||
-                        product?.hsnCode ||
-                        "",
-
-                   
-                    itemName:
-                        item.productName || "",
-
-                    qty:
-                        Number(item.qty || 0),
-
-                    unit:
-                        item.unit || "",
-
-                    rate: Number(
+                    const rate = Number(
                         item.Rate ??
                         item.netcost ??
+                        item.rate ??
                         0
+                    );
+
+                    return total + (qty * rate);
+                },
+                0
+            );
+
+            const gstTotalCgstAmount = gstPurchaseItems.reduce(
+                (total, item) => {
+                    const taxAmount = Number(item.taxAmount || 0);
+
+                    return total + Number(
+                        (taxAmount / 2).toFixed(2)
+                    );
+                },
+                0
+            );
+
+            const gstTotalSgstAmount = gstPurchaseItems.reduce(
+                (total, item) => {
+                    const taxAmount = Number(item.taxAmount || 0);
+
+                    return total + Number(
+                        (taxAmount / 2).toFixed(2)
+                    );
+                },
+                0
+            );
+
+            const gstTotalGstAmount =
+                gstTotalCgstAmount +
+                gstTotalSgstAmount;
+
+            const gstBillTotalAmount =
+                gstItemsTotal +
+                gstTotalGstAmount;
+
+            await AuditLog.create({
+                ...hierarchy,
+
+                userId: req.user.userId,
+                role: req.user.role,
+
+                module: "Purchase",
+                action: "Create",
+
+                documentId: purchase._id,
+                oldData: null,
+
+                newData: {
+                    grnNo: purchase.grnNo || "",
+                    invoiceNo: purchase.invoiceNo || "",
+                    grnDate: purchase.grnDate || null,
+
+
+
+                    supplierName:
+                        supplier.supplierName || "",
+
+                    supplierGstNumber:
+                        supplier.gstNumber ||
+                        supplier.gstnumber ||
+                        supplier.gstin ||
+                        "",
+
+                    placeOfSupply:
+                        supplier.state ||
+                        supplier.placeOfSupply ||
+                        "",
+
+                    itemsTotal: Number(
+                        gstBillTotalAmount.toFixed(2)
                     ),
 
-                    mrp:
-                        Number(item.mrp || 0),
+
+                    totalCgstAmount: Number(
+                        gstTotalCgstAmount.toFixed(2)
+                    ),
+
+                    totalSgstAmount: Number(
+                        gstTotalSgstAmount.toFixed(2)
+                    ),
+
+                    totalGstAmount: Number(
+                        gstTotalGstAmount.toFixed(2)
+                    ),
+
+                    totalTaxAmount: Number(
+                        gstTotalGstAmount.toFixed(2)
+                    ),
+
+                    items: gstPurchaseItems.map((item) => {
+
+                        const gstRate =
+                            Number(
+                                item.taxPercentage || 0
+                            );
+
+                        const taxAmount =
+                            Number(
+                                item.taxAmount || 0
+                            );
+
+
+
+
+                        const product = item.productId
+                            ? productMap.get(item.productId.toString())
+                            : null;
+
+
+
+                        return {
+                            productId:
+                                item.productId || null,
+
+                            itemCode:
+                                product?.itemCode || "",
+
+                            hsnCode:
+                                item.hsnCode ||
+                                product?.hsnCode ||
+                                "",
+
+
+                            itemName:
+                                item.productName || "",
+
+                            qty:
+                                Number(item.qty || 0),
+
+                            unit:
+                                item.unit || "",
+
+                            rate: Number(
+                                item.Rate ??
+                                item.netcost ??
+                                0
+                            ),
+
+                            mrp:
+                                Number(item.mrp || 0),
 
                             sellingPrice: Number(
-        item.sellingPrice ??
-        product?.sellingPrice ??
-        0
-    ),
+                                item.sellingPrice ??
+                                product?.sellingPrice ??
+                                0
+                            ),
 
-                    gst:
-                        gstRate,
+                            gst:
+                                gstRate,
 
-                    cgst:
-                        gstRate / 2,
+                            cgst:
+                                gstRate / 2,
 
-                    sgst:
-                        gstRate / 2,
+                            sgst:
+                                gstRate / 2,
 
-                         cgstAmount:
-        Number((taxAmount / 2).toFixed(2)),
+                            cgstAmount:
+                                Number((taxAmount / 2).toFixed(2)),
 
-    sgstAmount:
-        Number((taxAmount / 2).toFixed(2)),
+                            sgstAmount:
+                                Number((taxAmount / 2).toFixed(2)),
 
 
-                    taxAmount
-                };
-            })
+                            taxAmount
+                        };
+                    })
+                }
+            });
         }
-    });
-}
 
 
         const responsePurchase = await Purchase.findById(purchase._id)
@@ -1150,7 +1150,7 @@ totalTaxAmount: Number(
                     categoryName:
                         item.categoryName || "",
 
-                   taxPercentage: item.taxPercentage ?? "none",
+                    taxPercentage: item.taxPercentage ?? "none",
 
                     categoryName:
                         item.categoryName || "",
@@ -1241,25 +1241,25 @@ exports.calculatePurchase = async (req, res) => {
             const totalStockQty = qty + freeQty;
 
             const netcost = Number(item.netcost || item.purchasePrice || item.netCost);
-           const mrp = Number(item.mrp || 0);
+            const mrp = Number(item.mrp || 0);
             const sellingPrice = Number(item.sellingPrice || mrp);
 
-           const rawGst =
-    item.gst ??
-    item.gstRate ??
-    item.taxPercentage ??
-    "none";
+            const rawGst =
+                item.gst ??
+                item.gstRate ??
+                item.taxPercentage ??
+                "none";
 
-const isGstNone =
-    String(rawGst).trim().toLowerCase() === "none";
+            const isGstNone =
+                String(rawGst).trim().toLowerCase() === "none";
 
-const taxPercentage = isGstNone
-    ? "none"
-    : Number(rawGst) || 0;
+            const taxPercentage = isGstNone
+                ? "none"
+                : Number(rawGst) || 0;
 
-const gstRateForCalculation = isGstNone
-    ? 0
-    : Number(rawGst) || 0;
+            const gstRateForCalculation = isGstNone
+                ? 0
+                : Number(rawGst) || 0;
 
             const discountPercent = Number(item.discountPercent || 0);
             const discountAmountInput = Number(item.discountAmount || 0);
@@ -1273,9 +1273,9 @@ const gstRateForCalculation = isGstNone
                 throw new Error(`Invalid purchase price at item ${index + 1}`);
             }
 
-           if (mrp < 0) {
-    throw new Error(`Invalid MRP at item ${index + 1}`);
-}
+            if (mrp < 0) {
+                throw new Error(`Invalid MRP at item ${index + 1}`);
+            }
 
             const netAmount = round2(netcost * qty);
             const grossAmount = round2(qty * netcost);
@@ -1317,29 +1317,29 @@ const gstRateForCalculation = isGstNone
             let taxAmount = 0;
             let totalCostWithGST = 0;
 
-           if (isGstIncluded) {
-    totalCostWithGST = amountAfterDiscount;
+            if (isGstIncluded) {
+                totalCostWithGST = amountAfterDiscount;
 
-    taxAmount = round2(
-        amountAfterDiscount *
-        gstRateForCalculation /
-        (100 + gstRateForCalculation)
-    );
+                taxAmount = round2(
+                    amountAfterDiscount *
+                    gstRateForCalculation /
+                    (100 + gstRateForCalculation)
+                );
 
-    amount = round2(
-        amountAfterDiscount - taxAmount
-    );
-} else {
-    amount = amountAfterDiscount;
+                amount = round2(
+                    amountAfterDiscount - taxAmount
+                );
+            } else {
+                amount = amountAfterDiscount;
 
-    taxAmount = round2(
-        amount * gstRateForCalculation / 100
-    );
+                taxAmount = round2(
+                    amount * gstRateForCalculation / 100
+                );
 
-    totalCostWithGST = round2(
-        amount + taxAmount
-    );
-}
+                totalCostWithGST = round2(
+                    amount + taxAmount
+                );
+            }
             totalGrossAmount = round2(totalGrossAmount + amount);
             totalTaxAmount = round2(totalTaxAmount + taxAmount);
             totalAmount = round2(totalAmount + totalCostWithGST);
@@ -1435,7 +1435,9 @@ const gstRateForCalculation = isGstNone
                 item.totalCostWithGST - purchaseDiscount
             );
 
-            const gstRate = item.taxPercentage;
+            const gstRate = item.taxPercentage === "none"
+                ? 0
+                : Number(item.taxPercentage) || 0;
 
             let taxable = 0;
             let gst = 0;
@@ -2085,7 +2087,7 @@ exports.getPurchases = async (req, res) => {
                     description: item.description || "",
 
                     hsnCode: item.hsnCode || "",
-                   taxPercentage: item.taxPercentage ?? "none",
+                    taxPercentage: item.taxPercentage ?? "none",
                     categoryName: item.categoryName || "",
 
                     qty: item.qty || 0,
@@ -2251,7 +2253,7 @@ exports.getPurchaseById = async (req, res) => {
                         "",
 
                     hsnCode: item.hsnCode || "",
-taxPercentage: item.taxPercentage ?? "none",
+                    taxPercentage: item.taxPercentage ?? "none",
                     categoryName: item.categoryName || "",
 
                     qty: item.qty || 0,
@@ -2456,7 +2458,7 @@ exports.updatePurchase = async (req, res) => {
             });
         }
 
-       
+
         for (const oldItem of purchase.items) {
             const oldStockQty = Number(
                 oldItem.receivedQty ||
@@ -2476,7 +2478,7 @@ exports.updatePurchase = async (req, res) => {
                 }
             );
 
-           
+
         }
 
         let processedItems = [];
@@ -2514,34 +2516,34 @@ exports.updatePurchase = async (req, res) => {
             const netcost = Number(item.netcost || item.netCost);
             const netAmount = round2(netcost * qty);
 
-  
-const mrpValue = item.mrp;
 
-let mrp = 0;
+            const mrpValue = item.mrp;
 
-if (
-    mrpValue !== undefined &&
-    mrpValue !== null &&
-    String(mrpValue).trim() !== ""
-) {
-    const parsedMrp = Number(mrpValue);
+            let mrp = 0;
 
-    if (!Number.isFinite(parsedMrp) || parsedMrp < 0) {
-        return res.status(400).json({
-            success: false,
-            message: "Invalid MRP"
-        });
-    }
+            if (
+                mrpValue !== undefined &&
+                mrpValue !== null &&
+                String(mrpValue).trim() !== ""
+            ) {
+                const parsedMrp = Number(mrpValue);
 
-    mrp = parsedMrp;
-}
+                if (!Number.isFinite(parsedMrp) || parsedMrp < 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Invalid MRP"
+                    });
+                }
 
-const sellingPrice = Number(
-    item.sellingPrice ||
-    product.sellingPrice ||
-    mrp ||
-    0
-);
+                mrp = parsedMrp;
+            }
+
+            const sellingPrice = Number(
+                item.sellingPrice ||
+                product.sellingPrice ||
+                mrp ||
+                0
+            );
 
             if (isNaN(qty) || qty <= 0) {
                 return res.status(400).json({
@@ -2696,7 +2698,7 @@ const sellingPrice = Number(
                 ? round2((profitAmount / netcost) * 100)
                 : 0;
 
-           
+
             await Product.updateOne(
                 {
                     _id: product._id,
@@ -2709,38 +2711,38 @@ const sellingPrice = Number(
 
 
             if (barcode) {
-               await Barcode.findOneAndUpdate(
-    {
-        productId: product._id,
-        code: barcode,
-        superAdminId: hierarchy.superAdminId
-    },
-    {
-        $set: {
-            productId: product._id,
-            code: barcode,
+                await Barcode.findOneAndUpdate(
+                    {
+                        productId: product._id,
+                        code: barcode,
+                        superAdminId: hierarchy.superAdminId
+                    },
+                    {
+                        $set: {
+                            productId: product._id,
+                            code: barcode,
 
-            mrp: mrp,
+                            mrp: mrp,
 
-            costPrice: item.costPrice || product.costPrice || 0,
-            sellingPrice: item.sellingPrice || product.sellingPrice || 0,
-            gstRate: product.gstRate || 0,
+                            costPrice: item.costPrice || product.costPrice || 0,
+                            sellingPrice: item.sellingPrice || product.sellingPrice || 0,
+                            gstRate: product.gstRate || 0,
 
-            unit: purchaseUnit,
-            unitValue: purchaseUnitValue,
-            isCustomUnitValue,
+                            unit: purchaseUnit,
+                            unitValue: purchaseUnitValue,
+                            isCustomUnitValue,
 
-            isSold: false,
+                            isSold: false,
 
-            ...hierarchy,
-            createdBy: req.user.userId
-        }
-    },
-    {
-        upsert: true,
-        new: true
-    }
-);
+                            ...hierarchy,
+                            createdBy: req.user.userId
+                        }
+                    },
+                    {
+                        upsert: true,
+                        new: true
+                    }
+                );
             }
 
             if (item.priceLevel) {
@@ -3041,7 +3043,7 @@ const sellingPrice = Number(
                 totalAmount: round2(purchase.totalAmount),
                 totalGrossAmount: round2(totalGrossAmount),
                 totalTaxAmount: round2(totalTaxAmount),
-                
+
 
                 items: processedItems
             }

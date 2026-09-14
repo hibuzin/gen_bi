@@ -16,51 +16,8 @@ const barcodeSchema = new mongoose.Schema({
 
     purchaseId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Purchase"
-    },
-
-    mrp: {
-        type: Number,
-        default: 0
-    },
-
-    sellingPrice: {
-        type: Number,
-        default: 0
-    },
-
-    costPrice: {
-        type: Number,
-        default: 0
-    },
-
-    gstRate: {
-    type: String,
-    enum: ["none", "0", "5", "12", "18", "40"],
-    default: "none"
-},
-
-    unit: {
-        type: String,
-        enum: ["pcs", "kg", "g"],
-        default: "pcs"
-    },
-    unitValue: {
-        type: Number,
-        default: 1
-    },
-    qty: {
-        type: Number,
-        default: 0
-    },
-    availableQty: {
-        type: Number,
-        default: 0
-    },
-
-    isSold: {
-        type: Boolean,
-        default: false
+        ref: "Purchase",
+        default: null
     },
 
     superAdminId: {
@@ -71,19 +28,24 @@ const barcodeSchema = new mongoose.Schema({
 
     adminId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        default: null
     },
 
     cashierId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        default: null
     },
 
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        default: null
     }
 
 }, { timestamps: true });
 
-module.exports = mongoose.model("Barcode", barcodeSchema);
+module.exports =
+    mongoose.models.Barcode ||
+    mongoose.model("Barcode", barcodeSchema);

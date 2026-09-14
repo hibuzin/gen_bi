@@ -22,10 +22,10 @@ const productSchema = new mongoose.Schema({
     },
 
     bulkId: {
-    type: mongoose.Schema.Types.ObjectId,
-    default: null,
-    index: true
-},
+        type: mongoose.Schema.Types.ObjectId,
+        default: null,
+        index: true
+    },
 
     name: { type: String, required: true },
 
@@ -124,20 +124,20 @@ const productSchema = new mongoose.Schema({
     },
 
     gstRate: {
-    type: String,
-    enum: ["none", "0", "5", "12", "18", "40"],
-    default: "none"
-},
+        type: String,
+        enum: ["none", "0", "5", "12", "18", "40"],
+        default: "none"
+    },
 
     categoryId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category",
-         default: null
+        default: null
     },
 
     categoryName: {
         type: String,
-         default: null
+        default: null
     },
 
     hsnId: {
