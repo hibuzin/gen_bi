@@ -459,47 +459,39 @@ const gstRateForCalculation =
                     });
                 }
 
-                await Barcode.findOneAndUpdate(
-                    {
-                        productId: product._id,
-                        code: barcode,
-                        superAdminId: hierarchy.superAdminId
-                    },
-                    {
-                        $set: {
-                            productId: product._id,
-                            code: barcode,
+               await Barcode.findOneAndUpdate(
+        {
+            productId: product._id,
+            code: barcode,
+            superAdminId: hierarchy.superAdminId
+        },
+        {
+            $set: {
+                productId: product._id,
+                code: barcode,
 
-                            mrp: item.mrp || product.mrp || 0,
-                            costPrice: item.costPrice || product.costPrice || 0,
-                            sellingPrice: item.sellingPrice || product.sellingPrice || 0,
+                mrp: item.mrp || product.mrp || 0,
+                costPrice: item.costPrice || product.costPrice || 0,
+                sellingPrice: item.sellingPrice || product.sellingPrice || 0,
 
-                            gstRate: product.gstRate || "none",
+                gstRate: product.gstRate || "none",
 
-                            unit: purchaseUnit,
-                            unitValue: purchaseUnitValue,
-                            isCustomUnitValue,
+                unit: purchaseUnit,
+                unitValue: purchaseUnitValue,
+                isCustomUnitValue,
 
-                            isSold: false,
+                isSold: false,
 
-                            ...hierarchy,
-                            createdBy: req.user.userId
-                        },
-                        $inc: {
-
-                            qty: stockQty,
-                            availableQty: stockQty
-
-                        }
-                    },
-                    {
-                        upsert: true,
-                        new: true
-                    }
-
-                )
-            };
-
+                ...hierarchy,
+                createdBy: req.user.userId
+            }
+        },
+        {
+            upsert: true,
+            new: true
+        }
+    );
+}
 
             if (priceLevel) {
                 await PriceLevel.findOneAndUpdate(
@@ -550,24 +542,7 @@ const gstRateForCalculation =
                 }
             );
 
-            await Product.updateOne(
-
-                {
-                    _id: product._id,
-                    superAdminId: hierarchy.superAdminId
-                },
-
-                {
-
-                    mrp: mrp,
-
-                    costPrice: netcost,
-
-                    sellingPrice: sellingPrice
-
-                }
-
-            );
+           
 
 
             totalAmount = round2(totalAmount + totalCostWithGST);
@@ -1268,7 +1243,23 @@ exports.calculatePurchase = async (req, res) => {
             const netcost = Number(item.netcost || item.purchasePrice || item.netCost);
            const mrp = Number(item.mrp || 0);
             const sellingPrice = Number(item.sellingPrice || mrp);
-            const taxPercentage = Number(item.gst || item.gstRate || item.taxPercentage || 0);
+
+           const rawGst =
+    item.gst ??
+    item.gstRate ??
+    item.taxPercentage ??
+    "none";
+
+const isGstNone =
+    String(rawGst).trim().toLowerCase() === "none";
+
+const taxPercentage = isGstNone
+    ? "none"
+    : Number(rawGst) || 0;
+
+const gstRateForCalculation = isGstNone
+    ? 0
+    : Number(rawGst) || 0;
 
             const discountPercent = Number(item.discountPercent || 0);
             const discountAmountInput = Number(item.discountAmount || 0);
@@ -1326,28 +1317,29 @@ exports.calculatePurchase = async (req, res) => {
             let taxAmount = 0;
             let totalCostWithGST = 0;
 
-            if (isGstIncluded) {
-                totalCostWithGST = amountAfterDiscount;
+           if (isGstIncluded) {
+    totalCostWithGST = amountAfterDiscount;
 
-                taxAmount = round2(
-                    amountAfterDiscount * taxPercentage / (100 + taxPercentage)
-                );
+    taxAmount = round2(
+        amountAfterDiscount *
+        gstRateForCalculation /
+        (100 + gstRateForCalculation)
+    );
 
-                amount = round2(
-                    amountAfterDiscount - taxAmount
-                );
-            } else {
-                amount = amountAfterDiscount;
+    amount = round2(
+        amountAfterDiscount - taxAmount
+    );
+} else {
+    amount = amountAfterDiscount;
 
-                taxAmount = round2(
-                    amount * taxPercentage / 100
-                );
+    taxAmount = round2(
+        amount * gstRateForCalculation / 100
+    );
 
-                totalCostWithGST = round2(
-                    amount + taxAmount
-                );
-            }
-
+    totalCostWithGST = round2(
+        amount + taxAmount
+    );
+}
             totalGrossAmount = round2(totalGrossAmount + amount);
             totalTaxAmount = round2(totalTaxAmount + taxAmount);
             totalAmount = round2(totalAmount + totalCostWithGST);
@@ -2484,21 +2476,7 @@ exports.updatePurchase = async (req, res) => {
                 }
             );
 
-            if (oldItem.barcode) {
-                await Barcode.updateOne(
-                    {
-                        productId: oldItem.productId,
-                        code: oldItem.barcode,
-                        superAdminId: hierarchy.superAdminId
-                    },
-                    {
-                        $inc: {
-                            qty: -oldStockQty,
-                            availableQty: -oldStockQty
-                        }
-                    }
-                );
-            }
+           
         }
 
         let processedItems = [];
@@ -2731,42 +2709,38 @@ const sellingPrice = Number(
 
 
             if (barcode) {
-                await Barcode.findOneAndUpdate(
-                    {
-                        productId: product._id,
-                        code: barcode,
-                        superAdminId: hierarchy.superAdminId
-                    },
-                    {
-                        $set: {
-                            productId: product._id,
-                            code: barcode,
+               await Barcode.findOneAndUpdate(
+    {
+        productId: product._id,
+        code: barcode,
+        superAdminId: hierarchy.superAdminId
+    },
+    {
+        $set: {
+            productId: product._id,
+            code: barcode,
 
-                            mrp: mrp,
+            mrp: mrp,
 
-                            costPrice: item.costPrice || product.costPrice || 0,
-                            sellingPrice: item.sellingPrice || product.sellingPrice || 0,
-                            gstRate: product.gstRate || 0,
+            costPrice: item.costPrice || product.costPrice || 0,
+            sellingPrice: item.sellingPrice || product.sellingPrice || 0,
+            gstRate: product.gstRate || 0,
 
-                            unit: purchaseUnit,
-                            unitValue: purchaseUnitValue,
-                            isCustomUnitValue,
+            unit: purchaseUnit,
+            unitValue: purchaseUnitValue,
+            isCustomUnitValue,
 
-                            isSold: false,
+            isSold: false,
 
-                            ...hierarchy,
-                            createdBy: req.user.userId
-                        },
-                        $inc: {
-                            qty: stockQty,
-                            availableQty: stockQty
-                        }
-                    },
-                    {
-                        upsert: true,
-                        new: true
-                    }
-                );
+            ...hierarchy,
+            createdBy: req.user.userId
+        }
+    },
+    {
+        upsert: true,
+        new: true
+    }
+);
             }
 
             if (item.priceLevel) {

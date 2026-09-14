@@ -29,27 +29,140 @@
 }
 
 .pageHeader h1 {
+  position: relative;
+  display: inline-block;
+
   margin: 0;
+  padding-bottom: 10px;
 
   font-size: var(--heading-text);
   font-weight: var(--heading-fontweight);
-
   color: var(--heading-color);
 }
 
-.divider {
-  width: 100%;
-  height: 1px;
+.pageHeader h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
 
-  background: #d7dce2;
+  width: 30px;
+  height: 3px;
 
-  margin-top: 12px;
+  background: #035555;
+  border-radius: 999px;
 }
+
+
 
 .sectionHeader {
   margin: 5px;
 }
 
+.salesGraphCard {
+  width: 100%;
+  height: 230px;
+
+  background: #ffffff;
+
+  border: 1px solid #e8e8ec;
+  border-radius: 12px;
+
+  padding: 14px 18px 8px;
+
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* HEADER */
+
+.graphTop {
+  height: 42px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.graphLabel {
+  display: block;
+
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+
+  color: #000000;
+}
+
+.graphAmount {
+  margin-top: 3px;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  color: #ffffff;
+}
+
+
+/* PERIOD */
+
+.reportButtons {
+  display: flex;
+  align-items: center;
+
+  padding: 3px;
+  gap: 2px;
+
+  background: rgba(255, 255, 255, 0.07);
+
+  border-radius: 7px;
+}
+
+.reportButtons button {
+  border: 0;
+  outline: 0;
+
+  height: 27px;
+
+  padding: 0 11px;
+
+  background: transparent;
+
+  color: #9da1b0;
+
+  border-radius: 5px;
+
+  font-size: 10px;
+
+  cursor: pointer;
+}
+
+.reportButtons button:hover {
+  color: #ffffff;
+}
+
+.reportButtons .activeReport {
+  background: rgba(255, 255, 255, 0.13);
+
+  color: #ffffff;
+
+  font-weight: 600;
+}
+
+
+/* GRAPH */
+
+.graphArea {
+  width: 100%;
+  height: 160px;
+
+  margin-top: 3px;
+}
 .sectionHeader h1 {
   font-size: 15px;
   font-weight: 500;

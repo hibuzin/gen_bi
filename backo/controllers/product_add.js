@@ -258,8 +258,7 @@ if (!allowedGstRates.includes(processedGstRate)) {
                 productId: product._id,
                 code: barcodeCode,
 
-                qty: processedOpeningStock,
-                availableQty: processedOpeningStock,
+                
 
                 mrp: processedMrp,
 
@@ -783,8 +782,7 @@ exports.bulkProductCreate = async (req, res) => {
                         productId: product._id,
                         code: barcodeCode,
 
-                        qty: processedOpeningStock,
-                        availableQty: processedOpeningStock,
+                        
 
                         mrp: processedMrp,
 
@@ -1031,6 +1029,7 @@ exports.getProductsByType = async (req, res) => {
     }
 };
 
+
 exports.allProducts = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
@@ -1057,34 +1056,20 @@ exports.allProducts = async (req, res) => {
                     isActive: true
                 }).lean();
 
-                const totalAvailableQty = Number(
-                    barcodes
-                        .reduce((sum, b) => sum + Number(b.availableQty || 0), 0)
-                        .toFixed(2)
-                );
+               
 
                 return {
                     ...product,
                     stock: Number(Number(product.stock || 0).toFixed(2)),
 
-                    totalAvailableQty,
+                   
                     barcodeCount: barcodes.length,
 
-                    barcodes: barcodes.map((barcode) => ({
-                        barcodeId: barcode._id,
-                        barcode: barcode.code || "",
-
-                        qty: barcode.qty || 0,
-                        availableQty: Number(Number(barcode.availableQty || 0).toFixed(2)),
-
-                        unit: barcode.unit || product.unit || "pcs",
-                        unitValue: barcode.unitValue || product.unitValue || 1,
-
-                        mrp: barcode.mrp ?? product.mrp,
-                        costPrice: barcode.costPrice ?? product.costPrice,
-                        sellingPrice: barcode.sellingPrice ?? product.sellingPrice,
-                        gstRate: barcode.gstRate ?? product.gstRate ?? "none"
-                    })),
+                   barcodes: barcodes.map((barcode) => ({
+    barcodeId: barcode._id,
+    barcode: barcode.code || "",
+    productId: barcode.productId
+})),
 
                     priceLevel: priceLevel
                         ? {
@@ -1314,36 +1299,23 @@ exports.ProductsById = async (req, res) => {
             isActive: true
         }).lean();
 
-        const totalAvailableQty = barcodes.reduce(
-            (sum, barcode) => sum + Number(barcode.availableQty || 0),
-            0
-        );
+        
 
         return res.status(200).json({
             success: true,
             data: {
                 ...product,
 
-                totalAvailableQty,
+               
                 barcodeCount: barcodes.length,
 
                 lowStockQty: product.lowStockQty || 10,
 
                 barcodes: barcodes.map((barcode) => ({
-                    barcodeId: barcode._id,
-                    barcode: barcode.code || "",
-
-                    qty: barcode.qty || 0,
-                    availableQty: barcode.availableQty || 0,
-
-                    unit: barcode.unit || product.unit || "pcs",
-                    unitValue: barcode.unitValue || product.unitValue || 1,
-
-                    mrp: barcode.mrp ?? product.mrp,
-                    costPrice: barcode.costPrice ?? product.costPrice,
-                    sellingPrice: barcode.sellingPrice ?? product.sellingPrice,
-                    gstRate: barcode.gstRate ?? product.gstRate ?? "none"
-                })),
+    barcodeId: barcode._id,
+    barcode: barcode.code || "",
+    productId: barcode.productId
+})),
 
                 priceLevel: priceLevel || null
             }
@@ -1605,10 +1577,7 @@ exports.updateProduct = async (req, res) => {
                 createdBarcode = await Barcode.create({
                     productId: product._id,
                     code: barcodeCode,
-
-                    qty: 0,
-                    availableQty: 0,
-
+                    
                     mrp: product.mrp || 0,
                     costPrice: product.costPrice || 0,
                     sellingPrice: product.sellingPrice || 0,
@@ -1625,31 +1594,7 @@ exports.updateProduct = async (req, res) => {
             }
         }
 
-        await product.save();
-
-        const barcodeUpdateData = {
-            mrp: product.mrp,
-            costPrice: product.costPrice,
-            sellingPrice: product.sellingPrice,
-            gstRate: product.gstRate,
-            unit: product.unit,
-            unitValue: product.unitValue
-        };
-
-        if (openingStock !== undefined) {
-            barcodeUpdateData.qty = product.stock;
-            barcodeUpdateData.availableQty = product.stock;
-        }
-
-        await Barcode.updateMany(
-            {
-                productId: product._id,
-                superAdminId: hierarchy.superAdminId
-            },
-            {
-                $set: barcodeUpdateData
-            }
-        );
+        await product.save();        
 
         const barcodes = await Barcode.find({
             productId: product._id,

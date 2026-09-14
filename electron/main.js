@@ -2,6 +2,7 @@ import { app, BrowserWindow } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
+import net from "node:net";
 import treeKill from "tree-kill";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +43,56 @@ function startBackend() {
 
   backendProcess.on("close", (code) => {
     console.log("Backend exited:", code);
+  });
+}
+
+function waitForBackend(port = 5000, host = "127.0.0.1", timeout = 30000) {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
+
+    function check() {
+      const socket = new net.Socket();
+
+      socket.setTimeout(1000);
+
+      socket.once("connect", () => {
+        socket.destroy();
+        console.log(`[Electron] Backend is ready on ${host}:${port}`);
+        resolve();
+      });
+
+      socket.once("error", () => {
+        socket.destroy();
+
+        if (Date.now() - startTime >= timeout) {
+          reject(
+            new Error(
+              `Backend did not start on ${host}:${port} within ${timeout / 1000} seconds`
+            )
+          );
+        } else {
+          setTimeout(check, 300);
+        }
+      });
+
+      socket.once("timeout", () => {
+        socket.destroy();
+
+        if (Date.now() - startTime >= timeout) {
+          reject(
+            new Error(
+              `Backend did not start on ${host}:${port} within ${timeout / 1000} seconds`
+            )
+          );
+        } else {
+          setTimeout(check, 300);
+        }
+      });
+
+      socket.connect(port, host);
+    }
+
+    check();
   });
 }
 
@@ -92,12 +143,18 @@ mainWindow.loadFile(indexPath);
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   startBackend();
 
-  setTimeout(() => {
+  try {
+    await waitForBackend(5000);
+
     createWindow();
-  }, 3000);
+  } catch (error) {
+    console.error("[Electron] Backend startup failed:", error);
+
+    createWindow();
+  }
 });
 
 app.on("window-all-closed", () => {

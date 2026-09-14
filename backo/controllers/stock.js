@@ -16,22 +16,26 @@ exports.allstockcheck = async (req, res) => {
 
         const barcodes = await Barcode.find({
             superAdminId: hierarchy.superAdminId
-        }).lean();
+        })
+            .select("productId code")
+            .lean();
 
         const data = [];
 
         const formatQty = (value) => {
             const num = Number(value || 0);
+
             return Number.isInteger(num)
                 ? String(num)
                 : String(Number(num.toFixed(2)));
         };
 
-
-
+        // Group barcodes by product
         const barcodeMap = new Map();
 
         for (const barcode of barcodes) {
+            if (!barcode.productId) continue;
+
             const productId = String(barcode.productId);
 
             if (!barcodeMap.has(productId)) {
@@ -41,164 +45,176 @@ exports.allstockcheck = async (req, res) => {
             barcodeMap.get(productId).push(barcode);
         }
 
-
-
         for (const product of products) {
-
             const productId = String(product._id);
 
-            const productBarcodes = barcodeMap.get(productId) || [];
+            const productBarcodes =
+                barcodeMap.get(productId) || [];
 
+            // -----------------------------------------
+            // PRODUCT STOCK = SINGLE SOURCE OF TRUTH
+            // -----------------------------------------
+
+            const currentStock = Number(
+                Number(product.stock || 0).toFixed(2)
+            );
+
+            const unit = product.unit || "pcs";
+
+            const unitValue = Number(
+                product.unitValue ?? 1
+            );
+
+            const safeUnitValue =
+                unitValue > 0 ? unitValue : 1;
+
+            const costPrice = Number(
+                product.costPrice || 0
+            );
+
+            // -----------------------------------------
+            // STOCK TEXT
+            // -----------------------------------------
+
+            let totalStockText = "";
+
+            if (unit === "kg") {
+                totalStockText =
+                    `${formatQty(currentStock)} kg`;
+
+            } else if (unit === "g") {
+                totalStockText =
+                    `${formatQty(currentStock / 1000)} kg`;
+
+            } else {
+                totalStockText =
+                    `${formatQty(currentStock)} pcs`;
+            }
+
+            // -----------------------------------------
+            // STOCK VALUE
+            // -----------------------------------------
+
+            let stockValue = 0;
+
+            if (unit === "kg") {
+                stockValue =
+                    currentStock * costPrice;
+
+            } else if (unit === "g") {
+                stockValue =
+                    (currentStock / 1000) * costPrice;
+
+            } else {
+                stockValue =
+                    currentStock * costPrice;
+            }
+
+            stockValue = Number(
+                stockValue.toFixed(2)
+            );
+
+            // -----------------------------------------
+            // STOCK STATUS
+            // -----------------------------------------
+
+            let status = "Available";
+
+            if (currentStock <= 0) {
+                status = "Out Of Stock";
+            } else if (
+                currentStock <= Number(product.lowStockQty || 10)
+            ) {
+                status = "Low Stock";
+            }
+
+            // -----------------------------------------
+            // BARCODE PRODUCTS
+            // -----------------------------------------
 
             if (productBarcodes.length > 0) {
-
                 for (const barcode of productBarcodes) {
-
-                    const currentStock = Number(
-                        Number(barcode.availableQty || 0).toFixed(2)
-                    );
-
-                    const totalQty = Number(
-                        Number(barcode.qty || 0).toFixed(2)
-                    );
-
-                    const unit = barcode.unit || product.unit || "pcs";
-
-                    const unitValue = Number(
-                        barcode.unitValue || product.unitValue || 1
-                    );
-
-                    let totalStockText = "";
-
-                    if (unit === "kg") {
-                        totalStockText =
-                            `${formatQty(currentStock * unitValue)} kg`;
-
-                    } else if (unit === "g") {
-                        totalStockText =
-                            `${formatQty((currentStock * unitValue) / 1000)} kg`;
-
-                    } else {
-                        totalStockText =
-                            `${formatQty(currentStock)} pcs`;
-                    }
-
-                    const soldQty = Math.max(
-                        Number((totalQty - currentStock).toFixed(2)),
-                        0
-                    );
-
-                    const costPrice = Number(
-                        barcode.costPrice ??
-                        product.costPrice ??
-                        0
-                    );
-
-                    const stockValue = Number(
-                        (currentStock * costPrice).toFixed(2)
-                    );
-
                     data.push({
                         productId: product._id,
-                        productName: product.name || "",
 
-                        itemCode: product.itemCode || "",
+                        productName:
+                            product.name || "",
 
-                        barcode: barcode.code,
+                        itemCode:
+                            product.itemCode || "",
 
-                        totalQty,
+                        barcode:
+                            barcode.code || null,
+
+                        // Product.stock is the actual stock
+                        totalQty: currentStock,
+
                         currentStock,
-                        soldQty,
+
+
+                        soldQty: 0,
+
+                        actualStockQty:
+                            currentStock,
 
                         totalStockText,
 
                         stockValue,
 
-                        mrp: barcode.mrp || product.mrp || 0,
-                        costPrice: barcode.costPrice || product.costPrice || 0,
-                        sellingPrice: barcode.sellingPrice || product.sellingPrice || 0,
+                        mrp:
+                            product.mrp || 0,
 
-                        gst: barcode.gstRate || product.gstRate || 0,
+                        costPrice,
+
+                        sellingPrice:
+                            product.sellingPrice || 0,
+
+                        gst:
+                            product.gstRate ?? "none",
 
                         unit,
-                        unitValue,
-                        unitText: `${unitValue} ${unit}`,
 
-                        status:
-                            currentStock <= 0
-                                ? "Out Of Stock"
-                                : currentStock <= 10
-                                    ? "Low Stock"
-                                    : "Available"
+                        unitValue,
+
+                        unitText:
+                            `${safeUnitValue} ${unit}`,
+
+                        status
                     });
                 }
             }
 
+            // -----------------------------------------
+            // NORMAL PRODUCTS WITHOUT BARCODE
+            // -----------------------------------------
+
             else {
-
-                const currentStock = Number(
-                    Number(product.stock || 0).toFixed(2)
-                );
-
-                const totalQty = currentStock;
-
-                const unit = product.unit || "pcs";
-
-                const unitValue = Number(
-                    product.unitValue || 1
-                );
-
-                let totalStockText = "";
-
-                if (unit === "kg") {
-
-                    totalStockText =
-                        `${formatQty(currentStock * unitValue)} kg`;
-
-                } else if (unit === "g") {
-
-                    totalStockText =
-                        `${formatQty(
-                            (currentStock * unitValue) / 1000
-                        )} kg`;
-
-                } else {
-
-                    totalStockText =
-                        `${formatQty(currentStock)} pcs`;
-                }
-
-                const costPrice = Number(
-                    product.costPrice || 0
-                );
-
-                const stockValue = Number(
-                    (currentStock * costPrice).toFixed(2)
-                );
-
                 data.push({
-
                     productId: product._id,
 
-                    productName: product.name || "",
+                    productName:
+                        product.name || "",
 
-                    itemCode: product.itemCode || "",
-
+                    itemCode:
+                        product.itemCode || "",
 
                     barcode: null,
 
-                    totalQty,
+                    totalQty: currentStock,
 
                     currentStock,
 
-
                     soldQty: 0,
+
+                    actualStockQty:
+                        currentStock,
 
                     totalStockText,
 
                     stockValue,
 
-                    mrp: product.mrp || 0,
+                    mrp:
+                        product.mrp || 0,
 
                     costPrice,
 
@@ -206,23 +222,23 @@ exports.allstockcheck = async (req, res) => {
                         product.sellingPrice || 0,
 
                     gst:
-                        product.gstRate || 0,
+                        product.gstRate ?? "none",
 
                     unit,
 
                     unitValue,
 
-                    unitText: `${unitValue} ${unit}`,
+                    unitText:
+                        `${safeUnitValue} ${unit}`,
 
-                    status:
-                        currentStock <= 0
-                            ? "Out Of Stock"
-                            : currentStock <= 10
-                                ? "Low Stock"
-                                : "Available"
+                    status
                 });
             }
         }
+
+        // -----------------------------------------
+        // SORT
+        // -----------------------------------------
 
         data.sort((a, b) => {
             return String(b.productId).localeCompare(
@@ -230,15 +246,33 @@ exports.allstockcheck = async (req, res) => {
             );
         });
 
+        // -----------------------------------------
+        // TOTAL STOCK VALUE
+        // -----------------------------------------
+
+        const totalStockValue = Number(
+            data
+                .reduce(
+                    (sum, item) =>
+                        sum +
+                        Number(item.stockValue || 0),
+                    0
+                )
+                .toFixed(2)
+        );
+
         return res.status(200).json({
             success: true,
             count: data.length,
+            totalStockValue,
             data
         });
 
     } catch (err) {
-
-        console.error("allstockcheck error:", err);
+        console.error(
+            "allstockcheck error:",
+            err
+        );
 
         return res.status(500).json({
             success: false,
@@ -301,12 +335,13 @@ exports.getAllRepackStock = async (req, res) => {
                 for (const barcode of productBarcodes) {
 
 
-                    const currentStock = Number(Number(barcode.availableQty || 0).toFixed(2));
-                    const totalQty = Number(Number(barcode.qty || 0).toFixed(2));
-                    const soldQty = Math.max(
-                        Number((totalQty - currentStock).toFixed(2)),
-                        0
+                    const currentStock = Number(
+                        Number(product.stock || 0).toFixed(2)
                     );
+
+                    const totalQty = currentStock;
+
+                    const soldQty = 0;
 
                     const costPrice = Number(barcode.costPrice || product.costPrice || 0);
                     const sellingPrice = Number(barcode.sellingPrice || product.sellingPrice || 0);
@@ -412,7 +447,7 @@ exports.getAllRepackStock = async (req, res) => {
                     itemCode:
                         product.itemCode || "",
 
-                   
+
                     barcode: null,
 
                     totalQty,
@@ -452,7 +487,7 @@ exports.getAllRepackStock = async (req, res) => {
             }
         }
 
-       
+
 
         data.sort((a, b) => {
             return String(b.productId).localeCompare(
@@ -512,7 +547,7 @@ exports.getAllBulkProducts = async (req, res) => {
                 mrp: item.mrp || 0,
                 costPrice,
                 sellingPrice: item.sellingPrice || 0,
-                gstRate: item.gstRate || 0,
+                gstRate: item.gstRate ?? "none",
 
                 stockValue: Number((stock * costPrice).toFixed(2)),
 
@@ -800,7 +835,6 @@ exports.getStockValue = async (req, res) => {
                     itemCode:
                         product.itemCode || "",
 
-                    
                     barcode: null,
 
                     currentStock,
@@ -843,7 +877,8 @@ exports.getStockValue = async (req, res) => {
             }
         }
 
-   
+
+
 
         data.sort((a, b) => {
             return String(b.productId).localeCompare(
@@ -1010,7 +1045,17 @@ exports.getproductsearchstock = async (req, res) => {
 
                         sellingPrice: barcode.sellingPrice || product.sellingPrice || 0,
 
-                        gstRate: barcode.gstRate || product.gstRate || 0,
+                        gstRate:
+                            barcode.gstRate !== undefined &&
+                                barcode.gstRate !== null &&
+                                barcode.gstRate !== ""
+                                ? barcode.gstRate
+                                : product.gstRate !== undefined &&
+                                    product.gstRate !== null &&
+                                    product.gstRate !== ""
+                                    ? product.gstRate
+                                    : 0,
+
 
                         unit: barcode.unit || product.unit || "pcs",
                         unitValue: barcode.unitValue || product.unitValue || 1,
@@ -1076,7 +1121,6 @@ exports.getproductsearchstock = async (req, res) => {
                     productName:
                         product.name || "",
 
-                  
                     barcode: null,
 
                     currentStock,
@@ -1117,7 +1161,8 @@ exports.getproductsearchstock = async (req, res) => {
             }
         }
 
-       
+
+
         const existingBarcodeIds = new Set(
             data
                 .filter(item => item.barcode)
@@ -1314,7 +1359,7 @@ exports.productStockById = async (req, res) => {
         const product = await Product.findOne({
             _id: productId,
             superAdminId: hierarchy.superAdminId
-        });
+        }).lean();
 
         if (!product) {
             return res.status(404).json({
@@ -1326,129 +1371,398 @@ exports.productStockById = async (req, res) => {
         const barcodes = await Barcode.find({
             productId,
             superAdminId: hierarchy.superAdminId
-        }).sort({ createdAt: -1 });
-
-        let totalQty = 0;
-        let currentStock = 0;
-        let totalCostValue = 0;
-        let totalSellingValue = 0;
+        })
+            .select(
+                "code qty availableQty mrp costPrice sellingPrice gstRate unit unitValue createdAt"
+            )
+            .sort({ createdAt: -1 })
+            .lean();
 
         const data = [];
 
         const formatQty = (value) => {
             const num = Number(value || 0);
+
             return Number.isInteger(num)
                 ? String(num)
                 : String(Number(num.toFixed(2)));
         };
 
+        // =====================================================
+        // PRODUCT STOCK = SINGLE SOURCE OF TRUTH
+        // =====================================================
+
+        const currentStock = Number(
+            Number(product.stock || 0).toFixed(2)
+        );
+
+        const unit = product.unit || "pcs";
+
+        const unitValue = Number(
+            product.unitValue ?? 1
+        );
+
+        const safeUnitValue =
+            unitValue > 0 ? unitValue : 1;
+
+        const costPrice = Number(
+            product.costPrice || 0
+        );
+
+        const sellingPrice = Number(
+            product.sellingPrice || 0
+        );
+
+        // =====================================================
+        // TOTAL STOCK TEXT
+        // =====================================================
+
+        let productTotalStockText = "";
+
+        if (unit === "kg") {
+            productTotalStockText =
+                `${formatQty(currentStock)} kg`;
+
+        } else if (unit === "g") {
+            productTotalStockText =
+                `${formatQty(currentStock / 1000)} kg`;
+
+        } else {
+            productTotalStockText =
+                `${formatQty(currentStock)} pcs`;
+        }
+
+        // =====================================================
+        // PRODUCT TOTAL VALUES
+        // =====================================================
+
+        let totalCostValue = 0;
+        let totalSellingValue = 0;
+
+        if (unit === "kg") {
+            totalCostValue =
+                currentStock * costPrice;
+
+            totalSellingValue =
+                currentStock * sellingPrice;
+
+        } else if (unit === "g") {
+            totalCostValue =
+                (currentStock / 1000) * costPrice;
+
+            totalSellingValue =
+                (currentStock / 1000) * sellingPrice;
+
+        } else {
+            totalCostValue =
+                currentStock * costPrice;
+
+            totalSellingValue =
+                currentStock * sellingPrice;
+        }
+
+        totalCostValue = Number(
+            totalCostValue.toFixed(2)
+        );
+
+        totalSellingValue = Number(
+            totalSellingValue.toFixed(2)
+        );
+
+        // =====================================================
+        // SOLD QTY
+        // =====================================================
+
+        // Product.stock is current stock.
+        // Barcode.qty / availableQty are NOT used
+        // to calculate actual stock anymore.
+        //
+        // Therefore we don't calculate soldQty from barcode.
+        // If you have a separate sales-history calculation,
+        // that should be used here.
+
+        // =====================================================
+        // BARCODE DATA
+        // =====================================================
+
         for (const barcode of barcodes) {
-            const barcodeQty = Number(barcode.qty || 0);
-            const availableQty = Number(barcode.availableQty || 0);
 
-            const unit = barcode.unit || product.unit || "pcs";
-            const unitValue = Number(barcode.unitValue || product.unitValue || 1);
+            const barcodeUnit =
+                barcode.unit || unit;
 
-            totalQty += barcodeQty;
-            currentStock += availableQty;
+            const barcodeUnitValue = Number(
+                barcode.unitValue ?? unitValue
+            );
 
-            totalCostValue += availableQty * Number(barcode.costPrice || product.costPrice || 0);
-            totalSellingValue += availableQty * Number(barcode.sellingPrice || product.sellingPrice || 0);
+            const barcodeCostPrice = Number(
+                barcode.costPrice ?? costPrice
+            );
+
+            const barcodeSellingPrice = Number(
+                barcode.sellingPrice ?? sellingPrice
+            );
+
+            // -------------------------------------------------
+            // Each barcode displays PRODUCT STOCK
+            // -------------------------------------------------
 
             let totalStockText = "";
 
-            if (unit === "kg") {
-                totalStockText = `${formatQty(availableQty * unitValue)} kg`;
-            } else if (unit === "g") {
-                totalStockText = `${formatQty((availableQty * unitValue) / 1000)} kg`;
+            if (barcodeUnit === "kg") {
+
+                totalStockText =
+                    `${formatQty(currentStock)} kg`;
+
+            } else if (barcodeUnit === "g") {
+
+                totalStockText =
+                    `${formatQty(currentStock / 1000)} kg`;
+
             } else {
-                totalStockText = `${formatQty(availableQty)} pcs`;
+
+                totalStockText =
+                    `${formatQty(currentStock)} pcs`;
             }
+
+            // -------------------------------------------------
+            // Barcode GST
+            // -------------------------------------------------
+
+            const gstRate =
+                barcode.gstRate !== undefined &&
+                    barcode.gstRate !== null &&
+                    barcode.gstRate !== ""
+                    ? barcode.gstRate
+                    : product.gstRate !== undefined &&
+                        product.gstRate !== null &&
+                        product.gstRate !== ""
+                        ? product.gstRate
+                        : "none";
+
+            // -------------------------------------------------
+            // Push response
+            // -------------------------------------------------
 
             data.push({
                 productId: product._id,
-                productName: product.name,
-                itemCode: product.itemCode || "",
 
-                barcode: barcode.code,
+                productName:
+                    product.name || "",
 
-                totalQty: barcodeQty,
-                currentStock: availableQty,
-                soldQty: Math.max(Number((barcodeQty - availableQty).toFixed(2)), 0),
+                itemCode:
+                    product.itemCode || "",
+
+                barcode:
+                    barcode.code || null,
+
+                // Product.stock is the actual stock
+                totalQty: currentStock,
+
+                currentStock,
+
+                // Not calculated from barcode anymore
+                soldQty: 0,
+
+                actualStockQty:
+                    currentStock,
 
                 stockValue: Number(
                     (
-                        availableQty *
-                        Number(barcode.costPrice || product.costPrice || 0)
+                        unit === "g"
+                            ? (currentStock / 1000) * barcodeCostPrice
+                            : currentStock * barcodeCostPrice
                     ).toFixed(2)
                 ),
 
                 totalStockText,
 
-                mrp: barcode.mrp || product.mrp || 0,
-                costPrice: barcode.costPrice || product.costPrice || 0,
-                sellingPrice: barcode.sellingPrice || product.sellingPrice || 0,
+                mrp:
+                    barcode.mrp ??
+                    product.mrp ??
+                    0,
 
-                gstRate: barcode.gstRate || product.gstRate || 0,
+                costPrice:
+                    barcode.costPrice ??
+                    product.costPrice ??
+                    0,
 
-                unit,
-                unitValue,
-                unitText: `${unitValue} ${unit}`,
+                sellingPrice:
+                    barcode.sellingPrice ??
+                    product.sellingPrice ??
+                    0,
+
+                gstRate,
+
+                unit: barcodeUnit,
+
+                unitValue: barcodeUnitValue,
+
+                unitText:
+                    `${barcodeUnitValue} ${barcodeUnit}`,
 
                 status:
-                    availableQty <= 0
+                    currentStock <= 0
                         ? "Out Of Stock"
-                        : availableQty <= 10
+                        : currentStock <= Number(
+                            product.lowStockQty || 10
+                        )
                             ? "Low Stock"
                             : "Available"
             });
         }
 
-        let productTotalStockText = "";
+        // =====================================================
+        // NORMAL PRODUCT WITHOUT BARCODE
+        // =====================================================
 
-        if (product.unit === "kg") {
-            productTotalStockText = `${formatQty(currentStock * Number(product.unitValue || 1))} kg`;
-        } else if (product.unit === "g") {
-            productTotalStockText = `${formatQty((currentStock * Number(product.unitValue || 1)) / 1000)} kg`;
-        } else {
-            productTotalStockText = `${formatQty(currentStock)} pcs`;
-        }
+        if (barcodes.length === 0) {
 
-        return res.status(200).json({
-            success: true,
-            product: {
+            const gstRate =
+                product.gstRate !== undefined &&
+                    product.gstRate !== null &&
+                    product.gstRate !== ""
+                    ? product.gstRate
+                    : "none";
+
+            data.push({
                 productId: product._id,
-                productName: product.name,
-                itemCode: product.itemCode || "",
 
-                unit: product.unit || "pcs",
-                unitValue: product.unitValue || 1,
+                productName:
+                    product.name || "",
 
-                currentStock: Number(currentStock.toFixed(2)),
-                totalStock: productTotalStockText,
+                itemCode:
+                    product.itemCode || "",
 
-                gstRate: product.gstRate || 0,
+                barcode: null,
+
+                totalQty:
+                    currentStock,
+
+                currentStock,
+
+                soldQty: 0,
+
+                actualStockQty:
+                    currentStock,
+
+                stockValue:
+                    totalCostValue,
+
+                totalStockText:
+                    productTotalStockText,
+
+                mrp:
+                    product.mrp || 0,
+
+                costPrice,
+
+                sellingPrice,
+
+                gstRate,
+
+                unit,
+
+                unitValue,
+
+                unitText:
+                    `${safeUnitValue} ${unit}`,
 
                 status:
                     currentStock <= 0
                         ? "Out Of Stock"
-                        : currentStock <= 10
+                        : currentStock <= Number(
+                            product.lowStockQty || 10
+                        )
                             ? "Low Stock"
                             : "Available"
+            });
+        }
+
+        // =====================================================
+        // PRODUCT STATUS
+        // =====================================================
+
+        let status = "Available";
+
+        if (currentStock <= 0) {
+            status = "Out Of Stock";
+        } else if (
+            currentStock <= Number(
+                product.lowStockQty || 10
+            )
+        ) {
+            status = "Low Stock";
+        }
+
+        // =====================================================
+        // RESPONSE
+        // =====================================================
+
+        return res.status(200).json({
+            success: true,
+
+            product: {
+                productId: product._id,
+
+                productName:
+                    product.name || "",
+
+                itemCode:
+                    product.itemCode || "",
+
+                unit:
+                    product.unit || "pcs",
+
+                unitValue:
+                    product.unitValue || 1,
+
+                currentStock,
+
+                totalStock:
+                    productTotalStockText,
+
+                gstRate:
+                    product.gstRate !== undefined &&
+                        product.gstRate !== null &&
+                        product.gstRate !== ""
+                        ? product.gstRate
+                        : "none",
+
+                status
             },
+
             summary: {
-                totalQty: Number(totalQty.toFixed(2)),
-                currentStock: Number(currentStock.toFixed(2)),
-                soldQty: Math.max(Number((totalQty - currentStock).toFixed(2)), 0),
-                totalCostValue: Number(totalCostValue.toFixed(2)),
-                totalSellingValue: Number(totalSellingValue.toFixed(2)),
-                expectedProfit: Number((totalSellingValue - totalCostValue).toFixed(2))
+                // Product.stock is the actual current stock
+                totalQty: currentStock,
+
+                currentStock,
+
+                // Not calculated from Barcode
+                soldQty: 0,
+
+                totalCostValue,
+
+                totalSellingValue,
+
+                expectedProfit: Number(
+                    (
+                        totalSellingValue -
+                        totalCostValue
+                    ).toFixed(2)
+                )
             },
+
             count: data.length,
+
             data
         });
 
     } catch (err) {
+        console.error(
+            "productStockById error:",
+            err
+        );
+
         return res.status(500).json({
             success: false,
             message: "Server error",
@@ -1461,7 +1775,7 @@ exports.productStockById = async (req, res) => {
 exports.getTopSellingProducts = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
-        const limit = Math.max(1, Number(req.query.limit || 10));
+
 
         const result = await Bill.aggregate([
             {
@@ -1472,13 +1786,10 @@ exports.getTopSellingProducts = async (req, res) => {
             { $unwind: "$items" },
             {
                 $group: {
-                    _id: {
-                        productId: "$items.productId",
-                        barcode: "$items.barcode"
-                    },
+                    _id: "$items.productId",
                     productNameFromBill: { $first: "$items.productName" },
                     nameFromBill: { $first: "$items.name" },
-                    barcode: { $first: "$items.barcode" },
+
                     totalQtySold: { $sum: "$items.qty" },
                     totalSalesAmount: { $sum: "$items.finalPrice" },
                     totalGST: { $sum: "$items.gstAmount" }
@@ -1487,23 +1798,22 @@ exports.getTopSellingProducts = async (req, res) => {
             {
                 $lookup: {
                     from: "products",
-                    localField: "_id.productId",
+                    localField: "_id",
                     foreignField: "_id",
                     as: "product"
                 }
             },
             {
-                $unwind: {
-                    path: "$product",
-                    preserveNullAndEmptyArrays: true
-                }
+
+                $unwind: "$product"
             },
+
             {
                 $lookup: {
                     from: "barcodes",
                     let: {
-                        productId: "$_id.productId",
-                        barcodeCode: "$_id.barcode",
+                        productId: "$_id",
+
                         superAdminId: hierarchy.superAdminId
                     },
                     pipeline: [
@@ -1512,7 +1822,6 @@ exports.getTopSellingProducts = async (req, res) => {
                                 $expr: {
                                     $and: [
                                         { $eq: ["$productId", "$$productId"] },
-                                        { $eq: ["$code", "$$barcodeCode"] },
                                         { $eq: ["$superAdminId", "$$superAdminId"] }
                                     ]
                                 }
@@ -1534,12 +1843,13 @@ exports.getTopSellingProducts = async (req, res) => {
                 }
             },
             {
-                $limit: limit
-            },
-            {
                 $project: {
                     _id: 0,
                     productId: "$_id.productId",
+
+                    itemCode: {
+                        $ifNull: ["$product.itemCode", ""]
+                    },
 
                     productName: {
                         $ifNull: [
@@ -1553,7 +1863,7 @@ exports.getTopSellingProducts = async (req, res) => {
                         ]
                     },
 
-                    barcode: "$_id.barcode",
+                    barcodes: "$barcodeData",
 
                     gstRate: {
                         $ifNull: [
@@ -1596,7 +1906,7 @@ exports.getTopSellingProducts = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("TOP SELLING ERROR:", error);
+
         return res.status(500).json({
             success: false,
             message: "Server error",
@@ -1636,8 +1946,12 @@ exports.lowstockcheck = async (req, res) => {
 
         for (const barcode of barcodes) {
 
-            const productId =
-                String(barcode.productId);
+
+            if (!barcode.productId) {
+                continue;
+            }
+
+            const productId = String(barcode.productId);
 
             if (!barcodeMap.has(productId)) {
                 barcodeMap.set(productId, []);
@@ -1742,37 +2056,50 @@ exports.lowstockcheck = async (req, res) => {
                     totalStockValue += stockValue;
 
                     data.push({
-                        productId: barcode.productId?._id || "",
-                        productName: barcode.productId?.name || "",
-                        itemCode: barcode.productId?.itemCode || "",
+                        productId: product._id,
+
+                        productName: product.name || "",
+
+                        itemCode: product.itemCode || "",
+
                         barcode: barcode.code || "",
 
                         currentStock: qty,
                         lowStockQty,
-                        totalProductStock: Number(barcode.productId?.stock || 0),
+
+                        totalProductStock: Number(product.stock || 0),
+
+                        gstRate:
+                            barcode.gstRate !== undefined &&
+                                barcode.gstRate !== null &&
+                                barcode.gstRate !== ""
+                                ? barcode.gstRate
+                                : product.gstRate ?? 0,
 
                         unit,
                         unitValue,
                         totalUnitText,
 
-                        mrp: barcode.mrp || 0,
-                        costPrice: barcode.costPrice || 0,
-                        sellingPrice: barcode.sellingPrice || 0,
+                        mrp: barcode.mrp ?? product.mrp ?? 0,
+
+                        costPrice:
+                            barcode.costPrice ??
+                            product.costPrice ??
+                            0,
+
+                        sellingPrice:
+                            barcode.sellingPrice ??
+                            product.sellingPrice ??
+                            0,
 
                         stockValue: Number(stockValue.toFixed(2)),
-
-                        gstRate: Number(
-                            barcode.gstRate ||
-                            barcode.productId?.gstRate ||
-                            0
-                        ),
 
                         status: "Low Stock"
                     });
                 }
             }
 
-           
+
 
             else {
 
@@ -1782,7 +2109,7 @@ exports.lowstockcheck = async (req, res) => {
                     ).toFixed(2)
                 );
 
-                
+
                 if (
                     qty <= 0 ||
                     qty > lowStockQty
@@ -1852,7 +2179,6 @@ exports.lowstockcheck = async (req, res) => {
                     itemCode:
                         product.itemCode || "",
 
-                   
                     barcode: null,
 
                     currentStock:
@@ -1878,9 +2204,11 @@ exports.lowstockcheck = async (req, res) => {
                     stockValue,
 
                     gstRate:
-                        Number(
-                            product.gstRate || 0
-                        ),
+                        product.gstRate !== undefined &&
+                            product.gstRate !== null &&
+                            product.gstRate !== ""
+                            ? product.gstRate
+                            : 0,
 
                     status:
                         "Low Stock"
@@ -1888,7 +2216,8 @@ exports.lowstockcheck = async (req, res) => {
             }
         }
 
-      
+
+
 
         data.sort((a, b) => {
             return (
@@ -1897,7 +2226,7 @@ exports.lowstockcheck = async (req, res) => {
             );
         });
 
-        
+
 
         data.forEach((item, index) => {
             item.sno = index + 1;
@@ -1947,13 +2276,13 @@ exports.outofstockcheck = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
 
-       
+
 
         const products = await Product.find({
             superAdminId: hierarchy.superAdminId
         }).lean();
 
-        
+
 
         const barcodes = await Barcode.find({
             superAdminId: hierarchy.superAdminId
@@ -1969,14 +2298,17 @@ exports.outofstockcheck = async (req, res) => {
                 : String(Number(num.toFixed(2)));
         };
 
-       
+
 
         const barcodeMap = new Map();
 
         for (const barcode of barcodes) {
 
-            const productId =
-                String(barcode.productId);
+            if (!barcode.productId) {
+                continue;
+            }
+
+            const productId = String(barcode.productId);
 
             if (!barcodeMap.has(productId)) {
                 barcodeMap.set(productId, []);
@@ -1985,7 +2317,7 @@ exports.outofstockcheck = async (req, res) => {
             barcodeMap.get(productId).push(barcode);
         }
 
-       
+
 
         for (const product of products) {
 
@@ -2006,7 +2338,7 @@ exports.outofstockcheck = async (req, res) => {
                         ).toFixed(2)
                     );
 
-                    
+
                     if (qty > 0) {
                         continue;
                     }
@@ -2094,11 +2426,16 @@ exports.outofstockcheck = async (req, res) => {
                             ),
 
                         gstRate:
-                            Number(
-                                barcode.gstRate ??
-                                product.gstRate ??
-                                0
-                            ),
+                            barcode.gstRate !== undefined &&
+                                barcode.gstRate !== null &&
+                                barcode.gstRate !== ""
+                                ? barcode.gstRate
+                                : product.gstRate !== undefined &&
+                                    product.gstRate !== null &&
+                                    product.gstRate !== ""
+                                    ? product.gstRate
+                                    : 0,
+
 
                         status:
                             "Out Of Stock"
@@ -2106,7 +2443,7 @@ exports.outofstockcheck = async (req, res) => {
                 }
             }
 
-           
+
 
             else {
 
@@ -2116,7 +2453,7 @@ exports.outofstockcheck = async (req, res) => {
                     ).toFixed(2)
                 );
 
-               
+
                 if (qty > 0) {
                     continue;
                 }
@@ -2161,7 +2498,7 @@ exports.outofstockcheck = async (req, res) => {
                     itemCode:
                         product.itemCode || "",
 
-                   
+
                     barcode: null,
 
                     currentStock:
@@ -2192,9 +2529,11 @@ exports.outofstockcheck = async (req, res) => {
                         ),
 
                     gstRate:
-                        Number(
-                            product.gstRate || 0
-                        ),
+                        product.gstRate !== undefined &&
+                            product.gstRate !== null &&
+                            product.gstRate !== ""
+                            ? product.gstRate
+                            : 0,
 
                     status:
                         "Out Of Stock"
@@ -2202,7 +2541,7 @@ exports.outofstockcheck = async (req, res) => {
             }
         }
 
-       
+
 
         data.sort((a, b) => {
             return String(b.productId).localeCompare(
@@ -2210,7 +2549,7 @@ exports.outofstockcheck = async (req, res) => {
             );
         });
 
-        
+
 
         data.forEach((item, index) => {
             item.sno = index + 1;

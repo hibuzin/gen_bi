@@ -257,22 +257,67 @@
 }
 
 .active {
-  background: #036666;
+  position: relative;
+  overflow: hidden;
+
+  border-radius: 9px;
+  margin: 2px 0 2px 0;
+
+
+  background: linear-gradient(
+    90deg,
+    #036666 0%,
+    #087d78 55%,
+    #0b9189 100%
+  );
+
+  box-shadow:
+    0 0 8px rgba(41, 206, 178, 0.20),
+    inset 0 0 12px rgba(255, 255, 255, 0.05);
+
+  color: #ffffff;
+}
+/* Shining effect */
+.active::after {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: -100%;
+
+  width: 60%;
+  height: 100%;
+
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.10),
+    transparent
+  );
+
+  transform: skewX(-20deg);
+
+  animation: activeShine 2.8s ease-in-out infinite;
+
+  pointer-events: none;
+  z-index: 1;
 }
 
-.active::before {
-  content: "";
-  position: absolute;
+@keyframes activeShine {
+  0% {
+    left: -100%;
+  }
 
-  left: 2px;
-  top: 50%;
-  transform: translateY(-50%);
+  45%,
+  100% {
+    left: 150%;
+  }
+}
 
-  width: 3px;
-  height: 39px;
-
-  background: #044441;
-  border-radius: 1px;
+/* Keep icon/text above shine */
+.item > * {
+  position: relative;
+  z-index: 3;
 }
 
 .subMenu {

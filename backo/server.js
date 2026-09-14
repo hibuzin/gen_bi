@@ -59,7 +59,7 @@ const cashRegisterRoutes = require("./routes/cashregister");
 const ocrRoute = require("./routes/ocr");
 const subscriptionPlanRoutes = require("./routes/subscription");
 const offerRoutes = require("./routes/offer");
-
+const barcodeGenrateRoutes = require("./routes/barcode_genrate");
 
 
 app.use("/api/auth", authRoutes);
@@ -106,6 +106,8 @@ app.use("/api/cash-register", cashRegisterRoutes);
 app.use("/api/ocr", ocrRoute);
 app.use("/api/subscription", subscriptionPlanRoutes);
 app.use("/api/offers", offerRoutes);
+app.use("/api/barcode-genrate", barcodeGenrateRoutes);
+
 
 
 app.get("/", (req, res) => {
