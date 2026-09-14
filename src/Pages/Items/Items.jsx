@@ -509,7 +509,9 @@ function Item() {
         numberValue(editProduct.lowStockQty),
 
       gstRate:
-        numberValue(editProduct.gstRate),
+        editProduct.gstRate === "none"
+          ? "none"
+          : numberValue(editProduct.gstRate),
 
       mrp:
         numberValue(editProduct.mrp),
@@ -853,7 +855,7 @@ function Item() {
             </div>
           )}
         </div>
-        
+
         <button
           className={styles.bulkBtn}
           onClick={() => navigate("/bulk-action")}
@@ -1099,12 +1101,20 @@ function Item() {
 
               <div className={styles.field}>
                 <label>Gst %</label>
-                <input
-                  type="number"
+
+                <select
                   name="gstRate"
                   value={editProduct.gstRate ?? ""}
                   onChange={handleChange}
-                />
+                >
+                  <option value="">Select GST</option>
+                  <option value="none">None</option>
+                  <option value="0">0%</option>
+                  <option value="5">5%</option>
+                  <option value="12">12%</option>
+                  <option value="18">18%</option>
+                  <option value="28">28%</option>
+                </select>
               </div>
 
               <div className={styles.field}>

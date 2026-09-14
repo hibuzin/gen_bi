@@ -14,8 +14,6 @@ import {
   handlePurchaseSubmit,
 } from "./purchaseLogic";
 
-
-
 function CreatePurchase() {
   const emptyItem = {
     productId: "",
@@ -321,20 +319,33 @@ function CreatePurchase() {
             item.categoryId ||
             "",
 
-          gstRate: Number(
-            item.taxPercentage ??
-            item.gstRate ??
-            item.tax ??
-            0
-          ),
+          gstRate:
+            (
+              item.taxPercentage ??
+              item.gstRate ??
+              item.tax
+            ) === "none"
+              ? "none"
+              : Number(
+                item.taxPercentage ??
+                item.gstRate ??
+                item.tax ??
+                0
+              ),
 
-          tax: Number(
-            item.taxPercentage ??
-            item.gstRate ??
-            item.tax ??
-            0
-          ),
-
+          tax:
+            (
+              item.taxPercentage ??
+              item.gstRate ??
+              item.tax
+            ) === "none"
+              ? "none"
+              : Number(
+                item.taxPercentage ??
+                item.gstRate ??
+                item.tax ??
+                0
+              ),
           qty: Number(item.qty || 0),
           freeQty: Number(item.freeQty || 0),
 
@@ -705,9 +716,6 @@ function CreatePurchase() {
           purchaseTotals={purchaseTotals}
         />
       </div>
-
-
-      {/* MODAL */}
 
     </>
   );

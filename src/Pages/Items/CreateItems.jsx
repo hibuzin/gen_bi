@@ -184,7 +184,10 @@ function CreateProduct() {
 
         hsnCode: form.hsnCode,
 
-        gstRate: Number(form.gstRate || 0),
+        gstRate:
+          form.gstRate === "none"
+            ? "none"
+            : Number(form.gstRate || 0),
         mrp: Number(form.mrp || 0),
 
         unit: form.unit,
@@ -408,6 +411,7 @@ function CreateProduct() {
                 onKeyDown={(e) => handleKeyDown(e, mrpRef)}
               >
                 <option value="">Select GST</option>
+                <option value="none">None</option>
                 <option value="0">0%</option>
                 <option value="5">5%</option>
                 <option value="12">12%</option>

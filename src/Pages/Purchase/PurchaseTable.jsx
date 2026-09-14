@@ -84,6 +84,7 @@ export default function PurchaseTable({
         "tax",
       ].includes(field) &&
       value !== "" &&
+      value !== "none" &&
       Number(value) < 0
     ) {
       return;
@@ -242,7 +243,10 @@ export default function PurchaseTable({
       ),
       sellingPrice: Number(product.sellingPrice || 0),
 
-      tax: Number(product.gstRate || product.tax || 0),
+      tax:
+        (product.gstRate ?? product.tax) === "none"
+          ? "none"
+          : Number(product.gstRate ?? product.tax ?? 0),
 
       stock: Number(
         product.stock ??
@@ -278,9 +282,10 @@ export default function PurchaseTable({
 
       hsnCode: item.hsnCode || "",
 
-      gstRate: Number(
-        item.tax || item.gstRate || 0
-      ),
+      gstRate:
+        (item.tax ?? item.gstRate) === "none"
+          ? "none"
+          : Number(item.tax ?? item.gstRate ?? 0),
 
       lowStockQty: Number(item.lowStockQty || 0),
 
@@ -391,19 +396,34 @@ export default function PurchaseTable({
         item.hsnCode ||
         "",
 
-      tax: Number(
-        createdProduct?.gstRate ??
-        item.tax ??
-        item.gstRate ??
-        0
-      ),
+      tax:
+        (
+          createdProduct?.gstRate ??
+          item.tax ??
+          item.gstRate
+        ) === "none"
+          ? "none"
+          : Number(
+            createdProduct?.gstRate ??
+            item.tax ??
+            item.gstRate ??
+            0
+          ),
 
-      gstRate: Number(
-        createdProduct?.gstRate ??
-        item.tax ??
-        item.gstRate ??
-        0
-      ),
+
+      gstRate:
+        (
+          createdProduct?.gstRate ??
+          item.tax ??
+          item.gstRate
+        ) === "none"
+          ? "none"
+          : Number(
+            createdProduct?.gstRate ??
+            item.tax ??
+            item.gstRate ??
+            0
+          ),
 
       mrp: Number(
         createdProduct?.mrp ??
@@ -644,8 +664,7 @@ export default function PurchaseTable({
 
               {/* GST */}
               <td>
-                <input
-                  type="number"
+                <select
                   className={styles.cellInput}
                   value={item.tax ?? ""}
                   onChange={(e) =>
@@ -655,8 +674,15 @@ export default function PurchaseTable({
                       e.target.value
                     )
                   }
-                  placeholder="GST"
-                />
+                >
+                  <option value="">GST</option>
+                  <option value="none">None</option>
+                  <option value="0">0%</option>
+                  <option value="5">5%</option>
+                  <option value="12">12%</option>
+                  <option value="18">18%</option>
+                  <option value="28">28%</option>
+                </select>
               </td>
 
               {/* NET COST */}
@@ -775,7 +801,7 @@ export default function PurchaseTable({
                 )}
               </td>
 
- {/* DISCOUNT PERCENT */}
+              {/* DISCOUNT PERCENT */}
               <td>
                 <input
                   type="number"

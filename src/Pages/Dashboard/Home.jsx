@@ -70,29 +70,29 @@ export default function Home() {
   };
 
   const fetchTransactions = async () => {
-  try {
-    const res = await fetch(API.bill, {
-      headers: authHeaders,
-    });
+    try {
+      const res = await fetch(API.bill, {
+        headers: authHeaders,
+      });
 
-    const json = await res.json();
+      const json = await res.json();
 
-    if (!res.ok) {
-      throw new Error(json.message || "Failed to fetch bills");
+      if (!res.ok) {
+        throw new Error(json.message || "Failed to fetch bills");
+      }
+
+      const list = Array.isArray(json?.data) ? json.data : [];
+
+      const allBills = list.sort(
+        (a, b) => Number(b.billCount || 0) - Number(a.billCount || 0)
+      );
+
+      setTransactions(allBills);
+    } catch (err) {
+      console.error("Bill fetch error:", err);
+      setTransactions([]);
     }
-
-    const list = Array.isArray(json?.data) ? json.data : [];
-
-    const allBills = list.sort(
-      (a, b) => Number(b.billCount || 0) - Number(a.billCount || 0)
-    );
-
-    setTransactions(allBills);
-  } catch (err) {
-    console.error("Bill fetch error:", err);
-    setTransactions([]);
-  }
-};
+  };
 
   return (
     <div className={styles.container}>
@@ -102,145 +102,145 @@ export default function Home() {
         <h1>Dashboard</h1>
         <div className={styles.divider}></div>
       </div>
-      <div className={styles.sectionHeader}> 
-  <h1>Business overview</h1> 
-</div>
-
-
-
-{/* SALES GRAPH */}
-<div className={styles.salesGraphCard}>
-
-  <div className={styles.graphTop}>
-    <div>
-      <span className={styles.graphLabel}>SALES</span>
-
-      <div className={styles.graphAmount}>
-        ₹ {(salesData[0]?.sales || 0).toLocaleString("en-IN", {
-          minimumFractionDigits: 2,
-        })}
+      <div className={styles.sectionHeader}>
+        <h1>Business overview</h1>
       </div>
-    </div>
-
-    <div className={styles.reportButtons}>
-      <button
-        className={reportType === "today" ? styles.activeReport : ""}
-        onClick={() => setReportType("today")}
-      >
-        Today
-      </button>
-
-      <button
-        className={reportType === "week" ? styles.activeReport : ""}
-        onClick={() => setReportType("week")}
-      >
-        Week
-      </button>
-
-      <button
-        className={reportType === "month" ? styles.activeReport : ""}
-        onClick={() => setReportType("month")}
-      >
-        Month
-      </button>
-    </div>
 
 
 
-  </div>
+      {/* SALES GRAPH */}
+      <div className={styles.salesGraphCard}>
 
-  <div className={styles.graphArea}>
+        <div className={styles.graphTop}>
+          <div>
+            <span className={styles.graphLabel}>SALES</span>
 
-  <svg
-    viewBox="0 0 1000 160"
-    preserveAspectRatio="none"
-    className={styles.salesSvg}
-  >
+            <div className={styles.graphAmount}>
+              ₹ {(salesData[0]?.sales || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+              })}
+            </div>
+          </div>
 
-    <defs>
+          <div className={styles.reportButtons}>
+            <button
+              className={reportType === "today" ? styles.activeReport : ""}
+              onClick={() => setReportType("today")}
+            >
+              Today
+            </button>
 
-      {/* Area gradient */}
-      <linearGradient
-        id="graphFill"
-        x1="0"
-        y1="0"
-        x2="0"
-        y2="1"
-      >
-       <stop
-  offset="0%"
-  stopColor="#087d78"
-  stopOpacity="0.28"
-/>
+            <button
+              className={reportType === "week" ? styles.activeReport : ""}
+              onClick={() => setReportType("week")}
+            >
+              Week
+            </button>
 
-<stop
-  offset="100%"
-  stopColor="#087d78"
-  stopOpacity="0"
-/>
-      </linearGradient>
-
-      {/* Pink glow */}
-      <filter
-        id="graphGlow"
-        x="-30%"
-        y="-50%"
-        width="160%"
-        height="200%"
-      >
-        <feGaussianBlur
-          stdDeviation="3"
-          result="blur"
-        />
-
-        <feMerge>
-          <feMergeNode in="blur" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-
-    </defs>
+            <button
+              className={reportType === "month" ? styles.activeReport : ""}
+              onClick={() => setReportType("month")}
+            >
+              Month
+            </button>
+          </div>
 
 
-    {/* GRID */}
 
-    <line
-      x1="0"
-      y1="25"
-      x2="1000"
-      y2="25"
-      className={styles.graphGrid}
-    />
+        </div>
 
-    <line
-      x1="0"
-      y1="65"
-      x2="1000"
-      y2="65"
-      className={styles.graphGrid}
-    />
+        <div className={styles.graphArea}>
 
-    <line
-      x1="0"
-      y1="105"
-      x2="1000"
-      y2="105"
-      className={styles.graphGrid}
-    />
+          <svg
+            viewBox="0 0 1000 160"
+            preserveAspectRatio="none"
+            className={styles.salesSvg}
+          >
 
-    <line
-      x1="0"
-      y1="145"
-      x2="1000"
-      y2="145"
-      className={styles.graphGrid}
-    />
+            <defs>
+
+              {/* Area gradient */}
+              <linearGradient
+                id="graphFill"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="0%"
+                  stopColor="#087d78"
+                  stopOpacity="0.28"
+                />
+
+                <stop
+                  offset="100%"
+                  stopColor="#087d78"
+                  stopOpacity="0"
+                />
+              </linearGradient>
+
+              {/* Pink glow */}
+              <filter
+                id="graphGlow"
+                x="-30%"
+                y="-50%"
+                width="160%"
+                height="200%"
+              >
+                <feGaussianBlur
+                  stdDeviation="3"
+                  result="blur"
+                />
+
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+            </defs>
 
 
-    {/* GRADIENT AREA */}
+            {/* GRID */}
 
-    <path
-      d="
+            <line
+              x1="0"
+              y1="25"
+              x2="1000"
+              y2="25"
+              className={styles.graphGrid}
+            />
+
+            <line
+              x1="0"
+              y1="65"
+              x2="1000"
+              y2="65"
+              className={styles.graphGrid}
+            />
+
+            <line
+              x1="0"
+              y1="105"
+              x2="1000"
+              y2="105"
+              className={styles.graphGrid}
+            />
+
+            <line
+              x1="0"
+              y1="145"
+              x2="1000"
+              y2="145"
+              className={styles.graphGrid}
+            />
+
+
+            {/* GRADIENT AREA */}
+
+            <path
+              d="
         M 0 135
 
         C 35 135,
@@ -283,14 +283,14 @@ export default function Home() {
         L 0 160
         Z
       "
-      fill="url(#graphFill)"
-    />
+              fill="url(#graphFill)"
+            />
 
 
-    {/* MAIN CURVE */}
+            {/* MAIN CURVE */}
 
-    <path
-      d="
+            <path
+              d="
         M 0 135
 
         C 35 135,
@@ -329,51 +329,40 @@ export default function Home() {
           905 55,
           1000 58
       "
-      fill="none"
-      stroke="#035555"
-      strokeWidth="2"
-      filter="url(#graphGlow)"
-    />
+              fill="none"
+              stroke="#035555"
+              strokeWidth="2"
+              filter="url(#graphGlow)"
+            />
 
 
-    {/* HIGHLIGHT POINT */}
+            {/* HIGHLIGHT POINT */}
 
-   <circle
-  cx="735"
-  cy="36"
-  r="7"
-  fill="#035555"
-  opacity="0.18"
-/>
+            <circle
+              cx="735"
+              cy="36"
+              r="7"
+              fill="#035555"
+              opacity="0.18"
+            />
 
-<circle
-  cx="735"
-  cy="36"
-  r="4"
-  fill="#035555"
-  stroke="#6fc9c3"
-  strokeWidth="2"
-/>
+            <circle
+              cx="735"
+              cy="36"
+              r="4"
+              fill="#035555"
+              stroke="#6fc9c3"
+              strokeWidth="2"
+            />
 
-  </svg>
+          </svg>
 
+        </div>
 
-  <div className={styles.graphLabels}>
-    <span>Mon</span>
-    <span>Tue</span>
-    <span>Wed</span>
-    <span>Thu</span>
-    <span>Fri</span>
-    <span>Sat</span>
-    <span>Sun</span>
-  </div>
+      </div>
 
-</div>
-
-</div>
-
-{/* ONLY THIS SCROLLS */} 
-<div className={styles.pageContent}>
+      {/* ONLY THIS SCROLLS */}
+      <div className={styles.pageContent}>
         <div className={styles.transactionSection}>
           <div className={styles.transactionTitleRow}>
             <div>

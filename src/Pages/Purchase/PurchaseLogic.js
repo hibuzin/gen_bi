@@ -18,11 +18,19 @@ export const calculateNewItemLocal = (item) => {
 
     const sellingPrice = Number(item.sellingPrice || 0);
 
-    const taxPercentage = Number(
-        item.tax ||
-        item.gstRate ||
-        0
-    );
+    const rawTax =
+        item.tax ??
+        item.gstRate ??
+        0;
+
+    const normalizedTax = String(rawTax)
+        .trim()
+        .toLowerCase();
+
+    const taxPercentage =
+        normalizedTax === "none" || normalizedTax === ""
+            ? 0
+            : Number(normalizedTax) || 0;
 
     const discountPercent = Number(item.discountPercent || 0);
     const discountAmountInput = Number(item.discountAmount || 0);
@@ -141,7 +149,16 @@ export const calculateNewItemLocal = (item) => {
         amount,
         totalCostWithGST,
 
-        tax: taxPercentage,
+        tax:
+            normalizedTax === "none"
+                ? "none"
+                : taxPercentage,
+
+        gstRate:
+            normalizedTax === "none"
+                ? "none"
+                : taxPercentage,
+
         taxAmount,
 
         rate,
@@ -302,7 +319,10 @@ export const calculatePurchase = async ({
                 netcost: Number(item.originalNetcost || item.netcost || item.costPrice || 0),
                 mrp: Number(item.mrp || 0),
                 sellingPrice: Number(item.sellingPrice || 0),
-                gstRate: Number(item.tax || item.gstRate || 0),
+                gstRate:
+                    (item.tax ?? item.gstRate) === "none"
+                        ? "none"
+                        : Number(item.tax ?? item.gstRate ?? 0),
             })),
         };
 
@@ -361,7 +381,16 @@ export const calculatePurchase = async ({
                 roiPercent: calc.roiPercent,
                 profitAmount: calc.profitAmount,
 
-                tax: calc.taxPercentage,
+                tax:
+                    item.tax === "none" || item.gstRate === "none"
+                        ? "none"
+                        : calc.taxPercentage,
+
+                gstRate:
+                    item.tax === "none" || item.gstRate === "none"
+                        ? "none"
+                        : calc.taxPercentage,
+
                 taxAmount: calc.taxAmount,
 
                 rate: calc.Rate,
@@ -686,6 +715,11 @@ export const handlePurchaseSubmit = async ({
                 freeQty: Number(
                     item.freeQty || 0
                 ),
+
+                gstRate:
+                    (item.tax ?? item.gstRate) === "none"
+                        ? "none"
+                        : Number(item.tax ?? item.gstRate ?? 0),
 
                 netcost: Number(
                     item.originalNetcost ||

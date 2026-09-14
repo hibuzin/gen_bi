@@ -303,7 +303,7 @@ function POSRightPanel({
               }}
             />
 
-            <span>Walk-in Customer</span>
+            <span>  Walk-in Customer</span>
           </label>
         </div>
         <div className={styles.customerFieldsRow}>

@@ -160,7 +160,10 @@ function ItemDetails() {
                 description: editProduct.description,
                 hsnCode: editProduct.hsnCode,
                 lowStockQty: Number(editProduct.lowStockQty),
-                gstRate: Number(editProduct.gstRate),
+                gstRate:
+                    editProduct.gstRate === "none"
+                        ? "none"
+                        : Number(editProduct.gstRate || 0),
                 mrp: Number(editProduct.mrp),
                 costPrice: Number(editProduct.costPrice),
                 sellingPrice: Number(editProduct.sellingPrice),
@@ -627,7 +630,20 @@ function ItemDetails() {
 
                                 <div className={styles.field}>
                                     <label>Gst %</label>
-                                    <input type="text" name="gstRate" value={editProduct.gstRate || ""} onChange={handleEditChange} />
+
+                                    <select
+                                        name="gstRate"
+                                        value={editProduct.gstRate ?? ""}
+                                        onChange={handleEditChange}
+                                    >
+                                        <option value="">Select GST</option>
+                                        <option value="none">None</option>
+                                        <option value="0">0%</option>
+                                        <option value="5">5%</option>
+                                        <option value="12">12%</option>
+                                        <option value="18">18%</option>
+                                        <option value="28">28%</option>
+                                    </select>
                                 </div>
 
                                 <div className={styles.field}>

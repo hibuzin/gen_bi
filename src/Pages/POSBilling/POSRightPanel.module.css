@@ -1,4 +1,9 @@
 /* ── Right Panel ── */
+
+.walkInCheck input[type="checkbox"] {
+  accent-color: var(--sidebar-bg);
+}
+
 .rightPanel {
   width: 280px;
   display: flex;
