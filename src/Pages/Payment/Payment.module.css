@@ -36,11 +36,6 @@
   font-size: 14px;
 }
 
-.search:focus {
-  border-color: #4c3cce;
-  box-shadow: 0 0 0 2px rgba(76, 60, 206, 0.12);
-}
-
 .count {
   margin-bottom: 15px;
   color: #666;
@@ -151,7 +146,7 @@
   width: 34px;
   height: 34px;
   border: 3px solid #e5e7eb;
-  border-top-color: #4c3cce;
+  border-top-color: var(--sidebar-bg);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -206,7 +201,7 @@
 
 /* PAY BUTTON */
 .payBtn {
-  background-color: #4c3cce;
+  background-color: var(--button-bg);
   color: #fff;
   border: none;
   padding: 7px 14px;
@@ -216,7 +211,7 @@
 }
 
 .payBtn:hover {
-  opacity: 0.9;
+  opacity: var(--hover);
 }
 
 .payBtn:disabled {

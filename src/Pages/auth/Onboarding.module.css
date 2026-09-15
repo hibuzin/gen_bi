@@ -4,7 +4,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f4f6fb;
+  background: #ffffff;
   padding: 40px 10px 10px 10px;
 }
 
@@ -17,12 +17,18 @@
   border-radius: 8px;
   background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   min-height: 540px;
 }
 
 /* ─── LEFT ─────────────────────────────────── */
+
+.loginImage {
+  width: 580px;
+  height: auto;
+  object-fit: contain;
+  margin-top: 25px;
+}
 
 .left {
   flex: 1;
@@ -36,8 +42,8 @@
 }
 
 .brand {
-  font-size: 36px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 400;
   margin-bottom: 10px;
   letter-spacing: 1px;
 }
@@ -51,7 +57,7 @@
 }
 
 .left h1 {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 700;
   color: #1e293b;
   line-height: 1.2;

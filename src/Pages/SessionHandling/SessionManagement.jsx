@@ -419,13 +419,6 @@ if (data.success && isActiveSession) {
         </div>
 
         <div className={styles.headerActions}>
-          <button
-            type="button"
-            className={styles.historyBtn}
-            onClick={() => navigate("/session-history")}
-          >
-            History
-          </button>
 
           <div
             className={`${styles.statusBadge} ${session?.status ? styles[session.status] : ""

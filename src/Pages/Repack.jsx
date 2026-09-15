@@ -176,7 +176,6 @@ function Repack() {
       {/* TOP BAR */}
       <div className={styles.topBar}>
         <div className={styles.topLeft}>
-          <FiPackage size={18} color="#6c63ff" />
           <h2>Repack</h2>
         </div>
         <div className={styles.searchWrapper}>

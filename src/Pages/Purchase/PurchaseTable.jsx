@@ -84,7 +84,6 @@ export default function PurchaseTable({
         "tax",
       ].includes(field) &&
       value !== "" &&
-      value !== "none" &&
       Number(value) < 0
     ) {
       return;

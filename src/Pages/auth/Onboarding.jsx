@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppBar from "../../components/AppBar/AppBar";
 import { FaShieldAlt, FaCheckCircle, FaCertificate } from "react-icons/fa";
+import loginIcon from "../../assets/loginicon.png";
 import { MdVerified } from "react-icons/md";
 import { API } from "../../constants/api";
 
@@ -103,29 +104,13 @@ function Onboarding() {
 
           {/* LEFT */}
           <div className={styles.left}>
-            <div className={styles.brand}>
-              <span className={styles.orange}>fast</span>
-              <span className={styles.dark}>Billing</span>
-            </div>
+            <h1>Welcome 👋 to Our Billing</h1>
 
-            <h1>Welcome 👋 to</h1>
-            <h2>Our Billing</h2>
-
-            <p>Simple billing & accounting software for your business.</p>
-
-            <div className={styles.badgeRow}>
-
-              <div className={styles.badge}>
-                <FaShieldAlt className={styles.badgeIcon} />
-                <span>100% Secure</span>
-              </div>
-
-              <div className={styles.isoBadge}>
-                <span className={styles.isoCircle}>ISO</span>
-                <span className={styles.isoText}>ISO Certified</span>
-              </div>
-
-            </div>
+            <img
+              src={loginIcon}
+              alt="Billing"
+              className={styles.loginImage}
+            />
           </div>
 
           {/* DIVIDER */}
