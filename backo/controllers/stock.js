@@ -576,8 +576,6 @@ exports.getAllBulkProducts = async (req, res) => {
 };
 
 
-
-
 exports.stockCheckByBulkId = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
@@ -688,6 +686,7 @@ exports.stockCheckByBulkId = async (req, res) => {
         });
     }
 };
+
 
 exports.getStockValue = async (req, res) => {
     try {

@@ -129,18 +129,18 @@ exports.createBill = async (req, res) => {
                 });
             }
 
-          const normalSellingPrice = Number(
-    barcode?.sellingPrice ?? product.sellingPrice ?? 0
-);
+            const normalSellingPrice = Number(
+                barcode?.sellingPrice ?? product.sellingPrice ?? 0
+            );
 
 
-const billSellingPrice = Number(
-    billItem.sellingPrice ?? 
-    billItem.price ?? 
-    normalSellingPrice
-);
+            const billSellingPrice = Number(
+                billItem.sellingPrice ??
+                billItem.price ??
+                normalSellingPrice
+            );
 
-let price = billSellingPrice;
+            let price = billSellingPrice;
             let slabPrice = null;
             let discountPerItem = 0;
             let totalDiscount = 0;
@@ -149,28 +149,28 @@ let price = billSellingPrice;
             let appliedSlab = null;
 
 
-           const rawGstRate = barcode?.gstRate ?? product.gstRate ?? "none";
+            const rawGstRate = barcode?.gstRate ?? product.gstRate ?? "none";
 
-const isGstNone =
-    String(rawGstRate).trim().toLowerCase() === "none";
+            const isGstNone =
+                String(rawGstRate).trim().toLowerCase() === "none";
 
-const gstRate = isGstNone
-    ? "none"
-    : Number(rawGstRate);
+            const gstRate = isGstNone
+                ? "none"
+                : Number(rawGstRate);
 
-const gstRateForCalculation = isGstNone
-    ? 0
-    : Number(rawGstRate);
+            const gstRateForCalculation = isGstNone
+                ? 0
+                : Number(rawGstRate);
 
-if (
-    gstRate !== "none" &&
-    (isNaN(gstRate) || gstRate < 0)
-) {
-    return res.status(400).json({
-        success: false,
-        message: `Invalid GST rate for product: ${product.name}`
-    });
-}
+            if (
+                gstRate !== "none" &&
+                (isNaN(gstRate) || gstRate < 0)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid GST rate for product: ${product.name}`
+                });
+            }
             const grossAmount = Number((price * qty).toFixed(2));
 
 
@@ -203,26 +203,24 @@ if (
             items.push({
                 productId: product._id,
                 barcodeId: barcode?._id || null,
-barcode: barcode?.code || "",
+                barcode: barcode?.code || "",
 
                 name: product.name || "",
                 hsnCode: product.hsnCode || barcode.hsnCode || "",
 
                 unit: barcode?.unit ?? product.unit ?? "pcs",
 
-unitValue: Number(
-    barcode?.unitValue ?? product.unitValue ?? 1
-),
+                unitValue: Number(
+                    barcode?.unitValue ?? product.unitValue ?? 1
+                ),
 
-                unitText: `${barcode?.unitValue ?? product.unitValue ?? 1} ${
-    barcode?.unit ?? product.unit ?? "pcs"
-}`,
+                unitText: `${barcode?.unitValue ?? product.unitValue ?? 1} ${barcode?.unit ?? product.unit ?? "pcs"
+                    }`,
 
                 totalkg: `${qty * Number(
-    barcode?.unitValue ?? product.unitValue ?? 1
-)} ${
-    barcode?.unit ?? product.unit ?? "pcs"
-}`,
+                    barcode?.unitValue ?? product.unitValue ?? 1
+                )} ${barcode?.unit ?? product.unit ?? "pcs"
+                    }`,
 
                 mrp: Number(barcode.mrp || 0),
 
@@ -246,7 +244,7 @@ unitValue: Number(
             });
 
             if (gstRate !== "none") {
-    gstAuditItems.push({
+                gstAuditItems.push({
                     productId: product._id,
                     productName: product.name || "",
                     barcode: barcode.code,
@@ -258,30 +256,7 @@ unitValue: Number(
                 });
             }
 
-
-
-           
-
-            const stockUpdate = await Product.updateOne(
-    {
-        _id: product._id,
-        superAdminId: hierarchy.superAdminId,
-        stock: { $gte: qty }
-    },
-    {
-        $inc: {
-            stock: -qty
         }
-    }
-);
-
-if (stockUpdate.modifiedCount === 0) {
-    return res.status(400).json({
-        success: false,
-        message: `${product.name} stock not available`
-    });
-}
-}
 
 
         for (const billItem of billItems) {
@@ -337,20 +312,20 @@ if (stockUpdate.modifiedCount === 0) {
 
 
 
-           const hasBillSellingPrice =
-    billItem.sellingPrice !== undefined &&
-    billItem.sellingPrice !== null &&
-    billItem.sellingPrice !== "";
+            const hasBillSellingPrice =
+                billItem.sellingPrice !== undefined &&
+                billItem.sellingPrice !== null &&
+                billItem.sellingPrice !== "";
 
-const normalSellingPrice = Number(
-    barcode?.sellingPrice ?? product.sellingPrice ?? 0
-);
+            const normalSellingPrice = Number(
+                barcode?.sellingPrice ?? product.sellingPrice ?? 0
+            );
 
-const billSellingPrice = hasBillSellingPrice
-    ? Number(billItem.sellingPrice)
-    : normalSellingPrice;
+            const billSellingPrice = hasBillSellingPrice
+                ? Number(billItem.sellingPrice)
+                : normalSellingPrice;
 
-let price = billSellingPrice;
+            let price = billSellingPrice;
             let slabPrice = null;
             let discountPerItem = 0;
             let totalDiscount = 0;
@@ -364,7 +339,7 @@ let price = billSellingPrice;
                 isActive: true
             });
 
-         if (productPriceLevel && !hasBillSellingPrice) {
+            if (productPriceLevel && !hasBillSellingPrice) {
 
                 if (
                     priceLevel === "manual" &&
@@ -436,26 +411,26 @@ let price = billSellingPrice;
 
             const rawGstRate = barcode?.gstRate ?? product.gstRate ?? "none";
 
-const isGstNone =
-    String(rawGstRate).trim().toLowerCase() === "none";
+            const isGstNone =
+                String(rawGstRate).trim().toLowerCase() === "none";
 
-const gstRate = isGstNone
-    ? "none"
-    : Number(rawGstRate);
+            const gstRate = isGstNone
+                ? "none"
+                : Number(rawGstRate);
 
-const gstRateForCalculation = isGstNone
-    ? 0
-    : Number(rawGstRate);
+            const gstRateForCalculation = isGstNone
+                ? 0
+                : Number(rawGstRate);
 
-if (
-    gstRate !== "none" &&
-    (isNaN(gstRate) || gstRate < 0)
-) {
-    return res.status(400).json({
-        success: false,
-        message: `Invalid GST rate for product: ${product.name}`
-    });
-}
+            if (
+                gstRate !== "none" &&
+                (isNaN(gstRate) || gstRate < 0)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid GST rate for product: ${product.name}`
+                });
+            }
 
             if (price <= 0) {
                 return res.status(400).json({
@@ -498,9 +473,9 @@ if (
                 (grossAmount - itemDiscount).toFixed(2)
             );
 
-           const taxableAmount = Number(
-    (finalPrice / (1 + gstRateForCalculation / 100)).toFixed(2)
-);
+            const taxableAmount = Number(
+                (finalPrice / (1 + gstRateForCalculation / 100)).toFixed(2)
+            );
             const gstAmount = Number((finalPrice - taxableAmount).toFixed(2));
 
 
@@ -508,38 +483,34 @@ if (
             totalGST += gstAmount;
 
             items.push({
-                 productId: product._id,
+                productId: product._id,
 
-  
-    barcodeId: barcode?._id || null,
-    barcode: barcode?.code || "",
+
+                barcodeId: barcode?._id || null,
+                barcode: barcode?.code || "",
 
                 name: product.name || "",
-                 hsnCode: product.hsnCode || barcode?.hsnCode || "",
+                hsnCode: product.hsnCode || barcode?.hsnCode || "",
 
                 unit: barcode?.unit ?? product.unit ?? "pcs",
 
-                 unitValue: Number(
-        barcode?.unitValue ?? product.unitValue ?? 1
-    ),
+                unitValue: Number(
+                    barcode?.unitValue ?? product.unitValue ?? 1
+                ),
 
-    unitText: `${
-        barcode?.unitValue ?? product.unitValue ?? 1
-    } ${
-        barcode?.unit ?? product.unit ?? "pcs"
-    }`,
+                unitText: `${barcode?.unitValue ?? product.unitValue ?? 1
+                    } ${barcode?.unit ?? product.unit ?? "pcs"
+                    }`,
 
-                totalkg: `${
-        qty * Number(
-            barcode?.unitValue ?? product.unitValue ?? 1
-        )
-    } ${
-        barcode?.unit ?? product.unit ?? "pcs"
-    }`,
+                totalkg: `${qty * Number(
+                    barcode?.unitValue ?? product.unitValue ?? 1
+                )
+                    } ${barcode?.unit ?? product.unit ?? "pcs"
+                    }`,
 
-    mrp: Number(
-        barcode?.mrp ?? product.mrp ?? 0
-    ),
+                mrp: Number(
+                    barcode?.mrp ?? product.mrp ?? 0
+                ),
 
 
                 price: Number(price || 0),
@@ -561,7 +532,7 @@ if (
                                 ? Number(appliedSlab.maxQty)
                                 : null,
 
-                       
+
                         price: Number(
                             appliedSlab.slabPrice ||
                             appliedSlab.price ||
@@ -571,7 +542,7 @@ if (
                     }
                     : null,
 
-              gstRate: gstRate,
+                gstRate: gstRate,
                 gstAmount: Number(gstAmount || 0),
 
                 discountAmount: Number(itemDiscount || 0),
@@ -581,7 +552,7 @@ if (
             });
 
 
-           if (gstRate !== "none") {
+            if (gstRate !== "none") {
                 gstAuditItems.push({
                     productId: product._id,
                     productName: product.name || "",
@@ -600,7 +571,7 @@ if (
                 Number(product.stock || 0) -
                 Number(product.reservedStock || 0);
 
-            if (availableStock < qty) {
+            if (availableStock < qty + freeQty) {
                 return res.status(400).json({
                     success: false,
                     message: `${product.name} stock not available`
@@ -994,236 +965,236 @@ if (
         });
 
         const hasGSTItems =
-    Array.isArray(gstAuditItems) &&
-    gstAuditItems.length > 0;
+            Array.isArray(gstAuditItems) &&
+            gstAuditItems.length > 0;
 
         if (hasGSTItems) {
             await AuditLog.create({
-    ...hierarchy,
+                ...hierarchy,
 
-    userId: req.user.userId || req.user.id,
-    role: req.user.role,
+                userId: req.user.userId || req.user.id,
+                role: req.user.role,
 
-    module: "Bill",
-    action: "Create",
+                module: "Bill",
+                action: "Create",
 
-    documentId: bill._id,
-    oldData: null,
+                documentId: bill._id,
+                oldData: null,
 
-    newData: {
-        invoiceNo: bill.invoiceNo || "",
-        invoiceDate: bill.createdAt || new Date(),
+                newData: {
+                    invoiceNo: bill.invoiceNo || "",
+                    invoiceDate: bill.createdAt || new Date(),
 
-        customerId: customer?._id || null,
-        customerName: customer?.name || "Walk-in Customer",
+                    customerId: customer?._id || null,
+                    customerName: customer?.name || "Walk-in Customer",
 
-        customerGstNumber:
-            customer?.gstNumber ||
-            customer?.gstnumber ||
-            customer?.gstin ||
-            "",
+                    customerGstNumber:
+                        customer?.gstNumber ||
+                        customer?.gstnumber ||
+                        customer?.gstin ||
+                        "",
 
-        placeOfSupply:
-            customer?.state ||
-            customer?.placeOfSupply ||
-            "",
+                    placeOfSupply:
+                        customer?.state ||
+                        customer?.placeOfSupply ||
+                        "",
 
-      items: bill.items
-    .filter(
-        (item) =>
-            item.gstRate !== "none" &&
-            item.gstRate !== null &&
-            item.gstRate !== undefined &&
-            !isNaN(Number(item.gstRate))
-    )
-    .map((item) => {
-            const qty = Number(item.qty || 0);
-            const freeQty = Number(item.freeQty || 0);
+                    items: bill.items
+                        .filter(
+                            (item) =>
+                                item.gstRate !== "none" &&
+                                item.gstRate !== null &&
+                                item.gstRate !== undefined &&
+                                !isNaN(Number(item.gstRate))
+                        )
+                        .map((item) => {
+                            const qty = Number(item.qty || 0);
+                            const freeQty = Number(item.freeQty || 0);
 
-            const rate = Number(item.price || 0);
-            const gstRate = Number(item.gstRate || 0);
-            const gstAmount = Number(item.gstAmount || 0);
-            const finalAmount = Number(item.finalPrice || 0);
+                            const rate = Number(item.price || 0);
+                            const gstRate = Number(item.gstRate || 0);
+                            const gstAmount = Number(item.gstAmount || 0);
+                            const finalAmount = Number(item.finalPrice || 0);
 
-            const taxableAmount = Number(
-                Number(
-                    item.taxableAmount ??
-                    Math.max(0, finalAmount - gstAmount)
-                ).toFixed(2)
-            );
+                            const taxableAmount = Number(
+                                Number(
+                                    item.taxableAmount ??
+                                    Math.max(0, finalAmount - gstAmount)
+                                ).toFixed(2)
+                            );
 
-            return {
-                productId: item.productId || null,
-                barcodeId: item.barcodeId || null,
+                            return {
+                                productId: item.productId || null,
+                                barcodeId: item.barcodeId || null,
 
-                itemName: item.name || "",
-                hsnCode: item.hsnCode || "",
-                barcode: item.barcode || "",
+                                itemName: item.name || "",
+                                hsnCode: item.hsnCode || "",
+                                barcode: item.barcode || "",
 
-                qty,
-                freeQty,
+                                qty,
+                                freeQty,
 
-                totalGivenQty: Number(
-                    item.totalGivenQty ?? (qty + freeQty)
-                ),
+                                totalGivenQty: Number(
+                                    item.totalGivenQty ?? (qty + freeQty)
+                                ),
 
-                unit: item.unit || "pcs",
-                unitValue: Number(item.unitValue || 1),
-                unitText: item.unitText || "",
-                totalKg: item.totalkg || "",
+                                unit: item.unit || "pcs",
+                                unitValue: Number(item.unitValue || 1),
+                                unitText: item.unitText || "",
+                                totalKg: item.totalkg || "",
 
-                mrp: Number(item.mrp || 0),
-                rate,
+                                mrp: Number(item.mrp || 0),
+                                rate,
 
-                 sellingPrice: Number(
-    item.sellingPrice ??
-    item.price ??
-    0
-),
+                                sellingPrice: Number(
+                                    item.sellingPrice ??
+                                    item.price ??
+                                    0
+                                ),
 
-price: Number(
-    item.price ??
-    0
-),
+                                price: Number(
+                                    item.price ??
+                                    0
+                                ),
 
-                appliedPriceLevel:
-                    item.appliedPriceLevel || "normal",
+                                appliedPriceLevel:
+                                    item.appliedPriceLevel || "normal",
 
-                appliedSlab:
-                    item.appliedPriceLevel === "slab" &&
-                    Number(item.appliedSlab?.price || 0) > 0
-                        ? {
-                            minQty: Number(
-                                item.appliedSlab?.minQty || 0
-                            ),
+                                appliedSlab:
+                                    item.appliedPriceLevel === "slab" &&
+                                        Number(item.appliedSlab?.price || 0) > 0
+                                        ? {
+                                            minQty: Number(
+                                                item.appliedSlab?.minQty || 0
+                                            ),
 
-                            maxQty:
-                                item.appliedSlab?.maxQty !== null &&
-                                item.appliedSlab?.maxQty !== undefined
-                                    ? Number(item.appliedSlab.maxQty)
-                                    : null,
+                                            maxQty:
+                                                item.appliedSlab?.maxQty !== null &&
+                                                    item.appliedSlab?.maxQty !== undefined
+                                                    ? Number(item.appliedSlab.maxQty)
+                                                    : null,
 
-                            price: Number(
-                                item.appliedSlab?.price || 0
-                            )
+                                            price: Number(
+                                                item.appliedSlab?.price || 0
+                                            )
+                                        }
+                                        : null,
+
+                                gstRate,
+
+                                cgstRate: Number(
+                                    (gstRate / 2).toFixed(2)
+                                ),
+
+                                sgstRate: Number(
+                                    (gstRate / 2).toFixed(2)
+                                ),
+
+                                gstAmount,
+
+                                cgstAmount: Number(
+                                    (gstAmount / 2).toFixed(2)
+                                ),
+
+                                sgstAmount: Number(
+                                    (gstAmount / 2).toFixed(2)
+                                ),
+
+                                discountAmount: Number(
+                                    item.discountAmount || 0
+                                ),
+
+                                taxableAmount,
+
+                                totalAmount: Number(
+                                    item.totalAmount || 0
+                                ),
+
+                                finalAmount,
+
+                                itemTotalAmount: Number(
+                                    finalAmount.toFixed(2)
+                                )
+                            };
+                        }),
+
+                    summary: {
+                        subTotal: Number(
+                            bill.summary?.subTotal || 0
+                        ),
+
+                        totalGST: Number(
+                            bill.summary?.totalGST || 0
+                        ),
+
+                        itemDiscountAmount: Number(
+                            bill.summary?.itemDiscountAmount || 0
+                        ),
+
+                        billDiscountAmount: Number(
+                            bill.summary?.billDiscountAmount || 0
+                        ),
+
+                        billDiscountPercentage: Number(
+                            bill.summary?.billDiscountPercentage || 0
+                        ),
+
+                        loyaltyDiscount: Number(
+                            bill.summary?.discount || 0
+                        ),
+
+                        grandTotal: Number(
+                            bill.summary?.grandTotal || 0
+                        )
+                    },
+
+                    offer: {
+                        offerId: bill.offer?.offerId || null,
+                        offerName: bill.offer?.offerName || "",
+                        discountAmount: Number(
+                            bill.offer?.discountAmount || 0
+                        )
+                    },
+
+                    paidAmount: Number(
+                        bill.paidAmount || 0
+                    ),
+
+                    pendingAmount: Number(
+                        bill.pendingAmount || 0
+                    ),
+
+                    paymentMethod:
+                        bill.paymentMethod || "due",
+
+                    paymentStatus:
+                        bill.paymentStatus || "due",
+
+                    payments: (bill.payments || []).map((payment) => ({
+                        method: payment.method || "",
+                        amount: Number(payment.amount || 0),
+
+                        details: {
+                            upiId: payment.details?.upiId || "",
+                            cardType: payment.details?.cardType || "",
+                            cardLast4: payment.details?.cardLast4 || "",
+
+                            chequeNo:
+                                payment.details?.chequeNo || "",
+
+                            chequeDate:
+                                payment.details?.chequeDate || null,
+
+                            bankName:
+                                payment.details?.bankName || "",
+
+                            accountHolder:
+                                payment.details?.accountHolder || ""
                         }
-                        : null,
+                    }))
+                }
 
-                gstRate,
-
-                cgstRate: Number(
-                    (gstRate / 2).toFixed(2)
-                ),
-
-                sgstRate: Number(
-                    (gstRate / 2).toFixed(2)
-                ),
-
-                gstAmount,
-
-                cgstAmount: Number(
-                    (gstAmount / 2).toFixed(2)
-                ),
-
-                sgstAmount: Number(
-                    (gstAmount / 2).toFixed(2)
-                ),
-
-                discountAmount: Number(
-                    item.discountAmount || 0
-                ),
-
-                taxableAmount,
-
-                totalAmount: Number(
-                    item.totalAmount || 0
-                ),
-
-                finalAmount,
-
-                itemTotalAmount: Number(
-                    finalAmount.toFixed(2)
-                )
-            };
-        }),
-
-        summary: {
-            subTotal: Number(
-                bill.summary?.subTotal || 0
-            ),
-
-            totalGST: Number(
-                bill.summary?.totalGST || 0
-            ),
-
-            itemDiscountAmount: Number(
-                bill.summary?.itemDiscountAmount || 0
-            ),
-
-            billDiscountAmount: Number(
-                bill.summary?.billDiscountAmount || 0
-            ),
-
-            billDiscountPercentage: Number(
-                bill.summary?.billDiscountPercentage || 0
-            ),
-
-            loyaltyDiscount: Number(
-                bill.summary?.discount || 0
-            ),
-
-            grandTotal: Number(
-                bill.summary?.grandTotal || 0
-            )
-        },
-
-        offer: {
-            offerId: bill.offer?.offerId || null,
-            offerName: bill.offer?.offerName || "",
-            discountAmount: Number(
-                bill.offer?.discountAmount || 0
-            )
-        },
-
-        paidAmount: Number(
-            bill.paidAmount || 0
-        ),
-
-        pendingAmount: Number(
-            bill.pendingAmount || 0
-        ),
-
-        paymentMethod:
-            bill.paymentMethod || "due",
-
-        paymentStatus:
-            bill.paymentStatus || "due",
-
-        payments: (bill.payments || []).map((payment) => ({
-            method: payment.method || "",
-            amount: Number(payment.amount || 0),
-
-            details: {
-                upiId: payment.details?.upiId || "",
-                cardType: payment.details?.cardType || "",
-                cardLast4: payment.details?.cardLast4 || "",
-
-                chequeNo:
-                    payment.details?.chequeNo || "",
-
-                chequeDate:
-                    payment.details?.chequeDate || null,
-
-                bankName:
-                    payment.details?.bankName || "",
-
-                accountHolder:
-                    payment.details?.accountHolder || ""
-            }
-        }))
-    }
-
-});
+            });
         }
 
 
@@ -1383,7 +1354,7 @@ exports.calculateBill = async (req, res) => {
                 return res.status(400).json({ success: false, message: `Barcode not found: ${searchValue}` });
             }
 
-        
+
             const product = await Product.findOne({
                 _id: barcode.productId,
                 superAdminId: hierarchy.superAdminId
@@ -1391,35 +1362,35 @@ exports.calculateBill = async (req, res) => {
 
             if (!product) {
                 return res.status(400).json({ success: false, message: `Product not found for: ${searchValue}` });
-                
+
             }
 
 
             const availableStock =
-    Number(product.stock || 0) -
-    Number(product.reservedStock || 0);
+                Number(product.stock || 0) -
+                Number(product.reservedStock || 0);
 
-if (availableStock < qty) {
-    return res.status(400).json({
-        success: false,
-        message: `${product.name} stock not available`
-    });
-}
+            if (availableStock < qty) {
+                return res.status(400).json({
+                    success: false,
+                    message: `${product.name} stock not available`
+                });
+            }
 
             const price = Number(barcode.sellingPrice || 0);
 
-          const rawGstRate = barcode?.gstRate ?? product.gstRate ?? "none";
+            const rawGstRate = barcode?.gstRate ?? product.gstRate ?? "none";
 
-const isGstNone =
-    String(rawGstRate).trim().toLowerCase() === "none";
+            const isGstNone =
+                String(rawGstRate).trim().toLowerCase() === "none";
 
-const gstRate = isGstNone
-    ? "none"
-    : Number(rawGstRate) || 0;
+            const gstRate = isGstNone
+                ? "none"
+                : Number(rawGstRate) || 0;
 
-const gstRateForCalculation = isGstNone
-    ? 0
-    : Number(rawGstRate) || 0;
+            const gstRateForCalculation = isGstNone
+                ? 0
+                : Number(rawGstRate) || 0;
 
 
             const grossAmount = Number((price * qty).toFixed(2));
@@ -1464,9 +1435,9 @@ const gstRateForCalculation = isGstNone
                 (grossAmount - itemDiscount).toFixed(2)
             );
 
-           const taxableAmount = Number(
-    (finalPrice / (1 + gstRateForCalculation / 100)).toFixed(2)
-);
+            const taxableAmount = Number(
+                (finalPrice / (1 + gstRateForCalculation / 100)).toFixed(2)
+            );
 
             const gstAmount = Number((finalPrice - taxableAmount).toFixed(2));
 
@@ -1559,24 +1530,24 @@ const gstRateForCalculation = isGstNone
                 superAdminId: hierarchy.superAdminId
             });
 
-           const normalSellingPrice = Number(
-    barcode?.sellingPrice ??
-    product.sellingPrice ??
-    0
-);
+            const normalSellingPrice = Number(
+                barcode?.sellingPrice ??
+                product.sellingPrice ??
+                0
+            );
 
-const hasBillSellingPrice =
-    billItem.sellingPrice !== undefined &&
-    billItem.sellingPrice !== null &&
-    billItem.sellingPrice !== "";
+            const hasBillSellingPrice =
+                billItem.sellingPrice !== undefined &&
+                billItem.sellingPrice !== null &&
+                billItem.sellingPrice !== "";
 
-const billSellingPrice = hasBillSellingPrice
-    ? Number(billItem.sellingPrice)
-    : normalSellingPrice;
+            const billSellingPrice = hasBillSellingPrice
+                ? Number(billItem.sellingPrice)
+                : normalSellingPrice;
 
-let price = billSellingPrice;
+            let price = billSellingPrice;
 
-           
+
             let appliedPriceLevel = "normal";
             let appliedSlab = null;
             let discountPerItem = 0;
@@ -1597,18 +1568,18 @@ let price = billSellingPrice;
                     const profitPercent = Number(productPriceLevel.autoPricing?.profitPercent || 0);
                     const baseOn = productPriceLevel.autoPricing?.baseOn || "costPrice";
 
-                   const basePrice =
-    baseOn === "mrp"
-        ? Number(
-            barcode?.mrp ??
-            product.mrp ??
-            0
-          )
-        : Number(
-            barcode?.costPrice ??
-            product.costPrice ??
-            0
-          );
+                    const basePrice =
+                        baseOn === "mrp"
+                            ? Number(
+                                barcode?.mrp ??
+                                product.mrp ??
+                                0
+                            )
+                            : Number(
+                                barcode?.costPrice ??
+                                product.costPrice ??
+                                0
+                            );
 
                     price = basePrice + (basePrice * profitPercent / 100);
                     appliedPriceLevel = "auto";
@@ -1639,21 +1610,21 @@ let price = billSellingPrice;
                 return res.status(400).json({ success: false, message: `${product.name} stock not available` });
             }
 
-           const rawGstRate =
-    barcode?.gstRate ??
-    product.gstRate ??
-    "none";
+            const rawGstRate =
+                barcode?.gstRate ??
+                product.gstRate ??
+                "none";
 
-const isGstNone =
-    String(rawGstRate).trim().toLowerCase() === "none";
+            const isGstNone =
+                String(rawGstRate).trim().toLowerCase() === "none";
 
-const gstRate = isGstNone
-    ? "none"
-    : Number(rawGstRate) || 0;
+            const gstRate = isGstNone
+                ? "none"
+                : Number(rawGstRate) || 0;
 
-const gstRateForCalculation = isGstNone
-    ? 0
-    : Number(rawGstRate) || 0;
+            const gstRateForCalculation = isGstNone
+                ? 0
+                : Number(rawGstRate) || 0;
 
             const grossAmount = Number((price * qty).toFixed(2));
 
@@ -1696,9 +1667,9 @@ const gstRateForCalculation = isGstNone
                 (grossAmount - itemDiscount).toFixed(2)
             );
 
-           const taxableAmount = Number(
-    (finalPrice / (1 + gstRateForCalculation / 100)).toFixed(2)
-);
+            const taxableAmount = Number(
+                (finalPrice / (1 + gstRateForCalculation / 100)).toFixed(2)
+            );
 
             const gstAmount = Number((finalPrice - taxableAmount).toFixed(2));
 
@@ -1734,8 +1705,8 @@ const gstRateForCalculation = isGstNone
 
                 mrp: barcode?.mrp || 0,
 
-               sellingPrice: price,
-normalSellingPrice,
+                sellingPrice: price,
+                normalSellingPrice,
 
                 slabPrice:
                     appliedPriceLevel === "slab"
@@ -2343,8 +2314,8 @@ exports.getBills = async (req, res) => {
                 items: bill.items.map(item => ({
                     productId: item.productId,
 
-                   itemCode: item.productId?.itemCode || "",  
-                 
+                    itemCode: item.productId?.itemCode || "",
+
                     barcodeId: item.barcodeId,
                     barcode: item.barcode,
 
@@ -3468,7 +3439,7 @@ exports.editBill = async (req, res) => {
             subTotal,
             totalGST,
 
-          
+
             discount: loyaltyDiscount,
 
             grandTotal,
