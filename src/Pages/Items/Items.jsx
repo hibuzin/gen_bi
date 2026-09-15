@@ -173,12 +173,10 @@ function Item() {
       if (data.success) {
         setProduct(data.data || []);
       } else {
-        setToast({
-          type: "error",
-          message:
-            data.message ||
-            "Failed to load items",
-        });
+        showToast(
+          "error",
+          data.message || "Failed to load items"
+        );
       }
     } catch (err) {
       console.error(err);
@@ -322,12 +320,10 @@ function Item() {
           )
         );
 
-        setToast({
-          type: "success",
-          message:
-            data.message ||
-            "Item deleted successfully",
-        });
+        showToast(
+          "success",
+          data.message || "Item deleted successfully"
+        );
       } else {
         setToast({
           type: "error",
@@ -432,6 +428,8 @@ function Item() {
           fullItem.barcode ||
           fullItem.barcodeNumber ||
           fullItem.primaryBarcode ||
+          fullItem.barcodes?.[0]?.barcode ||
+          fullItem.barcodes?.[0]?.barcodeNumber ||
           "",
       });
 

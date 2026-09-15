@@ -25,6 +25,13 @@ function ItemDetails() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [toast, setToast] = useState(null);
+    const showToast = (type, message) => {
+        setToast({ type, message });
+
+        setTimeout(() => {
+            setToast(null);
+        }, 2500);
+    };
 
     // Fetch all products once
     useEffect(() => {
@@ -131,13 +138,89 @@ function ItemDetails() {
         }
     };
 
-    const openEdit = () => {
-        setEditProduct({
-            ...product,
-            categoryId: product.categoryId?._id || product.categoryId,
-        });
-        setShowEditModal(true);
-        document.body.style.overflow = "hidden";
+    const openEdit = async () => {
+        try {
+            const token = localStorage.getItem("token");
+
+            const itemId = product?._id || id;
+
+            const res = await fetch(`${API.products}/${itemId}`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const json = await res.json();
+
+            const fullItem =
+                json.success && json.data
+                    ? json.data
+                    : product;
+
+            const categoryId =
+                fullItem.categoryId?._id ||
+                fullItem.categoryId ||
+                fullItem.category?._id ||
+                fullItem.category ||
+                "";
+
+            setEditProduct({
+                ...fullItem,
+
+                _id: itemId,
+
+                name:
+                    fullItem.name ||
+                    fullItem.productName ||
+                    "",
+
+                categoryId:
+                    typeof categoryId === "object"
+                        ? categoryId._id || ""
+                        : categoryId,
+
+                description:
+                    fullItem.description || "",
+
+                hsnCode:
+                    fullItem.hsnCode || "",
+
+                gstRate:
+                    fullItem.gstRate ??
+                    fullItem.taxPercentage ??
+                    "",
+
+                lowStockQty:
+                    fullItem.lowStockQty ?? "",
+
+                mrp:
+                    fullItem.mrp ?? "",
+
+                costPrice:
+                    fullItem.costPrice ??
+                    fullItem.purchasePrice ??
+                    fullItem.netcost ??
+                    "",
+
+                sellingPrice:
+                    fullItem.sellingPrice ?? "",
+
+                barcode:
+                    fullItem.barcode ||
+                    fullItem.barcodeNumber ||
+                    fullItem.primaryBarcode ||
+                    fullItem.barcodes?.[0]?.barcode ||
+                    "",
+            });
+
+            setShowEditModal(true);
+            document.body.style.overflow = "hidden";
+        } catch (error) {
+            console.error("Edit product fetch error:", error);
+
+            showToast("error", "Unable to load item details");
+        }
     };
 
     const closeEditModal = () => {
@@ -182,15 +265,43 @@ function ItemDetails() {
             const data = await res.json();
 
             if (data.success) {
-                setToast({ type: "success", message: data.message });
+                await fetchItemDetails();
+
+                const updatedRes = await fetch(`${API.products}/${id}`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const updatedJson = await updatedRes.json();
+
+                if (updatedJson.success && updatedJson.data) {
+                    setProducts((prev) =>
+                        prev.map((item) =>
+                            item._id === id
+                                ? updatedJson.data
+                                : item
+                        )
+                    );
+                }
+
                 closeEditModal();
-                fetchItemDetails(); // refresh current item
+
+                showToast(
+                    "success",
+                    data.message || "Item updated successfully"
+                );
+
             } else {
-                setToast({ type: "error", message: data.message });
+                showToast(
+                    "error",
+                    data.message || "Item update failed"
+                );
             }
         } catch (err) {
             console.log(err);
-            setToast({ type: "error", message: "Server Error" });
+            showToast("error", "Server Error");
         }
     };
 
@@ -207,14 +318,14 @@ function ItemDetails() {
             const data = await res.json();
 
             if (data.success) {
-                setToast({ type: "success", message: data.message || "Item deleted" });
+                showToast("success", data.message || "Item deleted");
                 navigate("/product");
             } else {
-                setToast({ type: "error", message: data.message || "Delete failed" });
+                showToast("error", data.message || "Delete failed");
             }
         } catch (err) {
             console.log(err);
-            setToast({ type: "error", message: "Server error" });
+            showToast("error", "Server error");
         } finally {
             setDeleteLoading(false);
             setShowDeleteConfirm(false);
