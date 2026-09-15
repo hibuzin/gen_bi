@@ -2513,7 +2513,12 @@ exports.updatePurchase = async (req, res) => {
             const freeQty = Number(item.freeQty || 0);
             const totalStockQty = qty + freeQty;
 
-            const netcost = Number(item.netcost || item.netCost);
+            const netcost = Number(
+                item.netcost ??
+                item.netCost ??
+                product.costPrice
+            );
+
             const netAmount = round2(netcost * qty);
 
 
@@ -2637,7 +2642,29 @@ exports.updatePurchase = async (req, res) => {
                 }
             }
 
-            const taxPercentage = Number(product.gstRate || 0);
+            const gstRate = String(product.gstRate ?? "none")
+                .trim()
+                .toLowerCase();
+
+            const taxPercentage =
+                gstRate === "none"
+                    ? "none"
+                    : Number(gstRate);
+
+            if (
+                taxPercentage !== "none" &&
+                ![0, 5, 12, 18, 40].includes(taxPercentage)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid GST rate for product"
+                });
+            }
+
+            const gstRateForCalculation =
+                taxPercentage === "none"
+                    ? 0
+                    : taxPercentage;
 
             const discountPercent = Number(item.discountPercent || item.disPercent || 0);
             const manualDiscountAmount = Number(item.discountAmount || item.disAmount || 0);
@@ -2670,13 +2697,19 @@ exports.updatePurchase = async (req, res) => {
                 totalCostWithGST = amountAfterDiscount;
 
                 taxAmount = round2(
-                    amountAfterDiscount * taxPercentage / (100 + taxPercentage)
+                    amountAfterDiscount *
+                    gstRateForCalculation /
+                    (100 + gstRateForCalculation)
                 );
 
                 amount = round2(amountAfterDiscount - taxAmount);
             } else {
                 amount = amountAfterDiscount;
-                taxAmount = round2(amount * taxPercentage / 100);
+
+                taxAmount = round2(
+                    amount * gstRateForCalculation / 100
+                );
+
                 totalCostWithGST = round2(amount + taxAmount);
             }
 
@@ -2705,7 +2738,14 @@ exports.updatePurchase = async (req, res) => {
                     superAdminId: hierarchy.superAdminId
                 },
                 {
-                    $inc: { stock: stockQty }
+                    $inc: {
+                        stock: stockQty
+                    },
+                    $set: {
+                        costPrice: netcost,
+                        sellingPrice: sellingPrice,
+                        mrp: mrp
+                    }
                 }
             );
 
@@ -2726,7 +2766,8 @@ exports.updatePurchase = async (req, res) => {
 
                             costPrice: item.costPrice || product.costPrice || 0,
                             sellingPrice: item.sellingPrice || product.sellingPrice || 0,
-                            gstRate: product.gstRate || 0,
+
+                            gstRate: product.gstRate ?? "none",
 
                             unit: purchaseUnit,
                             unitValue: purchaseUnitValue,
@@ -2789,7 +2830,7 @@ exports.updatePurchase = async (req, res) => {
                 taxPercentage,
                 taxAmount,
 
-                discountPercent,
+                discountPercent: finalDiscountPercent,
                 discountAmount,
                 amount,
                 totalCostWithGST,

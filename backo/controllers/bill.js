@@ -134,11 +134,7 @@ exports.createBill = async (req, res) => {
             );
 
 
-            const billSellingPrice = Number(
-                billItem.sellingPrice ??
-                billItem.price ??
-                normalSellingPrice
-            );
+            const billSellingPrice = normalSellingPrice;
 
             let price = billSellingPrice;
             let slabPrice = null;
@@ -2848,19 +2844,7 @@ exports.editBill = async (req, res) => {
                 Number(oldItem.qty || 0) +
                 Number(oldItem.freeQty || 0);
 
-            if (oldItem.barcodeId) {
-                await Barcode.updateOne(
-                    {
-                        _id: oldItem.barcodeId,
-                        superAdminId: hierarchy.superAdminId
-                    },
-                    {
-                        $inc: {
-                            availableQty: restoreQty
-                        }
-                    }
-                );
-            }
+
 
             if (oldItem.productId) {
                 await Product.updateOne(
@@ -2943,15 +2927,14 @@ exports.editBill = async (req, res) => {
             const totalRequiredQty = qty + freeQty;
 
 
-            if (
-                Number(barcode.availableQty || 0) <
-                totalRequiredQty
-            ) {
+            const availableStock = Number(product.stock || 0);
+
+            if (availableStock < totalRequiredQty) {
                 return res.status(400).json({
                     success: false,
                     message:
                         `${product.name} stock not available. ` +
-                        `Available: ${barcode.availableQty || 0}`
+                        `Available: ${availableStock}`
                 });
             }
 
@@ -2968,12 +2951,32 @@ exports.editBill = async (req, res) => {
                 });
             }
 
-            const gstRate = Number(
+            const rawGstRate =
                 billItem.gstRate ??
                 barcode.gstRate ??
                 product.gstRate ??
-                0
-            );
+                "none";
+
+            const isGstNone =
+                String(rawGstRate).trim().toLowerCase() === "none";
+
+            const gstRate = isGstNone
+                ? "none"
+                : Number(rawGstRate);
+
+            const gstRateForCalculation = isGstNone
+                ? 0
+                : Number(rawGstRate);
+
+            if (
+                gstRate !== "none" &&
+                (isNaN(gstRate) || gstRate < 0)
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid GST rate for product: ${product.name}`
+                });
+            }
 
             const grossAmount = Number(
                 (price * qty).toFixed(2)
@@ -3042,7 +3045,7 @@ exports.editBill = async (req, res) => {
             const taxableAmount = Number(
                 (
                     finalPrice /
-                    (1 + gstRate / 100)
+                    (1 + gstRateForCalculation / 100)
                 ).toFixed(2)
             );
 
@@ -3120,12 +3123,6 @@ exports.editBill = async (req, res) => {
                 gstAmount
             });
 
-
-            barcode.availableQty =
-                Number(barcode.availableQty || 0) -
-                totalRequiredQty;
-
-            await barcode.save();
 
             const stockUpdate =
                 await Product.updateOne(
