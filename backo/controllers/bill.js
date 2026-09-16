@@ -2939,8 +2939,9 @@ exports.editBill = async (req, res) => {
             }
 
             const price = Number(
-                billItem.sellingPrice ||
-                barcode.sellingPrice ||
+                billItem.sellingPrice ??
+                barcode.sellingPrice ??
+                product.sellingPrice ??
                 0
             );
 

@@ -2666,19 +2666,33 @@ exports.updatePurchase = async (req, res) => {
                     ? 0
                     : taxPercentage;
 
-            const discountPercent = Number(item.discountPercent || item.disPercent || 0);
-            const manualDiscountAmount = Number(item.discountAmount || item.disAmount || 0);
+            const discountPercent = Number(
+                item.discountPercent || item.disPercent || 0
+            );
+
+            const manualDiscountAmount = Number(
+                item.discountAmount || item.disAmount || 0
+            );
+
             const isGstIncluded = item.isGstIncluded !== false;
 
             const grossAmount = round2(qty * netcost);
 
-            const percentDiscountAmount = round2(
-                grossAmount * discountPercent / 100
-            );
+            let discountAmount = 0;
+            let finalDiscountPercent = discountPercent;
 
-            const discountAmount = round2(
-                percentDiscountAmount + manualDiscountAmount
-            );
+            if (discountPercent > 0) {
+                discountAmount = round2(
+                    grossAmount * discountPercent / 100
+                );
+            } else if (manualDiscountAmount > 0) {
+                discountAmount = round2(manualDiscountAmount);
+
+                finalDiscountPercent =
+                    grossAmount > 0
+                        ? round2((discountAmount / grossAmount) * 100)
+                        : 0;
+            }
 
             if (discountAmount > grossAmount) {
                 return res.status(400).json({
@@ -2687,7 +2701,9 @@ exports.updatePurchase = async (req, res) => {
                 });
             }
 
-            const amountAfterDiscount = round2(grossAmount - discountAmount);
+            const amountAfterDiscount = round2(
+                grossAmount - discountAmount
+            );
 
             let amount = 0;
             let taxAmount = 0;
