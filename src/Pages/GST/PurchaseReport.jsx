@@ -461,8 +461,6 @@ function PurchaseReport() {
               <th>Tax Amount</th>
               <th>Item Total</th>
               <th>Payment Mode</th>
-              <th>User</th>
-              <th>Role</th>
             </tr>
           </thead>
 
@@ -623,16 +621,6 @@ function PurchaseReport() {
                     {/* Payment Mode */}
                     <td>
                       {row.paymentMode || "-"}
-                    </td>
-
-                    <td>
-                      {row.user?.name || "-"}
-                    </td>
-
-                    <td>
-                      <span className={styles.roleBadge}>
-                        {row.user?.role || "-"}
-                      </span>
                     </td>
                   </tr>
                 );

@@ -123,7 +123,7 @@ function TopSellingProducts() {
     filteredProducts.map((item, index) => (
       <tr key={item.productId}>
                     <td>{index + 1}</td>
-                    <td>{item.barcode}</td>
+                    <td>{item.itemCode}</td>
 
                     <td>
                       <div

@@ -584,10 +584,6 @@ function SalesGSTReport() {
               <th>Item Total</th>
 
               <th>Payment Mode</th>
-
-              <th>User</th>
-
-              <th>Role</th>
             </tr>
           </thead>
           <tbody>
@@ -750,14 +746,7 @@ function SalesGSTReport() {
                               "-"}
                           </strong>
 
-                          {product.itemIndex ? (
-                            <span>
-                              Item{" "}
-                              {
-                                product.itemIndex
-                              }
-                            </span>
-                          ) : null}
+                          
 
                         </div>
 
@@ -939,26 +928,6 @@ function SalesGSTReport() {
                       <td>
                         {row.paymentMethod ||
                           "-"}
-                      </td>
-
-                      {/* USER */}
-                      <td>
-                        {row.user?.name ||
-                          "-"}
-                      </td>
-
-                      {/* ROLE */}
-                      <td>
-
-                        <span
-                          className={
-                            styles.roleBadge
-                          }
-                        >
-                          {row.user?.role ||
-                            "-"}
-                        </span>
-
                       </td>
 
                     </tr>

@@ -451,6 +451,25 @@
   font-size: 14px;
 }
 
+/* EMPTY ROW FIX */
+.table tbody tr:has(.emptyState):hover {
+  background: transparent;
+}
+
+.table tbody tr:has(.emptyState) td {
+  border-bottom: none;
+  border-right: none;
+  padding: 0;
+  cursor: default;
+}
+
+.emptyState {
+  width: 100%;
+  height: 220px;
+  background: #fff;
+  cursor: default;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .container {

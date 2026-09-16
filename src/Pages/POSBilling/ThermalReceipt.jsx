@@ -50,7 +50,14 @@ function ThermalReceipt({
                     </div>
 
                     <div>
-                        <span>Bill No: {receiptData.invoiceNo || "-"}</span>
+                        <span>
+                            Bill No:{" "}
+                            {receiptData.invoiceNo ||
+                                receiptData.billNo ||
+                                receiptData.billNumber ||
+                                receiptData.billCount ||
+                                "-"}
+                        </span>
                     </div>
                 </div>
 
@@ -64,9 +71,6 @@ function ThermalReceipt({
                                     <div>{receiptData.customer.customerName}</div>
                                 )}
 
-                                {receiptData.customer?.mobile && (
-                                    <div>{receiptData.customer.mobile}</div>
-                                )}
                             </div>
                         </>
                     )}
@@ -173,11 +177,11 @@ function ThermalReceipt({
                                 {Number(receiptData.summary?.cgst || 0).toFixed(2)}
                             </span>
 
-                             <span>
+                            <span>
                                 {Number(receiptData.summary?.sgst || 0).toFixed(2)}
                             </span>
 
-                              <span>
+                            <span>
                                 {Number(receiptData.summary?.totalGST || 0).toFixed(2)}
                             </span>
 

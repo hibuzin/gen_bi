@@ -82,12 +82,6 @@
   color: #3f3d3d;
 }
 
-.searchInput:focus {
-  border-color: #6c63ff;
-  background-color: #fff;
-}
-
-
 .partyList {
   overflow-y: auto;
   flex: 1;
@@ -290,8 +284,8 @@
 }
 
 .tabActive {
-  color: #6c63ff;
-  border-bottom-color: #6c63ff;
+  color: var(--sidebar-bg);
+  border-bottom-color: var(--sidebar-bg);
   font-weight: 500;
 }
 
@@ -474,13 +468,13 @@
 
 
 .activeSupplierCard {
-  border: 1px solid #988cee;
-  background: #F1F0FC;
+  border: 1px solid var(--sidebar-bg);
+  background: var(--card-hover);
 }
 
 .supplierCard:hover{
-    border: 1px solid #988cee;
-  background: #F1F0FC;
+    border: 1px solid var(--sidebar-bg);
+  background: var(--card-hover);
 }
 
 .cardLeft {
@@ -621,16 +615,12 @@
   min-height: 90px;
 }
 
-.field input:focus,
-.field textarea:focus {
-  border-color: #6c63ff;
-}
 
 .saveBtn {
   grid-column: 1 / -1;
   margin-top: 10px;
   border: none;
-  background: #6c63ff;
+  background: var(--button-bg);
   color: #fff;
   padding: 12px;
   font-size: 14px;
@@ -641,7 +631,7 @@
 }
 
 .saveBtn:hover:not(:disabled) {
-  background: #5b52ec;
+  opacity: var(--hover);
 }
 
 .saveBtn:disabled {

@@ -33,10 +33,6 @@
   box-sizing: border-box;
 }
 
-.searchInput:focus {
-  border-color: #6c63ff;
-}
-
 .createBtn {
   height: 38px;
   margin: 0 12px 12px;
@@ -85,8 +81,8 @@
 
 .itemCard:hover,
 .activeItem {
-  border: 1px solid #988cee;
-  background: #f1f0fc;
+  border: 1px solid var(--sidebar-bg);
+  background: var(--card-hover);
 }
 
 .itemTop h4 {
@@ -245,8 +241,8 @@
 }
 
 .tabActive {
-  color: #6c63ff;
-  border-bottom-color: #6c63ff;
+  color: var(--sidebar-bg);
+  border-bottom-color: var(--sidebar-bg);
   font-weight: 500;
 }
 
@@ -496,10 +492,6 @@
   box-sizing: border-box;
 }
 
-.field input:focus,
-.field select:focus {
-  border-color: #1d4ed8;
-}
 
 .modalBtns {
   grid-column: 1 / -1;

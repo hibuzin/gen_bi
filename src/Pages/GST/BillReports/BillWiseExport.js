@@ -135,9 +135,6 @@ export const exportSalesReportExcel = (records = []) => {
 
       "Payment Method": row.paymentMethod || "-",
 
-      User: row.user?.name || "-",
-
-      Role: row.user?.role || "-",
     };
   });
 
@@ -201,16 +198,33 @@ export const exportSalesReportPDF = (records = []) => {
     format: "a4",
   });
 
+
   // ====================================================
-  // TITLE
+  // REPORT HEADER
   // ====================================================
 
-  doc.setFontSize(15);
+  doc.setFont(undefined, "bold");
+  doc.setFontSize(16);
 
   doc.text(
-    "Sales GST Report",
+    "AR TRADERS",
+    doc.internal.pageSize.width / 2,
     14,
-    15
+    {
+      align: "center",
+    }
+  );
+
+  doc.setFont(undefined, "normal");
+  doc.setFontSize(12);
+
+  doc.text(
+    "Purchase Bill Wise Audit Report",
+    doc.internal.pageSize.width / 2,
+    20,
+    {
+      align: "center",
+    }
   );
 
   doc.setFontSize(9);
@@ -218,92 +232,7 @@ export const exportSalesReportPDF = (records = []) => {
   doc.text(
     `Generated: ${new Date().toLocaleString("en-IN")}`,
     14,
-    21
-  );
-
-  // ====================================================
-  // TOTALS
-  // ====================================================
-
-  const totalQty = records.reduce(
-    (sum, row) =>
-      sum + number(row.item?.qty),
-    0
-  );
-
-  const totalGST = records.reduce(
-    (sum, row) =>
-      sum + number(row.item?.gstAmount),
-    0
-  );
-
-  const totalCGST = records.reduce(
-    (sum, row) =>
-      sum + number(row.item?.cgstAmount),
-    0
-  );
-
-  const totalSGST = records.reduce(
-    (sum, row) =>
-      sum + number(row.item?.sgstAmount),
-    0
-  );
-
-  const totalTaxable = records.reduce(
-    (sum, row) =>
-      sum + number(row.item?.taxableAmount),
-    0
-  );
-
-  const totalSubTotal = records.reduce(
-    (sum, row) =>
-      sum + number(row.summary?.subTotal),
-    0
-  );
-
-  const totalGrandTotal = records.reduce(
-    (sum, row) =>
-      sum + number(row.summary?.grandTotal),
-    0
-  );
-
-  const totalItemDiscount = records.reduce(
-    (sum, row) =>
-      sum + number(row.summary?.itemDiscountAmount),
-    0
-  );
-
-  const totalBillDiscount = records.reduce(
-    (sum, row) =>
-      sum + number(row.summary?.billDiscountAmount),
-    0
-  );
-
-  const totalLoyaltyDiscount = records.reduce(
-    (sum, row) =>
-      sum + number(row.summary?.loyaltyDiscount),
-    0
-  );
-
-  doc.text(
-    `Items: ${records.length}    ` +
-    `Quantity: ${totalQty.toFixed(2)}    ` +
-    `Sub Total: Rs. ${totalSubTotal.toFixed(2)}    ` +
-    `Taxable: Rs. ${totalTaxable.toFixed(2)}    ` +
-    `GST: Rs. ${totalGST.toFixed(2)}    ` +
-    `CGST: Rs. ${totalCGST.toFixed(2)}    ` +
-    `SGST: Rs. ${totalSGST.toFixed(2)}`,
-    14,
     27
-  );
-
-  doc.text(
-    `Item Discount: Rs. ${totalItemDiscount.toFixed(2)}    ` +
-    `Bill Discount: Rs. ${totalBillDiscount.toFixed(2)}    ` +
-    `Loyalty Discount: Rs. ${totalLoyaltyDiscount.toFixed(2)}    ` +
-    `Grand Total: Rs. ${totalGrandTotal.toFixed(2)}`,
-    14,
-    32
   );
 
   // ====================================================
@@ -344,8 +273,6 @@ export const exportSalesReportPDF = (records = []) => {
         "Total SGST",
         "Grand Total",
         "Payment",
-        "User",
-        "Role",
       ],
     ],
 
@@ -429,9 +356,6 @@ export const exportSalesReportPDF = (records = []) => {
 
         row.paymentMethod || "-",
 
-        row.user?.name || "-",
-
-        row.user?.role || "-",
       ];
     }),
 
@@ -542,14 +466,6 @@ const flattenPurchaseBillRows = (records = []) =>
 
       "Payment Status": isFirstRow
         ? row.paymentStatus || "-"
-        : "",
-
-      Action: isFirstRow
-        ? row.action || "-"
-        : "",
-
-      "User Role": isFirstRow
-        ? row.user?.role || "-"
         : "",
     };
   });

@@ -95,11 +95,11 @@
 }
 
 .tabBtn:hover {
-  color: #4c3cce;
+  opacity: var(--hover);
 }
 
 .activeTab {
-  color: #4c3cce;
+  color: var(--sidebar-bg);
   font-weight: 600;
 }
 
@@ -112,7 +112,7 @@
   width: 100%;
   height: 2px;
 
-  background: #4c3cce;
+  background: var(--sidebar-bg);
   border-radius: 10px;
 }
 
@@ -405,6 +405,25 @@
   font-weight: 600;
   color: #111827;
   word-break: break-word;
+}
+
+/* EMPTY ROW FIX */
+.table tbody tr:has(.emptyState):hover {
+  background: transparent;
+}
+
+.table tbody tr:has(.emptyState) td {
+  border-bottom: none;
+  border-right: none;
+  padding: 0;
+  cursor: default;
+}
+
+.emptyState {
+  width: 100%;
+  height: 220px;
+  background: #fff;
+  cursor: default;
 }
 
 /* RESPONSIVE */

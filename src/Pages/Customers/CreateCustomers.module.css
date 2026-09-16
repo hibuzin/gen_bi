@@ -181,7 +181,7 @@
   padding: 0 14px;
   border: none;
   border-radius: 6px;
-  background: #4c3cce;
+  background: var(--button-bg);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -191,7 +191,7 @@
 }
 
 .gstBtn:hover {
-  background: #7164d8;
+  opacity: var(--hover);
 }
 
 

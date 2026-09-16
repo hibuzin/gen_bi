@@ -354,9 +354,7 @@ function PurchaseList() {
                 >
                   <td>{index + 1}</td>
                   <td>
-                    {p.invoiceDate
-                      ? new Date(p.invoiceDate).toLocaleDateString()
-                      : "-"}
+                    {p.invoiceDate || "-"}
                   </td>
                   <td>{p.invoiceNo}</td>
                   <td>{p.supplier?.name || "-"}</td>

@@ -171,13 +171,6 @@ const preparePurchaseRows = (data = []) => {
         ? row.paymentMode || "-"
         : "",
 
-      User: isFirstProduct
-        ? row.user?.name || "-"
-        : "",
-
-      Role: isFirstProduct
-        ? row.user?.role || "-"
-        : "",
     };
   });
 };
@@ -257,18 +250,32 @@ export const exportPurchaseReportPDF = (data = []) => {
   });
 
   const today = new Date().toLocaleDateString("en-IN");
-
+  
   // ==========================================
   // TITLE
   // ==========================================
 
   doc.setFontSize(16);
-  doc.text("Purchase Item-wise Audit Report", 14, 15);
+  doc.setFont(undefined, "bold");
+  doc.text("AR TRADERS", doc.internal.pageSize.width / 2, 14, {
+    align: "center",
+  });
+
+  doc.setFontSize(12);
+  doc.setFont(undefined, "normal");
+  doc.text(
+    "Purchase Item-wise Audit Report",
+    doc.internal.pageSize.width / 2,
+    20,
+    {
+      align: "center",
+    }
+  );
 
   doc.setFontSize(9);
-  doc.text(`Generated On: ${today}`, 14, 21);
+  doc.text(`Generated On: ${today}`, 14, 26);
 
-  doc.text(`Total Records: ${data.length}`, 14, 26);
+  doc.text(`Total Records: ${data.length}`, 14, 31);
 
 
   // ==========================================
@@ -304,8 +311,6 @@ export const exportPurchaseReportPDF = (data = []) => {
     row["Total GST"],
     row["Total Item Amount"],
     row["Payment Mode"],
-    row["User"],
-    row["Role"],
   ]);
 
   autoTable(doc, {
@@ -339,8 +344,7 @@ export const exportPurchaseReportPDF = (data = []) => {
         "Total GST",
         "Total Item Amount",
         "Payment Mode",
-        "User",
-        "Role",
+    
       ],
     ],
     body: tableBody,
