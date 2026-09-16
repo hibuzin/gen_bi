@@ -351,6 +351,7 @@
 .colDiscount { width: 90px; }
 .colTax      { width: 80px; }
 .colAmount   { width: 90px; }
+.colAction   { width: 40px; }
 
 /* ── CELL INPUTS ── */
 .cellInput {

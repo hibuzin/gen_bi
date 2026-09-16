@@ -394,9 +394,9 @@ export const calculatePurchase = async ({
                 taxAmount: calc.taxAmount,
 
                 rate: calc.Rate,
-                netcost: calc.totalCostWithGST,
-                costPrice: calc.totalCostWithGST,
-                purchasePrice: calc.totalCostWithGST,
+                netcost: calc.netcost,
+                costPrice: calc.netcost,
+                purchasePrice: calc.netcost,
                 originalNetcost: item.originalNetcost || calc.netcost,
                 purchaseDiscount: calc.purchaseDiscount || 0,
                 netAmount: calc.netAmount,

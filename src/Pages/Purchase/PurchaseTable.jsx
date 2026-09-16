@@ -484,6 +484,7 @@ export default function PurchaseTable({
             <th className={styles.colMrp}>No</th>
             <th className={styles.colBarcode}>Item code</th>
             <th className={styles.colItem}>Items</th>
+            <th className={styles.colMrp}>HSN Code</th>
             <th className={styles.colQty}>Qty</th>
             <th className={styles.colMrp}>Rate</th>
             <th className={styles.colMrp}>GST %</th>
@@ -638,6 +639,22 @@ export default function PurchaseTable({
                       )}
                   </div>
                 )}
+              </td>
+
+              {/* HSN CODE */}
+              <td>
+                <input
+                  type="text"
+                  className={styles.cellInput}
+                  value={item.hsnCode ?? ""}
+                  onChange={(e) =>
+                    updateItem(
+                      index,
+                      "hsnCode",
+                      e.target.value
+                    )
+                  }
+                />
               </td>
 
               {/* QUANTITY */}
