@@ -14,6 +14,7 @@ const {
     searchProductsForBill,
     searchCustomerBills,
     getBills,
+    getBillItemWiseReport,
     salescheck,
     cashierWiseSales,
     getBillById,
@@ -57,6 +58,12 @@ router.get(
     getBills
 );
 
+router.get(
+    "/itemwise",
+    verifyToken,
+    authorize("super_admin", "admin", "cashier"),
+    getBillItemWiseReport
+);
 
 
 router.get(

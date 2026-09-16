@@ -2515,6 +2515,466 @@ exports.getBills = async (req, res) => {
 };
 
 
+exports.getBillItemWiseReport = async (req, res) => {
+    try {
+        const hierarchy = attachHierarchy(req.user);
+
+        const {
+            fromDate,
+            toDate,
+            period
+        } = req.query;
+
+        const filter = {
+            superAdminId: hierarchy.superAdminId
+        };
+
+        // =========================
+        // DATE FILTER
+        // =========================
+
+        const now = new Date();
+
+        const getISTDate = (date) => {
+            return new Date(
+                new Date(date).toLocaleString("en-US", {
+                    timeZone: "Asia/Kolkata"
+                })
+            );
+        };
+
+        if (fromDate || toDate || period) {
+
+            let startDate;
+            let endDate;
+
+            // =========================
+            // PERIOD
+            // =========================
+
+            if (period) {
+
+                const today = getISTDate(now);
+
+                today.setHours(0, 0, 0, 0);
+
+                // TODAY
+                if (period === "today") {
+
+                    startDate = new Date(today);
+
+                    endDate = new Date(today);
+                    endDate.setDate(endDate.getDate() + 1);
+                }
+
+                // YESTERDAY
+                else if (period === "yesterday") {
+
+                    startDate = new Date(today);
+                    startDate.setDate(
+                        startDate.getDate() - 1
+                    );
+
+                    endDate = new Date(today);
+                }
+
+                // THIS WEEK
+                else if (period === "week") {
+
+                    startDate = new Date(today);
+
+                    const day = startDate.getDay();
+
+                    const diff =
+                        day === 0 ? 6 : day - 1;
+
+                    startDate.setDate(
+                        startDate.getDate() - diff
+                    );
+
+                    endDate = new Date(today);
+                    endDate.setDate(
+                        endDate.getDate() + 1
+                    );
+                }
+
+                // THIS MONTH
+                else if (period === "month") {
+
+                    startDate = new Date(
+                        today.getFullYear(),
+                        today.getMonth(),
+                        1
+                    );
+
+                    endDate = new Date(
+                        today.getFullYear(),
+                        today.getMonth() + 1,
+                        1
+                    );
+                }
+
+                // THIS YEAR
+                else if (period === "year") {
+
+                    startDate = new Date(
+                        today.getFullYear(),
+                        0,
+                        1
+                    );
+
+                    endDate = new Date(
+                        today.getFullYear() + 1,
+                        0,
+                        1
+                    );
+                }
+            }
+
+            // =========================
+            // FROM DATE
+            // =========================
+
+            if (fromDate) {
+
+                const customFrom = getISTDate(fromDate);
+
+                customFrom.setHours(0, 0, 0, 0);
+
+                startDate = customFrom;
+            }
+
+            // =========================
+            // TO DATE
+            // =========================
+
+            if (toDate) {
+
+                const customTo = getISTDate(toDate);
+
+                customTo.setHours(23, 59, 59, 999);
+
+                endDate = customTo;
+            }
+
+            // =========================
+            // APPLY DATE FILTER
+            // =========================
+
+            if (startDate && endDate) {
+
+                filter.createdAt = {
+                    $gte: startDate,
+                    $lte: endDate
+                };
+
+            } else if (startDate) {
+
+                filter.createdAt = {
+                    $gte: startDate
+                };
+
+            } else if (endDate) {
+
+                filter.createdAt = {
+                    $lte: endDate
+                };
+            }
+        }
+
+        // =========================
+        // GET BILLS
+        // =========================
+
+        const bills = await Bill.find(filter)
+            .populate(
+                "customerId",
+                "name phone customerId"
+            )
+            .populate(
+                "createdBy",
+                "name email role"
+            )
+            .populate(
+                "items.productId",
+                "itemCode"
+            )
+            .sort({
+                createdAt: -1
+            });
+
+        // =========================
+        // ITEM-WISE DATA
+        // =========================
+
+        const itemWiseData = [];
+
+        let itemCount = 0;
+
+        for (const bill of bills) {
+
+            for (const item of bill.items) {
+
+                itemCount++;
+
+                const qty = Number(
+                    item.qty || 0
+                );
+
+                const freeQty = Number(
+                    item.freeQty || 0
+                );
+
+                const totalGivenQty = Number(
+                    item.totalGivenQty ||
+                    item.qty ||
+                    0
+                );
+
+                const unitValue = Number(
+                    item.unitValue || 1
+                );
+
+                const totalUnitQty =
+                    qty * unitValue;
+
+                itemWiseData.push({
+
+                    // =========================
+                    // BILL DETAILS
+                    // =========================
+
+                    itemCount,
+
+                    billId: bill._id,
+
+                    invoiceNo:
+                        bill.invoiceNo,
+
+                    invoiceDate:
+                        new Date(
+                            bill.createdAt
+                        ).toLocaleDateString(
+                            "en-GB",
+                            {
+                                timeZone:
+                                    "Asia/Kolkata"
+                            }
+                        ),
+
+                    invoiceTime:
+                        new Date(
+                            bill.createdAt
+                        ).toLocaleTimeString(
+                            "en-IN",
+                            {
+                                timeZone:
+                                    "Asia/Kolkata",
+
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+
+                                hour12: true
+                            }
+                        ),
+
+                    // =========================
+                    // CUSTOMER
+                    // =========================
+
+                    customer:
+                        bill.customerId
+                            ? {
+                                customerId:
+                                    bill.customerId
+                                        .customerId,
+
+                                name:
+                                    bill.customerId
+                                        .name,
+
+                                mobile:
+                                    bill.customerId
+                                        .phone
+                            }
+                            : null,
+
+                    // =========================
+                    // CASHIER
+                    // =========================
+
+                    cashier:
+                        bill.createdBy
+                            ? {
+                                id:
+                                    bill.createdBy
+                                        ._id,
+
+                                name:
+                                    bill.createdBy
+                                        .name,
+
+                                email:
+                                    bill.createdBy
+                                        .email,
+
+                                role:
+                                    bill.createdBy
+                                        .role
+                            }
+                            : null,
+
+                    // =========================
+                    // PRODUCT
+                    // =========================
+
+                    productId:
+                        item.productId?._id ||
+                        item.productId ||
+                        null,
+
+                    itemCode:
+                        item.productId?.itemCode ||
+                        "",
+
+                    barcodeId:
+                        item.barcodeId ||
+                        null,
+
+                    barcode:
+                        item.barcode ||
+                        "",
+
+                    name:
+                        item.name,
+
+                    // =========================
+                    // QUANTITY
+                    // =========================
+
+                    qty,
+
+                    freeQty,
+
+                    totalGivenQty,
+
+                    unit:
+                        item.unit,
+
+                    unitValue,
+
+                    unitText:
+                        item.unitText,
+
+                    totalUnitQty,
+
+                    // =========================
+                    // PRICE
+                    // =========================
+
+                    mrp:
+                        Number(item.mrp || 0),
+
+                    price:
+                        Number(
+                            item.sellingPrice ||
+                            item.price ||
+                            0
+                        ),
+
+                    // =========================
+                    // DISCOUNT
+                    // =========================
+
+                    discountPercent:
+                        Number(
+                            item.discountPercent || 0
+                        ),
+
+                    discountAmount:
+                        Number(
+                            item.discountAmount || 0
+                        ),
+
+                    // =========================
+                    // GST
+                    // =========================
+
+                    gstRate:
+                        item.gstRate,
+
+                    gstAmount:
+                        Number(
+                            item.gstAmount || 0
+                        ),
+
+                    // =========================
+                    // FINAL PRICE
+                    // =========================
+
+                    finalPrice:
+                        Number(
+                            item.finalPrice || 0
+                        ),
+
+                    totalAmount:
+                        Number(
+                            item.totalAmount || 0
+                        ),
+
+                    // =========================
+                    // PRICE LEVEL
+                    // =========================
+
+                    appliedPriceLevel:
+                        item.appliedPriceLevel ||
+                        null,
+
+                    appliedSlab:
+                        item.appliedSlab ||
+                        null
+                });
+            }
+        }
+
+        // =========================
+        // RESPONSE
+        // =========================
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                "Bill item-wise report fetched successfully",
+
+            billCount:
+                bills.length,
+
+            itemCount:
+                itemWiseData.length,
+
+            data:
+                itemWiseData
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Server error",
+
+            error:
+                error.message
+        });
+    }
+};
+
+
 exports.getWalkInCustomerBills = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
