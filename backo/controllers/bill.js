@@ -2202,9 +2202,140 @@ exports.getBills = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
 
-        const bills = await Bill.find({
+        const {
+            fromDate,
+            toDate,
+            period
+        } = req.query;
+
+        const filter = {
             superAdminId: hierarchy.superAdminId
-        })
+        };
+
+        // =========================
+        // DATE FILTER
+        // =========================
+
+        const now = new Date();
+
+        // Convert date to IST boundaries
+        const getISTDate = (date) => {
+            return new Date(
+                new Date(date).toLocaleString("en-US", {
+                    timeZone: "Asia/Kolkata"
+                })
+            );
+        };
+
+        if (fromDate || toDate || period) {
+
+            let startDate;
+            let endDate;
+
+
+
+            if (period) {
+                const today = getISTDate(now);
+
+                today.setHours(0, 0, 0, 0);
+
+                if (period === "today") {
+                    startDate = new Date(today);
+                    endDate = new Date(today);
+                    endDate.setDate(endDate.getDate() + 1);
+                }
+
+                else if (period === "yesterday") {
+                    startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() - 1);
+
+                    endDate = new Date(today);
+                }
+
+                else if (period === "week") {
+                    startDate = new Date(today);
+
+                    const day = startDate.getDay();
+                    const diff = day === 0 ? 6 : day - 1;
+
+                    startDate.setDate(startDate.getDate() - diff);
+
+                    endDate = new Date(today);
+                    endDate.setDate(endDate.getDate() + 1);
+                }
+
+                else if (period === "month") {
+                    startDate = new Date(
+                        today.getFullYear(),
+                        today.getMonth(),
+                        1
+                    );
+
+                    endDate = new Date(
+                        today.getFullYear(),
+                        today.getMonth() + 1,
+                        1
+                    );
+                }
+
+                else if (period === "year") {
+                    startDate = new Date(
+                        today.getFullYear(),
+                        0,
+                        1
+                    );
+
+                    endDate = new Date(
+                        today.getFullYear() + 1,
+                        0,
+                        1
+                    );
+                }
+            }
+
+
+            if (fromDate) {
+                const customFrom = getISTDate(fromDate);
+
+                customFrom.setHours(0, 0, 0, 0);
+
+                startDate = customFrom;
+            }
+
+
+
+            if (toDate) {
+                const customTo = getISTDate(toDate);
+
+                customTo.setHours(23, 59, 59, 999);
+
+                endDate = customTo;
+            }
+
+
+
+            if (startDate && endDate) {
+                filter.createdAt = {
+                    $gte: startDate,
+                    $lte: endDate
+                };
+            }
+
+            else if (startDate) {
+                filter.createdAt = {
+                    $gte: startDate
+                };
+            }
+
+            else if (endDate) {
+                filter.createdAt = {
+                    $lte: endDate
+                };
+            }
+        }
+
+
+        const bills = await Bill.find(filter)
             .populate("customerId", "name phone customerId")
             .populate("createdBy", "name email role")
             .populate("items.productId", "itemCode")
