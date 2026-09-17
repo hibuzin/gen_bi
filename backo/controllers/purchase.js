@@ -605,14 +605,7 @@ exports.createPurchase = async (req, res) => {
 
 
 
-        const purchaseTotalAmount = round2(
-            totalAmount +
-            finalFreightCharge +
-            finalPackagingCharge
-        );
-
-        const finalSupplierBillAmount = round2(totalAmount);
-
+      
 
         let finalBillDiscount = 0;
 
@@ -720,6 +713,16 @@ exports.createPurchase = async (req, res) => {
         totalGrossAmount = round2(recalculatedGross);
         totalTaxAmount = round2(recalculatedGST);
         totalAmount = round2(recalculatedTotal);
+
+
+          const purchaseTotalAmount = round2(
+            totalAmount +
+            finalFreightCharge +
+            finalPackagingCharge
+        );
+
+        const finalSupplierBillAmount = round2(totalAmount);
+
 
         const allowedMethods = ["cash", "upi", "card", "bank", "cheque"];
 
@@ -1517,7 +1520,6 @@ exports.calculatePurchase = async (req, res) => {
         const balanceAmount = round2(
             finalSupplierBillAmount - finalPaidAmount
         );
-
 
 
         const cgst = round2(totalTaxAmount / 2);

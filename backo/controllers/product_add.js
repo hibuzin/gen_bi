@@ -337,7 +337,7 @@ exports.bulkProductCreate = async (req, res) => {
 
         const bulkId = new mongoose.Types.ObjectId();
 
-        const allowedGstRates = [0, 5, 12, 18, 28];
+        const allowedGstRates = ["none", "0", "5", "12", "18", "40"];
         const allowedUnits = ["pcs", "kg", "g"];
 
         const errors = [];
@@ -411,17 +411,24 @@ exports.bulkProductCreate = async (req, res) => {
 
 
 
-                const processedGstRate = Number(item.gstRate || 0);
+                let processedGstRate;
 
                 if (
-                    isNaN(processedGstRate) ||
-                    !allowedGstRates.includes(processedGstRate)
+                    item.gstRate === undefined ||
+                    item.gstRate === null ||
+                    item.gstRate === ""
                 ) {
+                    processedGstRate = "none";
+                } else {
+                    processedGstRate = String(item.gstRate).trim().toLowerCase();
+                }
+
+                if (!allowedGstRates.includes(processedGstRate)) {
                     errors.push({
                         row: i + 1,
                         name,
                         barcode: barcodeCode,
-                        message: "GST rate must be 0, 5, 12, 18 or 28"
+                       message: "GST rate must be none, 0, 5, 12, 18 or 40"
                     });
 
                     continue;

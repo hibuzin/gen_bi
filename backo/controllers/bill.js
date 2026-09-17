@@ -223,6 +223,8 @@ exports.createBill = async (req, res) => {
 
                 price: Number(price || 0),
 
+                costPrice: Number(product.costPrice || 0),
+
                 qty: Number(qty || 0),
                 freeQty: 0,
                 totalGivenQty: Number(qty || 0),
@@ -510,6 +512,8 @@ exports.createBill = async (req, res) => {
 
 
                 price: Number(price || 0),
+
+                costPrice: Number(product.costPrice || 0),
 
                 qty: Number(qty || 0),
                 freeQty: Number(freeQty || 0),
@@ -1601,10 +1605,7 @@ exports.calculateBill = async (req, res) => {
                 return res.status(400).json({ success: false, message: `Invalid selling price for product: ${product.name}` });
             }
 
-            const availableStock = Number(product.stock || 0) - Number(product.reservedStock || 0);
-            if (availableStock < qty) {
-                return res.status(400).json({ success: false, message: `${product.name} stock not available` });
-            }
+
 
             const rawGstRate =
                 barcode?.gstRate ??
@@ -2548,9 +2549,6 @@ exports.getBillItemWiseReport = async (req, res) => {
             let startDate;
             let endDate;
 
-            // =========================
-            // PERIOD
-            // =========================
 
             if (period) {
 
@@ -2558,7 +2556,6 @@ exports.getBillItemWiseReport = async (req, res) => {
 
                 today.setHours(0, 0, 0, 0);
 
-                // TODAY
                 if (period === "today") {
 
                     startDate = new Date(today);
@@ -2567,7 +2564,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                     endDate.setDate(endDate.getDate() + 1);
                 }
 
-                // YESTERDAY
                 else if (period === "yesterday") {
 
                     startDate = new Date(today);
@@ -2578,7 +2574,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                     endDate = new Date(today);
                 }
 
-                // THIS WEEK
                 else if (period === "week") {
 
                     startDate = new Date(today);
@@ -2598,7 +2593,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                     );
                 }
 
-                // THIS MONTH
                 else if (period === "month") {
 
                     startDate = new Date(
@@ -2614,7 +2608,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                     );
                 }
 
-                // THIS YEAR
                 else if (period === "year") {
 
                     startDate = new Date(
@@ -2631,9 +2624,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                 }
             }
 
-            // =========================
-            // FROM DATE
-            // =========================
 
             if (fromDate) {
 
@@ -2644,9 +2634,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                 startDate = customFrom;
             }
 
-            // =========================
-            // TO DATE
-            // =========================
 
             if (toDate) {
 
@@ -2657,9 +2644,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                 endDate = customTo;
             }
 
-            // =========================
-            // APPLY DATE FILTER
-            // =========================
 
             if (startDate && endDate) {
 
@@ -2682,9 +2666,6 @@ exports.getBillItemWiseReport = async (req, res) => {
             }
         }
 
-        // =========================
-        // GET BILLS
-        // =========================
 
         const bills = await Bill.find(filter)
             .populate(
@@ -2703,9 +2684,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                 createdAt: -1
             });
 
-        // =========================
-        // ITEM-WISE DATA
-        // =========================
 
         const itemWiseData = [];
 
@@ -2779,9 +2757,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                             }
                         ),
 
-                    // =========================
-                    // CUSTOMER
-                    // =========================
 
                     customer:
                         bill.customerId
@@ -2800,9 +2775,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                             }
                             : null,
 
-                    // =========================
-                    // CASHIER
-                    // =========================
 
                     cashier:
                         bill.createdBy
@@ -2825,9 +2797,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                             }
                             : null,
 
-                    // =========================
-                    // PRODUCT
-                    // =========================
 
                     productId:
                         item.productId?._id ||
@@ -3090,9 +3059,35 @@ exports.salescheck = async (req, res) => {
                     totalSales: { $sum: "$summary.grandTotal" },
                     totalGST: { $sum: "$summary.totalGST" },
                     totalDiscount: { $sum: "$summary.discount" },
-                    subTotal: { $sum: "$summary.subTotal" }
+                    subTotal: { $sum: "$summary.subTotal" },
+
+                    profitAmount: {
+                        $sum: {
+                            $reduce: {
+                                input: "$items",
+                                initialValue: 0,
+                                in: {
+                                    $add: [
+                                        "$$value",
+                                        {
+                                            $multiply: [
+                                                {
+                                                    $subtract: [
+                                                        { $ifNull: ["$$this.price", 0] },
+                                                        { $ifNull: ["$$this.costPrice", 0] }
+                                                    ]
+                                                },
+                                                { $ifNull: ["$$this.qty", 0] }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
                 }
             }
+
         ]);
 
         const result = sales[0] || {
@@ -3100,8 +3095,21 @@ exports.salescheck = async (req, res) => {
             totalSales: 0,
             totalGST: 0,
             totalDiscount: 0,
-            subTotal: 0
+            subTotal: 0,
+            profitAmount: 0
         };
+
+        result.totalSales = Number(Number(result.totalSales || 0).toFixed(2));
+        result.totalGST = Number(Number(result.totalGST || 0).toFixed(2));
+        result.totalDiscount = Number(Number(result.totalDiscount || 0).toFixed(2));
+        result.subTotal = Number(Number(result.subTotal || 0).toFixed(2));
+        result.profitAmount = Number(Number(result.profitAmount || 0).toFixed(2));
+        
+        result.profitPercentage = result.subTotal > 0
+            ? Number(
+                ((result.profitAmount / result.subTotal) * 100).toFixed(2)
+            )
+            : 0;
 
         return res.status(200).json({
             success: true,
@@ -3518,16 +3526,7 @@ exports.editBill = async (req, res) => {
             const totalRequiredQty = qty + freeQty;
 
 
-            const availableStock = Number(product.stock || 0);
 
-            if (availableStock < totalRequiredQty) {
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        `${product.name} stock not available. ` +
-                        `Available: ${availableStock}`
-                });
-            }
 
             const price = Number(
                 billItem.sellingPrice ??
