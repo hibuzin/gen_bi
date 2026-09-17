@@ -2,10 +2,10 @@ const mongoose = require("mongoose");
 
 const billSchema = new mongoose.Schema({
 
-        billCount: {
-    type: Number,
-    default: 0
-},
+    billCount: {
+        type: Number,
+        default: 0
+    },
 
 
     items: [
@@ -24,24 +24,24 @@ const billSchema = new mongoose.Schema({
             name: String,
 
             hsnCode: {
-    type: String,
-    default: ""
-},
+                type: String,
+                default: ""
+            },
 
-discountAmount: {
-    type: Number,
-    default: 0
-},
+            discountAmount: {
+                type: Number,
+                default: 0
+            },
 
-taxableAmount: {
-    type: Number,
-    default: 0
-},
+            taxableAmount: {
+                type: Number,
+                default: 0
+            },
 
-totalAmount: {
-    type: Number,
-    default: 0
-},
+            totalAmount: {
+                type: Number,
+                default: 0
+            },
 
             unit: {
                 type: String,
@@ -74,6 +74,12 @@ totalAmount: {
 
             price: Number,
 
+            costPrice: {
+                type: Number,
+                default: 0
+            },
+
+
             qty: {
                 type: Number,
                 default: 1
@@ -104,42 +110,42 @@ totalAmount: {
         sparse: true
     },
 
-summary: {
-    subTotal: {
-        type: Number,
-        default: 0
-    },
+    summary: {
+        subTotal: {
+            type: Number,
+            default: 0
+        },
 
-    totalGST: {
-        type: Number,
-        default: 0
-    },
+        totalGST: {
+            type: Number,
+            default: 0
+        },
 
-    itemDiscountAmount: {
-        type: Number,
-        default: 0
-    },
+        itemDiscountAmount: {
+            type: Number,
+            default: 0
+        },
 
-    billDiscountAmount: {
-        type: Number,
-        default: 0
-    },
+        billDiscountAmount: {
+            type: Number,
+            default: 0
+        },
 
-    billDiscountPercentage: {
-        type: Number,
-        default: 0
-    },
+        billDiscountPercentage: {
+            type: Number,
+            default: 0
+        },
 
-    discount: {
-        type: Number,
-        default: 0
-    },
+        discount: {
+            type: Number,
+            default: 0
+        },
 
-    grandTotal: {
-        type: Number,
-        default: 0
-    }
-},
+        grandTotal: {
+            type: Number,
+            default: 0
+        }
+    },
 
     offer: {
         offerId: {
@@ -205,14 +211,14 @@ summary: {
     },
 
     receivedAmount: {
-    type: Number,
-    default: 0
-},
+        type: Number,
+        default: 0
+    },
 
-returnAmount: {
-    type: Number,
-    default: 0
-},
+    returnAmount: {
+        type: Number,
+        default: 0
+    },
 
     pendingAmount: {
         type: Number,
