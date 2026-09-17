@@ -605,7 +605,7 @@ exports.createPurchase = async (req, res) => {
 
 
 
-      
+
 
         let finalBillDiscount = 0;
 
@@ -715,7 +715,7 @@ exports.createPurchase = async (req, res) => {
         totalAmount = round2(recalculatedTotal);
 
 
-          const purchaseTotalAmount = round2(
+        const purchaseTotalAmount = round2(
             totalAmount +
             finalFreightCharge +
             finalPackagingCharge
@@ -3059,17 +3059,42 @@ exports.updatePurchase = async (req, res) => {
         await purchase.save();
 
         await AuditLog.create({
+            ...hierarchy,
             userId: req.user.userId,
             role: req.user.role,
-
             module: "Purchase",
             action: "Update",
+            documentId: purchase._id,
 
-            description: `Purchase updated - GRN: ${purchase.grnNo}`,
+            oldData: null,
 
-            referenceId: purchase._id,
+            newData: {
+                grnNo: purchase.grnNo,
+                invoiceNo: purchase.invoiceNo,
+                invoiceDate: purchase.invoiceDate,
+                grnDate: purchase.grnDate,
 
-            ...hierarchy
+                supplierId: purchase.supplierId,
+                supplierName: purchase.supplierName,
+                supplierEmail: purchase.supplierEmail,
+
+                invoiceAmount: purchase.invoiceAmount,
+
+                freightCharge: purchase.freightCharge,
+                packagingCharge: purchase.packagingCharge,
+
+                billDiscountPercent: purchase.billDiscountPercent,
+                billDiscountAmount: purchase.billDiscountAmount,
+
+                supplierBillAmount: purchase.supplierBillAmount,
+                paidAmount: purchase.paidAmount,
+                balanceAmount: purchase.balanceAmount,
+                paymentStatus: purchase.paymentStatus,
+
+                totalAmount: purchase.totalAmount,
+
+                items: purchase.items
+            }
         });
 
         return res.status(200).json({

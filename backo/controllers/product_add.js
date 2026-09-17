@@ -428,7 +428,7 @@ exports.bulkProductCreate = async (req, res) => {
                         row: i + 1,
                         name,
                         barcode: barcodeCode,
-                       message: "GST rate must be none, 0, 5, 12, 18 or 40"
+                        message: "GST rate must be none, 0, 5, 12, 18 or 40"
                     });
 
                     continue;
@@ -847,37 +847,26 @@ exports.bulkProductCreate = async (req, res) => {
 
 
             createdProducts.push({
-                row,
-
-                productId: product._id,
-
-                itemCode: product.itemCode,
-
-                name: product.name,
-
-                productType: product.productType,
-
-                categoryId: product.categoryId,
-
-                categoryName: product.categoryName,
-
-                openingStock: product.stock,
-
-                barcode: createdBarcode
-                    ? {
-                        id: createdBarcode._id,
-                        code: createdBarcode.code,
-                        qty: createdBarcode.qty
-                    }
-                    : null,
+                ...product.toObject(),
 
                 priceLevel: createdPriceLevel
                     ? {
                         id: createdPriceLevel._id,
-                        pricingType:
-                            createdPriceLevel.pricingType
+                        pricingType: createdPriceLevel.pricingType
                     }
-                    : null
+                    : null,
+
+                barcodeCount: createdBarcode ? 1 : 0,
+
+                barcodes: createdBarcode
+                    ? [
+                        {
+                            barcodeId: createdBarcode._id,
+                            barcode: createdBarcode.code,
+                            productId: product._id
+                        }
+                    ]
+                    : []
             });
         }
 
