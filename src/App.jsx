@@ -27,8 +27,8 @@ import SessionManagement from "./Pages/SessionHandling/SessionManagement";
 import Payment from "./Pages/Payment/Payment";
 import StockManagement from "./Pages/Stock/StockManagement";
 import GST from "./Pages/GST/GST";
-import BillReports from "./Pages/GST/PurchaseReport";
-import SalesBillWiseAudit from "./Pages/GST/BillReports/BillReports";
+import BillItemWise from "./Pages/Reports/BillItemWise";
+
 import Analytics from "./Pages/Analytics/Analytics";
 import Offers from "./Pages/Offers/Offers";
 import CreateOffer from "./Pages/Offers/CreateOffer";
@@ -84,6 +84,7 @@ import HelpSupport from "./Pages/Settings/Help/HelpSupport";
 import BulkAction from "./Pages/Items/BulkAction";
 import PurchaseReport from "./Pages/GST/PurchaseReport";
 import SalesGSTReport from "./Pages/GST/BillReports/BillReports";
+import BillWise from "./Pages/Reports/BillWise.jsx";
 
 function MainLayout() {
   const [collapsed, setCollapsed] =
@@ -171,6 +172,16 @@ function MainLayout() {
           <Route
             path="/Purchase-reports"
             element={<PurchaseReport />}
+          />
+
+           <Route
+            path="/Bill-itemwise"
+            element={<BillItemWise />}
+          />
+
+           <Route
+            path="/Billwise"
+            element={<BillWise />}
           />
 
           <Route

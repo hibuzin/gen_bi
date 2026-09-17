@@ -164,6 +164,16 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
         { name: lang === "ta" ? "அதிகம் விற்பனையாகும் பொருட்கள்" : "sales return", path: "/sales-return" },
       ],
     },
+
+    {
+      name: lang === "ta" ? "பொருட்கள்" : "Reports",
+      icon: <FaBox />,
+      children: [
+        { name: lang === "ta" ? "இன்றைய விற்பனை" : "Item wise reports ", path: "/Bill-itemwise" },
+        { name: lang === "ta" ? "அதிகம் விற்பனையாகும் பொருட்கள்" : "Bill wise  reports", path: "/Billwise" },
+      ],
+    },
+
     {
       name: lang === "ta" ? "பொருட்கள்" : "PAYMENT",
       path: "/payment",
