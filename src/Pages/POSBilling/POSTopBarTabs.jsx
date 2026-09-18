@@ -5,6 +5,7 @@ import { API } from "../../constants/api";
 function POSTopBarTabs({
   navigate,
   token,
+  exitEditMode,
   holdTabs,
   setHoldTabs,
   activeHoldId,
@@ -267,27 +268,29 @@ function POSTopBarTabs({
     <>
       {/* TOP BAR */}
 
+      {/* TOP BAR */}
       <div className={styles.topBar}>
-        <button className={styles.exitBtn} onClick={() => navigate(-1)}>
-          <span>←</span> Exit pos <kbd>[CTRL+ESC]</kbd>
-        </button>
-
-        <div className={styles.topTitleSection}>
-          <span className={styles.topTitle}>
-            {isEditMode ? "Edit POS Bill" : "POS Billing"}
-          </span>
+        <div className={styles.topBarLeft}>
+          <button
+            className={styles.exitBtn}
+            onClick={() => navigate(-1)}
+          >
+            <span>←</span>
+            Exit POS
+            <kbd>[CTRL+ESC]</kbd>
+          </button>
 
           <span className={styles.billCount}>
             {isEditMode
               ? `Editing: ${editInvoiceNo || ""}`
               : `Current Bill: #${Number(latestBillCount || 0) + 1}`}
           </span>
+        </div>
 
-          <span className={styles.topDivider}></span>
+        <div className={styles.topBarRight}>
+          <span className={styles.recentLabel}>Recent Bills</span>
 
           <div className={styles.recentBills}>
-            <span className={styles.recentLabel}>Recent Bills</span>
-
             {recentBills.map((bill) => (
               <button
                 key={bill.billId}
@@ -300,30 +303,35 @@ function POSTopBarTabs({
             ))}
           </div>
         </div>
-
-        <div className={styles.dateTime}>
-          {formattedDate} - {formattedTime}
-        </div>
       </div>
 
       {/* ── Tab Row ── */}
       <div className={styles.tabsRow}>
         {holdTabs.map((tab) => (
           <div
-            key={tab.holdId}
-            className={
-              activeHoldId === tab.holdId
-                ? styles.tabActive
-                : styles.tabHold
-            }
-            onClick={() => resumeHoldBill(tab.holdId)}
+            className={!activeHoldId ? styles.tabActive : styles.tabHold}
+            onClick={() => {
+              if (isEditMode) exitEditMode();
+              setActiveHoldId(null);
+              setScannedItems([]);
+              setCodes([]);
+              setScanCode("");
+            }}
           >
-            <span>Billing screen {tab.screenNo}</span>
+            <span>Billing screen {holdTabs.length + 1}</span>
 
             <button
               type="button"
               className={styles.closeTabBtn}
-              onClick={(e) => closeHoldTab(e, tab)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isEditMode) exitEditMode();
+                setActiveHoldId(null);
+                setScannedItems([]);
+                setCodes([]);
+                setScanCode("");
+                clearCustomer();
+              }}
             >
               ×
             </button>

@@ -502,6 +502,12 @@ function POSBilling() {
     setCustomerTotalSpend(0);
   };
 
+  const exitEditMode = () => {
+    setIsEditMode(false);
+    setEditBillId(null);
+    navigate("/posbilling", { replace: true, state: null });
+  };
+
   const generateBill = async () => {
     if (scannedItems.length === 0) {
       showToast("Please add at least one item", "error");
@@ -655,21 +661,18 @@ function POSBilling() {
       if (!res.ok) throw new Error(data.message || "Bill generation failed");
 
       setBill(data.data);
-      setLatestBillCount(Number(data?.data?.billCount || 0));
       showToast(
-        isEditMode
-          ? "Bill updated successfully"
-          : "Bill generated successfully",
+        isEditMode ? "Bill updated successfully" : "Bill generated successfully",
         "success"
       );
+
       if (isEditMode) {
         setIsEditMode(false);
         setEditBillId(null);
-
-        navigate("/posbilling", {
-          replace: true,
-          state: null,
-        });
+        navigate("/posbilling", { replace: true, state: null });
+        await fetchLatestBillCount();
+      } else {
+        setLatestBillCount(Number(data?.data?.billCount || 0));
       }
       setShowBillingPopup(false);
 
@@ -983,6 +986,7 @@ function POSBilling() {
 
         isEditMode={isEditMode}
         editInvoiceNo={location.state?.editBill?.invoiceNo}
+        exitEditMode={exitEditMode}
       />
 
       {/* ── Main Body ── */}
