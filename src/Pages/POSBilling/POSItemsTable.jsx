@@ -19,6 +19,7 @@ function POSItemsTable({
   const itemInputRefs = useRef([]);
   const qtyInputRefs = useRef([]);
   const scanInputRef = useRef(null);
+  const dropdownItemRefs = useRef({});
   const [rowSearches, setRowSearches] = useState({});
   const [rowSearchResults, setRowSearchResults] = useState({});
   const [activeRowIndex, setActiveRowIndex] = useState(null);
@@ -646,32 +647,50 @@ function POSItemsTable({
 
                             if (e.key === "ArrowDown") {
                               e.preventDefault();
+                              e.stopPropagation();
 
                               if (results.length === 0) return;
 
+                              const nextIndex =
+                                currentIndex < results.length - 1
+                                  ? currentIndex + 1
+                                  : 0;
+
                               setHighlightedIndexes((prev) => ({
                                 ...prev,
-                                [idx]:
-                                  currentIndex < results.length - 1
-                                    ? currentIndex + 1
-                                    : 0,
+                                [idx]: nextIndex,
                               }));
+
+                              setTimeout(() => {
+                                dropdownItemRefs.current[`${idx}-${nextIndex}`]?.scrollIntoView({
+                                  block: "nearest",
+                                });
+                              }, 0);
 
                               return;
                             }
 
                             if (e.key === "ArrowUp") {
                               e.preventDefault();
+                              e.stopPropagation();
 
                               if (results.length === 0) return;
 
+                              const nextIndex =
+                                currentIndex > 0
+                                  ? currentIndex - 1
+                                  : results.length - 1;
+
                               setHighlightedIndexes((prev) => ({
                                 ...prev,
-                                [idx]:
-                                  currentIndex > 0
-                                    ? currentIndex - 1
-                                    : results.length - 1,
+                                [idx]: nextIndex,
                               }));
+
+                              setTimeout(() => {
+                                dropdownItemRefs.current[`${idx}-${nextIndex}`]?.scrollIntoView({
+                                  block: "nearest",
+                                });
+                              }, 0);
 
                               return;
                             }
@@ -711,6 +730,9 @@ function POSItemsTable({
                               {rowSearchResults[idx].map((product, productIndex) => (
                                 <div
                                   key={`${product.productId}-${product.itemCode}`}
+                                  ref={(el) => {
+                                    dropdownItemRefs.current[`${idx}-${productIndex}`] = el;
+                                  }}
                                   className={`${styles.rowDropdownItem} ${highlightedIndexes[idx] === productIndex
                                     ? styles.rowDropdownItemActive
                                     : ""

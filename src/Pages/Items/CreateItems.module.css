@@ -198,7 +198,7 @@
   bottom: 0;
   background: #fff;
   font-weight: 600;
-  color: #4C3CCE;
+  color: var(--button-bg);
   border-top: 1px solid #e5e7eb;
 }
 
