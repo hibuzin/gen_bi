@@ -605,7 +605,7 @@ exports.createPurchase = async (req, res) => {
 
 
 
-      
+
 
         let finalBillDiscount = 0;
 
@@ -715,7 +715,7 @@ exports.createPurchase = async (req, res) => {
         totalAmount = round2(recalculatedTotal);
 
 
-          const purchaseTotalAmount = round2(
+        const purchaseTotalAmount = round2(
             totalAmount +
             finalFreightCharge +
             finalPackagingCharge
@@ -827,7 +827,7 @@ exports.createPurchase = async (req, res) => {
         });
 
         const gstPurchaseItems = purchase.items.filter(
-            (item) => item.taxPercentage !== "none"
+            (item) => item.isNonGst !== true
         );
 
         if (gstPurchaseItems.length > 0) {
@@ -1032,6 +1032,7 @@ exports.createPurchase = async (req, res) => {
                 }
             });
         }
+
 
 
         const responsePurchase = await Purchase.findById(purchase._id)
@@ -2056,6 +2057,8 @@ exports.getPurchases = async (req, res) => {
 
                 invoiceNo: purchase.invoiceNo,
 
+                invoiceAmount: round2(purchase.invoiceAmount || 0),
+
                 invoiceDate: purchase.invoiceDate
                     ? new Date(purchase.invoiceDate)
                         .toLocaleDateString("en-GB")
@@ -2069,6 +2072,9 @@ exports.getPurchases = async (req, res) => {
                     : "",
 
                 totalAmount: round2(purchase.totalAmount || 0),
+
+                grnAmount: round2(purchase.totalAmount || 0),
+
                 totalGrossAmount: Math.round((totalGrossAmount + Number.EPSILON) * 100) / 100,
                 totalTaxAmount: Math.round((totalTaxAmount + Number.EPSILON) * 100) / 100,
 
@@ -2209,6 +2215,8 @@ exports.getPurchaseById = async (req, res) => {
 
                 invoiceNo: purchase.invoiceNo,
 
+                invoiceAmount: round2(purchase.invoiceAmount || 0),
+
                 invoiceDate: purchase.invoiceDate
                     ? new Date(purchase.invoiceDate)
                         .toLocaleDateString("en-GB")
@@ -2222,6 +2230,9 @@ exports.getPurchaseById = async (req, res) => {
                     : "",
 
                 totalAmount: round2(purchase.totalAmount || 0),
+
+                grnAmount: round2(purchase.totalAmount || 0),
+
                 totalGrossAmount: round2(totalGrossAmount),
                 totalTaxAmount: round2(totalTaxAmount),
 
@@ -3014,6 +3025,9 @@ exports.updatePurchase = async (req, res) => {
 
         purchase.supplierBillAmount = finalSupplierBillAmount;
         purchase.paidAmount = finalPaidAmount;
+
+        const oldPaidAmount = Number(purchase.paidAmount || 0);
+
         purchase.balanceAmount = balanceAmount;
         purchase.paymentStatus = paymentStatus;
         let finalDueDate = purchase.DueDate;
@@ -3045,32 +3059,65 @@ exports.updatePurchase = async (req, res) => {
 
         if (
             finalPaidAmount > 0 &&
-            finalPaidAmount !== purchase.paidAmount
+            finalPaidAmount !== oldPaidAmount
         ) {
             purchase.paymentHistory.push({
-                amount: finalPaidAmount,
+                amount: finalPaidAmount - oldPaidAmount,
                 paymentType: "cash",
                 note: "Purchase updated"
             });
         }
 
+
         Object.assign(purchase, supplierData);
 
         await purchase.save();
 
-        await AuditLog.create({
-            userId: req.user.userId,
-            role: req.user.role,
+        await AuditLog.findOneAndUpdate(
+            {
+                documentId: purchase._id,
+                superAdminId: hierarchy.superAdminId,
+                module: "Purchase"
+            },
+            {
+                $set: {
+                    userId: req.user.userId,
+                    role: req.user.role,
+                    action: "Update",
 
-            module: "Purchase",
-            action: "Update",
+                    newData: {
+                        grnNo: purchase.grnNo,
+                        invoiceNo: purchase.invoiceNo,
+                        invoiceDate: purchase.invoiceDate,
+                        grnDate: purchase.grnDate,
 
-            description: `Purchase updated - GRN: ${purchase.grnNo}`,
+                        supplierId: purchase.supplierId,
+                        supplierName: purchase.supplierName,
+                        supplierEmail: purchase.supplierEmail,
 
-            referenceId: purchase._id,
+                        invoiceAmount: purchase.invoiceAmount,
 
-            ...hierarchy
-        });
+                        freightCharge: purchase.freightCharge,
+                        packagingCharge: purchase.packagingCharge,
+
+                        billDiscountPercent: purchase.billDiscountPercent,
+                        billDiscountAmount: purchase.billDiscountAmount,
+
+                        supplierBillAmount: purchase.supplierBillAmount,
+                        paidAmount: purchase.paidAmount,
+                        balanceAmount: purchase.balanceAmount,
+                        paymentStatus: purchase.paymentStatus,
+
+                        totalAmount: purchase.totalAmount,
+
+                        items: purchase.items
+                    }
+                }
+            },
+            {
+                new: true
+            }
+        );
 
         return res.status(200).json({
             success: true,
