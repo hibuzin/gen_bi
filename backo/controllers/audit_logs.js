@@ -1203,13 +1203,21 @@ exports.getBillWiseItemAudit = async (req, res) => {
 
                     itemDiscountAmount: gstItemDiscount,
 
-                    billDiscountAmount: 0,
+                    billDiscountAmount: Number(
+                        auditData.summary?.billDiscountAmount || 0
+                    ),
 
-                    billDiscountPercentage: 0,
+                    billDiscountPercentage: Number(
+                        auditData.summary?.billDiscountPercentage || 0
+                    ),
 
-                    loyaltyDiscount: 0,
+                    loyaltyDiscount: Number(
+                        auditData.summary?.loyaltyDiscount || 0
+                    ),
 
-                    grandTotal: gstGrandTotal
+                    grandTotal: Number(
+                        auditData.summary?.grandTotal || 0
+                    )
                 },
 
                 paymentMethod:
