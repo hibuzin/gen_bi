@@ -139,6 +139,7 @@ function POSBilling() {
         ),
 
         qty: Number(item.qty || 1),
+        originalQty: Number(item.qty || 1),
 
         discountPercent:
           Number(item.discountPercent || 0),
@@ -414,14 +415,14 @@ function POSBilling() {
         return {
           ...item,
 
-         stock: Number(
-  stockItem.totalAvailableQty ??
-  stockItem.availableQty ??
-  stockItem.currentStock ??
-  stockItem.stock ??
-  stockItem.quantity ??
-  0
-),
+          stock: Number(
+            stockItem.totalAvailableQty ??
+            stockItem.availableQty ??
+            stockItem.currentStock ??
+            stockItem.stock ??
+            stockItem.quantity ??
+            0
+          ),
 
           sellingPrice: Number(
             item.sellingPrice ??

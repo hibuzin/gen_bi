@@ -424,6 +424,11 @@ function Item() {
         sellingPrice:
           fullItem.sellingPrice ?? "",
 
+        unit:
+          fullItem.unit ||
+          fullItem.unitType ||
+          "",
+
         barcode:
           fullItem.barcode ||
           fullItem.barcodeNumber ||
@@ -519,6 +524,8 @@ function Item() {
 
       sellingPrice:
         numberValue(editProduct.sellingPrice),
+
+      unit: editProduct.unit || "",
 
       barcode:
         editProduct.barcode?.trim() || "",
@@ -1166,6 +1173,21 @@ function Item() {
                   value={editProduct.sellingPrice ?? ""}
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className={styles.field}>
+                <label>Unit</label>
+
+                <select
+                  name="unit"
+                  value={editProduct.unit || ""}
+                  onChange={handleChange}
+                >
+                  <option value="">Select unit</option>
+                  <option value="pcs">pcs</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                </select>
               </div>
 
               <div className={styles.field}>

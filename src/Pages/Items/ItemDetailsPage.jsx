@@ -206,6 +206,11 @@ function ItemDetails() {
                 sellingPrice:
                     fullItem.sellingPrice ?? "",
 
+                unit:
+                    fullItem.unit ||
+                    fullItem.unitType ||
+                    "",
+
                 barcode:
                     fullItem.barcode ||
                     fullItem.barcodeNumber ||
@@ -250,6 +255,7 @@ function ItemDetails() {
                 mrp: Number(editProduct.mrp),
                 costPrice: Number(editProduct.costPrice),
                 sellingPrice: Number(editProduct.sellingPrice),
+                unit: editProduct.unit || "",
                 barcode: editProduct.barcode,
             };
 
@@ -533,6 +539,17 @@ function ItemDetails() {
                                 </div>
 
                                 <div className={styles.profileRow}>
+                                    <span className={styles.lbl}>Unit</span>
+                                    <span className={styles.val}>
+                                        {getValue(
+                                            item.unit,
+                                            product.unit,
+                                            firstStock.unit
+                                        )}
+                                    </span>
+                                </div>
+
+                                <div className={styles.profileRow}>
                                     <span className={styles.lbl}>Stock</span>
                                     <span className={styles.val}>
                                         {getValue(product.currentStock, product.stock, firstStock.availableQty, 0)}
@@ -775,6 +792,21 @@ function ItemDetails() {
                                 <div className={styles.field}>
                                     <label>Selling price</label>
                                     <input type="text" name="sellingPrice" value={editProduct.sellingPrice || ""} onChange={handleEditChange} />
+                                </div>
+
+                                <div className={styles.field}>
+                                    <label>Unit</label>
+
+                                    <select
+                                        name="unit"
+                                        value={editProduct.unit || ""}
+                                        onChange={handleEditChange}
+                                    >
+                                        <option value="">Select unit</option>
+                                        <option value="pcs">pcs</option>
+                                        <option value="kg">kg</option>
+                                        <option value="g">g</option>
+                                    </select>
                                 </div>
 
                                 <div className={styles.field}>

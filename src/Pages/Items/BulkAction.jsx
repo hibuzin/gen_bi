@@ -554,151 +554,154 @@ function BulkAction() {
   // Submit Bulk Products
   // --------------------------------------------------
 
-const submitBulk = async () => {
-  if (isSubmitting) return;
+  const submitBulk = async () => {
+    if (isSubmitting) return;
 
-  try {
-    setIsSubmitting(true);
+    try {
+      setIsSubmitting(true);
 
-    const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-    const products = data
-      .filter((row) =>
-        row.some((cell) => String(cell).trim() !== "")
-      )
-      .map((row) => ({
-        name: row[0]?.trim() || "",
-        brand: row[1]?.trim() || "",
-        description: row[2]?.trim() || "",
+      const products = data
+        .filter((row) =>
+          row.some((cell) => String(cell).trim() !== "")
+        )
+        .map((row) => ({
+          name: row[0]?.trim() || "",
+          brand: row[1]?.trim() || "",
+          description: row[2]?.trim() || "",
 
-        categoryId: row[3] || "",
+          categoryId: row[3] || "",
 
-        hsnCode: row[4]?.trim() || "",
+          hsnCode: row[4]?.trim() || "",
 
-        gstRate: Number(row[5] || 0),
-        mrp: Number(row[6] || 0),
+          gstRate:
+            String(row[5] || "").trim().toLowerCase() === "none"
+              ? "none"
+              : Number(row[5] || 0),
+          mrp: Number(row[6] || 0),
 
-        unit: row[7]?.trim() || "",
+          unit: row[7]?.trim() || "",
 
-        unitValue:
-          row[8] !== undefined &&
-          String(row[8]).trim() !== ""
-            ? Number(row[8])
-            : undefined,
+          unitValue:
+            row[8] !== undefined &&
+              String(row[8]).trim() !== ""
+              ? Number(row[8])
+              : undefined,
 
-        costPrice: Number(row[9] || 0),
-        sellingPrice: Number(row[10] || 0),
-        openingStock: Number(row[11] || 0),
-        lowStockQty: Number(row[12] || 0),
+          costPrice: Number(row[9] || 0),
+          sellingPrice: Number(row[10] || 0),
+          openingStock: Number(row[11] || 0),
+          lowStockQty: Number(row[12] || 0),
 
-        barcode: row[13]?.trim() || "",
-      }));
+          barcode: row[13]?.trim() || "",
+        }));
 
-    if (products.length === 0) {
-      alert("Please enter at least one product");
-      return;
-    }
+      if (products.length === 0) {
+        alert("Please enter at least one product");
+        return;
+      }
 
-    // ============================================
-    // BATCH UPLOAD
-    // ============================================
+      // ============================================
+      // BATCH UPLOAD
+      // ============================================
 
-    const BATCH_SIZE = 500;
+      const BATCH_SIZE = 500;
 
-    let totalCreated = 0;
-    let totalErrors = 0;
+      let totalCreated = 0;
+      let totalErrors = 0;
 
-    for (let i = 0; i < products.length; i += BATCH_SIZE) {
-      const batch = products.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < products.length; i += BATCH_SIZE) {
+        const batch = products.slice(i, i + BATCH_SIZE);
 
-      console.log(
-        `Uploading ${i + 1} - ${Math.min(
-          i + BATCH_SIZE,
-          products.length
-        )} of ${products.length}`
+        console.log(
+          `Uploading ${i + 1} - ${Math.min(
+            i + BATCH_SIZE,
+            products.length
+          )} of ${products.length}`
+        );
+
+        const res = await fetch(API.createBulkProduct, {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+
+          body: JSON.stringify({
+            products: batch,
+          }),
+        });
+
+        // Don't blindly call res.json()
+        const contentType = res.headers.get("content-type");
+
+        let result;
+
+        if (contentType?.includes("application/json")) {
+          result = await res.json();
+        } else {
+          const text = await res.text();
+
+          console.error("Server returned non-JSON:", text);
+
+          throw new Error(
+            `Server error (${res.status}) while uploading batch`
+          );
+        }
+
+        console.log("Batch response:", result);
+
+        if (!res.ok || !result.success) {
+          console.error("Batch failed:", result);
+
+          throw new Error(
+            result.message ||
+            `Batch upload failed with status ${res.status}`
+          );
+        }
+
+        totalCreated += result.createdCount || 0;
+        totalErrors += result.errorCount || 0;
+      }
+
+      // ============================================
+      // SUCCESS
+      // ============================================
+
+      alert(
+        `Bulk product upload completed!\n\n` +
+        `Total: ${products.length}\n` +
+        `Created: ${totalCreated}\n` +
+        `Errors: ${totalErrors}`
       );
 
-      const res = await fetch(API.createBulkProduct, {
-        method: "POST",
+      setData(
+        Array.from(
+          { length: INITIAL_ROWS },
+          createRow
+        )
+      );
 
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-
-        body: JSON.stringify({
-          products: batch,
-        }),
-      });
-
-      // Don't blindly call res.json()
-      const contentType = res.headers.get("content-type");
-
-      let result;
-
-      if (contentType?.includes("application/json")) {
-        result = await res.json();
-      } else {
-        const text = await res.text();
-
-        console.error("Server returned non-JSON:", text);
-
-        throw new Error(
-          `Server error (${res.status}) while uploading batch`
-        );
+      if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
       }
 
-      console.log("Batch response:", result);
+      setScrollTop(0);
 
-      if (!res.ok || !result.success) {
-        console.error("Batch failed:", result);
+    } catch (error) {
+      console.error("Bulk submit error:", error);
 
-        throw new Error(
-          result.message ||
-            `Batch upload failed with status ${res.status}`
-        );
-      }
-
-      totalCreated += result.createdCount || 0;
-      totalErrors += result.errorCount || 0;
-    }
-
-    // ============================================
-    // SUCCESS
-    // ============================================
-
-    alert(
-      `Bulk product upload completed!\n\n` +
-      `Total: ${products.length}\n` +
-      `Created: ${totalCreated}\n` +
-      `Errors: ${totalErrors}`
-    );
-
-    setData(
-      Array.from(
-        { length: INITIAL_ROWS },
-        createRow
-      )
-    );
-
-    if (containerRef.current) {
-      containerRef.current.scrollTop = 0;
-    }
-
-    setScrollTop(0);
-
-  } catch (error) {
-    console.error("Bulk submit error:", error);
-
-    alert(
-      error.message ||
+      alert(
+        error.message ||
         "Error while adding products"
-    );
+      );
 
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // --------------------------------------------------
   // Render
@@ -910,6 +913,7 @@ const submitBulk = async () => {
                                 }
                               >
                                 <option value="">Select GST</option>
+                                <option value="none">None</option>
                                 <option value="0">0%</option>
                                 <option value="5">5%</option>
                                 <option value="12">12%</option>

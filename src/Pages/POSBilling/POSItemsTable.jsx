@@ -260,14 +260,52 @@ function POSItemsTable({
   };
 
   // QUANTITY
+
   const updateQty = (rowIndex, value) => {
     const onlyNumber = value.replace(/[^0-9.]/g, "");
 
     setScannedItems((prev) => {
       const updatedItems = prev.map((item, index) => {
-       
         if (index !== rowIndex) {
           return item;
+        }
+
+        const currentStock = Number(item.stock || 0);
+        const originalQty = Number(item.originalQty || 0);
+        const enteredQty = Number(onlyNumber || 0);
+
+        // EDIT BILL:
+        // Current stock 0 இருந்தாலும், பழைய bill qty-க்குள் reduce செய்ய allow.
+        if (originalQty > 0 && currentStock === 0) {
+          if (enteredQty > originalQty) {
+            showToast(
+              `Maximum ${originalQty} ${getUnit(item)} allowed for ${item.productName}`,
+              "error"
+            );
+
+            return {
+              ...item,
+              qty: originalQty,
+            };
+          }
+
+          return {
+            ...item,
+            qty: onlyNumber,
+          };
+        }
+
+        // NORMAL BILL / STOCK AVAILABLE
+        if (enteredQty > currentStock) {
+          showToast(
+            `Only ${currentStock} ${getUnit(item)} available for ${item.productName}`,
+            "error"
+          );
+
+          return {
+            ...item,
+            qty: currentStock,
+          };
         }
 
         if (item.stockStatus?.toLowerCase().includes("low")) {
@@ -280,7 +318,6 @@ function POSItemsTable({
         };
       });
 
-      // All rows qty அடிப்படையில் codes rebuild
       const updatedCodes = updatedItems.flatMap((item) => {
         const qty = Number(item.qty || 0);
         const barcode = item.barcode || item.itemCode;
@@ -297,6 +334,7 @@ function POSItemsTable({
       return updatedItems;
     });
   };
+
 
   // Dis amount
   const updateDiscountAmount = (rowIndex, value) => {
@@ -778,7 +816,7 @@ function POSItemsTable({
                       ? `${Number(item.stock).toFixed(2)} ${getUnit(item)}`
                       : ""}
                   </td>
-                 
+
 
                   <td>
                     {item ? (

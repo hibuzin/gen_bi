@@ -81,6 +81,7 @@ function Sales() {
             <th>Sub total</th>
             <th>Total gst</th>
             <th>Total discount</th>
+            <th>Profit</th>
             <th>Total sales</th>
           </tr>
         </thead>
@@ -106,6 +107,7 @@ function Sales() {
                   <td>{formatAmount(data?.subTotal)}</td>
                   <td>{formatAmount(data?.totalGST)}</td>
                   <td>{formatAmount(data?.totalDiscount)}</td>
+                  <td>{formatAmount(data?.profitAmount)}</td>
                   <td className={styles.salesCell}>
                     {formatAmount(data?.totalSales)}
                   </td>
