@@ -14,13 +14,27 @@ const CashRegister = require("../models/cashregister");
 const AuditLog = require("../models/audit_log");
 
 const getNextInvoiceNo = async (superAdminId) => {
-    const result = await counter.findOneAndUpdate(
-        { name: `invoice_${superAdminId}` },
-        { $inc: { seq: 1 } },
-        { returnDocument: "after", upsert: true }
-    );
+    while (true) {
+        const result = await counter.findOneAndUpdate(
+            { name: `invoice_${superAdminId}` },
+            { $inc: { seq: 1 } },
+            {
+                returnDocument: "after",
+                upsert: true
+            }
+        );
 
-    return `INV-${String(result.seq).padStart(5, "0")}`;
+        const invoiceNo = `INV-${String(result.seq).padStart(5, "0")}`;
+
+        const existingBill = await Bill.findOne({
+            invoiceNo,
+            superAdminId
+        });
+
+        if (!existingBill) {
+            return invoiceNo;
+        }
+    }
 };
 
 const getNextBillCount = async (superAdminId) => {
@@ -36,6 +50,7 @@ const getNextBillCount = async (superAdminId) => {
 
 
 exports.createBill = async (req, res) => {
+
     try {
 
         const {
@@ -3104,7 +3119,7 @@ exports.salescheck = async (req, res) => {
         result.totalDiscount = Number(Number(result.totalDiscount || 0).toFixed(2));
         result.subTotal = Number(Number(result.subTotal || 0).toFixed(2));
         result.profitAmount = Number(Number(result.profitAmount || 0).toFixed(2));
-        
+
         result.profitPercentage = result.subTotal > 0
             ? Number(
                 ((result.profitAmount / result.subTotal) * 100).toFixed(2)
