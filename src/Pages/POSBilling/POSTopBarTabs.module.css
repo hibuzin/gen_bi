@@ -156,18 +156,21 @@
 
 .recentBillBtn {
   flex-shrink: 0;
-  border: 1px solid #d7d7d7;
-  background: #fff;
-  color: #333;
+  border: 1px solid #b7d2d9;
+  background: #f0f9f8;
+  color: #056574 ;
   border-radius: 5px;
   padding: 5px 9px;
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
+  font-weight: 550;
+  transition: 0.15s ease;
 }
 
 .recentBillBtn:hover {
-  border-color: #1a5e67;
-  color: #1a5e67;
-  background: #f8ffff;
+  background: #fffbdc;
+  border-color: #d8d09a;
+  color: #111827;
+  transform: translateY(-1px);
 }

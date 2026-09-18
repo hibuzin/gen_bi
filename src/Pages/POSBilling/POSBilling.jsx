@@ -25,8 +25,15 @@ function POSBilling() {
   const [isEditMode, setIsEditMode] = useState(false);
   const token = localStorage.getItem("token");
   const [scanCode, setScanCode] = useState("");
-  const [codes, setCodes] = useState([]);
-  const [scannedItems, setScannedItems] = useState([]);
+  const [codes, setCodes] = useState(() => {
+    const saved = localStorage.getItem(`pos_draft_codes_${token}`);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [scannedItems, setScannedItems] = useState(() => {
+    const saved = localStorage.getItem(`pos_draft_items_${token}`);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "success" });
@@ -62,6 +69,7 @@ function POSBilling() {
   const [billDiscountAmount, setBillDiscountAmount] = useState("");
   const [customerWhatsapp, setCustomerWhatsapp] = useState("");
   const [latestBillCount, setLatestBillCount] = useState(0);
+  const [recentBillsRefresh, setRecentBillsRefresh] = useState(0);
   const [chequeDetails, setChequeDetails] = useState({
     chequeNo: "",
     chequeDate: "",
@@ -78,6 +86,20 @@ function POSBilling() {
     upiId: "",
     transactionId: "",
   });
+
+  useEffect(() => {
+    if (!token || location.state?.editBill?.billId) return;
+
+    localStorage.setItem(
+      `pos_draft_codes_${token}`,
+      JSON.stringify(codes)
+    );
+
+    localStorage.setItem(
+      `pos_draft_items_${token}`,
+      JSON.stringify(scannedItems)
+    );
+  }, [token, codes, scannedItems, location.state]);
 
   const [cardDetails, setCardDetails] = useState({
     cardType: "",
@@ -97,7 +119,11 @@ function POSBilling() {
   useEffect(() => {
     const editBill = location.state?.editBill;
 
-    if (!editBill?.billId) return;
+    if (!editBill?.billId) {
+      setIsEditMode(false);
+      setEditBillId(null);
+      return;
+    }
 
     setIsEditMode(true);
     setEditBillId(editBill.billId);
@@ -502,12 +528,6 @@ function POSBilling() {
     setCustomerTotalSpend(0);
   };
 
-  const exitEditMode = () => {
-    setIsEditMode(false);
-    setEditBillId(null);
-    navigate("/posbilling", { replace: true, state: null });
-  };
-
   const generateBill = async () => {
     if (scannedItems.length === 0) {
       showToast("Please add at least one item", "error");
@@ -661,18 +681,22 @@ function POSBilling() {
       if (!res.ok) throw new Error(data.message || "Bill generation failed");
 
       setBill(data.data);
+      setLatestBillCount(Number(data?.data?.billCount || 0));
+      setRecentBillsRefresh((prev) => prev + 1);
       showToast(
-        isEditMode ? "Bill updated successfully" : "Bill generated successfully",
+        isEditMode
+          ? "Bill updated successfully"
+          : "Bill generated successfully",
         "success"
       );
-
       if (isEditMode) {
         setIsEditMode(false);
         setEditBillId(null);
-        navigate("/posbilling", { replace: true, state: null });
-        await fetchLatestBillCount();
-      } else {
-        setLatestBillCount(Number(data?.data?.billCount || 0));
+
+        navigate("/posbilling", {
+          replace: true,
+          state: null,
+        });
       }
       setShowBillingPopup(false);
 
@@ -693,6 +717,8 @@ function POSBilling() {
 
       setCodes([]);
       setScannedItems([]);
+      localStorage.removeItem(`pos_draft_codes_${token}`);
+      localStorage.removeItem(`pos_draft_items_${token}`);
       setScanCode("");
       setActiveHoldId(null);
       clearCustomer();
@@ -986,7 +1012,7 @@ function POSBilling() {
 
         isEditMode={isEditMode}
         editInvoiceNo={location.state?.editBill?.invoiceNo}
-        exitEditMode={exitEditMode}
+        recentBillsRefresh={recentBillsRefresh}
       />
 
       {/* ── Main Body ── */}

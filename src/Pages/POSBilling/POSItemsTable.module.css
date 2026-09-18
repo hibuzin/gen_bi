@@ -2,7 +2,7 @@
   flex: 2;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid #ecf0f1 ; 
   overflow: hidden;
 }
 
@@ -26,7 +26,7 @@
   margin-top: 10px;
   overflow-y: auto;
   overflow-x: auto;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e9edee ; 
   border-radius: 6px;
   background: #fff;
 }
@@ -101,7 +101,7 @@
 }
 
 .table tbody tr:hover {
-  background: #f1f0fc;
+  background: #f3fdfe ;
 }
 
 .tableWrap::-webkit-scrollbar {
@@ -137,7 +137,7 @@
 }
 
 .table tbody tr:hover .cellInput {
-  background: #f1f0fc;
+  background: #f3fdfe ;
 }
 
 .cellInput:focus {
@@ -174,11 +174,11 @@
 }
 
 .rowDropdownItemActive {
-  background: #f1f0fc;
+  background: #e4f8fb ; 
 }
 
 .rowDropdownItemActive strong {
-  color: #4c3cce;
+  color: #056574 ; 
 }
 
 .rowSearchBox {
@@ -209,7 +209,7 @@
 }
 
 .rowDropdownItem:hover {
-  background: #f6f8fa;
+  background: #edfcfe ;
 }
 
 .rowDropdownItem p {

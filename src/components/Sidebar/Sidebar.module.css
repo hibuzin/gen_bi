@@ -117,7 +117,7 @@
   border: none;
   border-radius: 18px;
 
-  background: #036666;
+  background: #044d58 ;
   color: #ffffff;
 
   font-size: 12px;
@@ -218,9 +218,12 @@
 }
 
 .item:hover {
-  background: #106161;
+  background: #075460;
 }
 
+.item:hover::before {
+  background: #055966;
+}
 
 
 
@@ -240,14 +243,7 @@
   background: transparent;
 }
 
-/* Full-width hover */
-.item:hover::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: #106161;
-  z-index: 0;
-}
+
 
 
 /* Keep icon/text above background */
@@ -259,20 +255,18 @@
 .active {
   position: relative;
   overflow: hidden;
-
   border-radius: 9px;
   margin: 2px 0 2px 0;
 
-
-  background: linear-gradient(
-    90deg,
-    #036666 0%,
-    #087d78 55%,
-    #0b9189 100%
-  );
-
+ background: linear-gradient(
+  90deg,
+  #03434d 0%,
+  #056574 35%,
+  #056574 65%,
+  #03434d 100%
+);
   box-shadow:
-    0 0 8px rgba(41, 206, 178, 0.20),
+    0 0 8px rgba(5, 101, 116, 0.20),
     inset 0 0 12px rgba(255, 255, 255, 0.05);
 
   color: #ffffff;
@@ -342,12 +336,7 @@
 }
 
 .subItem:hover {
-  background: #106161;
-  color: #ffffff;
-}
-
-.subItem.active {
-  background: #106161;
+  background: #045562;
   color: #ffffff;
 }
 
@@ -409,7 +398,7 @@
 .bottomSettings {
   padding: 14px;
 
-  background-color: #036666;
+  background-color: #035566;
   border-top:
     1px solid rgba(255,255,255,0.08);
 
@@ -437,6 +426,8 @@
 
 /* ===== SETTINGS SIDEBAR ===== */
 
+
+
 .settingsSidebar {
   background: #ffffff;
 }
@@ -444,55 +435,65 @@
 .settingsDivider {
   height: 2px;
   margin: 12px 16px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(5, 101, 116, 0.12);
 }
 
+/* Settings text */
 .settingsSidebar .item,
 .settingsSidebar .subItem,
 .settingsSidebar .settingsText,
 .settingsSidebar .menuItem span,
 .settingsSidebar .text {
-  color: #111827;
+  color: #056574;
 }
 
 .settingsSidebar .icon {
-  color: #111827;
+  color: #056574;
   font-size: var(--sidebar-icon);
-  
 }
 
 .settingsSidebar .arrow {
-  color: #6b7280;
+  color: #056574;
 }
 
 .settingsSidebar .businessText h4 {
-  color: #111827;
+  color: #056574;
 }
 
 .settingsSidebar .businessText p {
-  color: #6b7280;
+  color: #5f858a;
 }
 
 .settingsSidebar .settingsDivider {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(5, 101, 116, 0.12);
 }
 
 .settingsSidebar .bottomSettings {
   background: #ffffff;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid rgba(5, 101, 116, 0.12);
 }
 
+/* Settings hover */
 .settingsSidebar .item:hover,
 .settingsSidebar .settingsButton:hover,
 .settingsSidebar .subItem:hover {
-  background: #106161;
+  background: #056574;
 }
 
+/* Active settings item */
 .settingsSidebar .active {
-  background: #106161;
+  background: linear-gradient(
+    90deg,
+    #03434d 0%,
+    #056574 35%,
+    #087583 65%,
+    #0a8490 100%
+  );
+
   color: #ffffff;
 }
 
+/* Hover + active text/icon */
 .settingsSidebar .item:hover .menuItem span,
 .settingsSidebar .item:hover .icon,
 .settingsSidebar .item:hover .arrow,
@@ -504,20 +505,19 @@
   color: #ffffff;
 }
 
-
-
+/* Settings heading */
 .menuHeading {
   margin: 16px 18px 8px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
+  color: rgba(5, 101, 116, 0.55);
   user-select: none;
 }
 
 .settingsSidebar .menuHeading {
-  color: #6b7280;
+  color: #056574;
 }
 
 .collapsed .menuHeading {
