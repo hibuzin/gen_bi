@@ -123,3 +123,40 @@
 .tabAdd:hover {
   background: #eff6ff;
 }
+
+.topDivider {
+  width: 1px;
+  height: 24px;
+  background: #d6d6d6;
+  margin: 0 8px;
+}
+
+.recentBills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.recentLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #777;
+  white-space: nowrap;
+}
+
+.recentBillBtn {
+  border: 1px solid #d7d7d7;
+  background: #fff;
+  color: #333;
+  border-radius: 5px;
+  padding: 5px 9px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.recentBillBtn:hover {
+  border-color: #1a5e67;
+  color: #1a5e67;
+}

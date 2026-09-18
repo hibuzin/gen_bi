@@ -18,10 +18,11 @@ function POSTopBarTabs({
   showToast,
   clearCustomer,
   latestBillCount,
-   isEditMode,
+  isEditMode,
   editInvoiceNo,
 }) {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [recentBills, setRecentBills] = useState([]);
 
   // DATE & TIME
   const formattedDate = `${String(
@@ -50,6 +51,64 @@ function POSTopBarTabs({
     setCodes([]);
     setScanCode("");
     clearCustomer?.();
+  };
+
+  const fetchRecentBills = async () => {
+    try {
+      const res = await fetch(`${API.bill}?period=today&gst=all`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to fetch recent bills");
+      }
+
+      const bills = Array.isArray(data.data) ? data.data : [];
+
+      setRecentBills(
+        bills
+          .filter((bill) => bill.billId)
+          .slice(0, 5)
+      );
+    } catch (err) {
+      console.log("Recent bills fetch error:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecentBills();
+  }, []);
+
+  const handleRecentBillClick = async (bill) => {
+    try {
+      const res = await fetch(`${API.bill}/${bill.billId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to load bill");
+      }
+
+      const selectedBill = data.data;
+
+      navigate("/posbilling", {
+        state: {
+          editBill: selectedBill,
+        },
+      });
+    } catch (err) {
+      showToast(err.message, "error");
+    }
   };
 
   // HOLD BILL
@@ -214,16 +273,33 @@ function POSTopBarTabs({
         </button>
 
         <div className={styles.topTitleSection}>
-  <span className={styles.topTitle}>
-    {isEditMode ? "Edit POS Bill" : "POS Billing"}
-  </span>
+          <span className={styles.topTitle}>
+            {isEditMode ? "Edit POS Bill" : "POS Billing"}
+          </span>
 
-  <span className={styles.billCount}>
-    {isEditMode
-      ? `Editing: ${editInvoiceNo || ""}`
-      : `Current Bill: #${Number(latestBillCount || 0) + 1}`}
-  </span>
-</div>
+          <span className={styles.billCount}>
+            {isEditMode
+              ? `Editing: ${editInvoiceNo || ""}`
+              : `Current Bill: #${Number(latestBillCount || 0) + 1}`}
+          </span>
+
+          <span className={styles.topDivider}></span>
+
+          <div className={styles.recentBills}>
+            <span className={styles.recentLabel}>Recent Bills</span>
+
+            {recentBills.map((bill) => (
+              <button
+                key={bill.billId}
+                type="button"
+                className={styles.recentBillBtn}
+                onClick={() => handleRecentBillClick(bill)}
+              >
+                {bill.invoiceNo || `#${bill.billCount}`}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className={styles.dateTime}>
           {formattedDate} - {formattedTime}
@@ -282,10 +358,10 @@ function POSTopBarTabs({
         </div>
 
         {!isEditMode && (
-  <div className={styles.tabAdd} onClick={holdBill}>
-    + Hold bill & create another
-  </div>
-)}
+          <div className={styles.tabAdd} onClick={holdBill}>
+            + Hold bill & create another
+          </div>
+        )}
       </div>
     </>
   );
