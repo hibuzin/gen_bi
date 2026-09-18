@@ -128,117 +128,65 @@ exports.allstockcheck = async (req, res) => {
                 status = "Low Stock";
             }
 
-            // -----------------------------------------
-            // BARCODE PRODUCTS
-            // -----------------------------------------
 
-            if (productBarcodes.length > 0) {
-                for (const barcode of productBarcodes) {
-                    data.push({
-                        productId: product._id,
-
-                        productName:
-                            product.name || "",
-
-                        itemCode:
-                            product.itemCode || "",
-
-                        barcode:
-                            barcode.code || null,
-
-                        // Product.stock is the actual stock
-                        totalQty: currentStock,
-
-                        currentStock,
-
-
-                        soldQty: 0,
-
-                        actualStockQty:
-                            currentStock,
-
-                        totalStockText,
-
-                        stockValue,
-
-                        mrp:
-                            product.mrp || 0,
-
-                        costPrice,
-
-                        sellingPrice:
-                            product.sellingPrice || 0,
-
-                        gst:
-                            product.gstRate ?? "none",
-
-                        unit,
-
-                        unitValue,
-
-                        unitText:
-                            `${safeUnitValue} ${unit}`,
-
-                        status
-                    });
-                }
-            }
 
             // -----------------------------------------
-            // NORMAL PRODUCTS WITHOUT BARCODE
+            // ONE ROW PER PRODUCT
+            // PRODUCT.STOCK IS SINGLE SOURCE OF TRUTH
             // -----------------------------------------
 
-            else {
-                data.push({
-                    productId: product._id,
+            const displayBarcode =
+                productBarcodes.length > 0
+                    ? productBarcodes[0].code
+                    : null;
 
-                    productName:
-                        product.name || "",
+            data.push({
+                productId: product._id,
 
-                    itemCode:
-                        product.itemCode || "",
+                productName:
+                    product.name || "",
 
-                    barcode: null,
+                itemCode:
+                    product.itemCode || "",
 
-                    totalQty: currentStock,
+                barcode: displayBarcode,
 
+                totalQty: currentStock,
+
+                currentStock,
+
+                soldQty: 0,
+
+                actualStockQty:
                     currentStock,
 
-                    soldQty: 0,
+                totalStockText,
 
-                    actualStockQty:
-                        currentStock,
+                stockValue,
 
-                    totalStockText,
+                mrp:
+                    product.mrp || 0,
 
-                    stockValue,
+                costPrice,
 
-                    mrp:
-                        product.mrp || 0,
+                sellingPrice:
+                    product.sellingPrice || 0,
 
-                    costPrice,
+                gst:
+                    product.gstRate ?? "none",
 
-                    sellingPrice:
-                        product.sellingPrice || 0,
+                unit,
 
-                    gst:
-                        product.gstRate ?? "none",
+                unitValue,
 
-                    unit,
+                unitText:
+                    `${safeUnitValue} ${unit}`,
 
-                    unitValue,
-
-                    unitText:
-                        `${safeUnitValue} ${unit}`,
-
-                    status
-                });
-            }
+                status
+            });
         }
 
-        // -----------------------------------------
-        // SORT
-        // -----------------------------------------
+        
 
         data.sort((a, b) => {
             return String(b.productId).localeCompare(
