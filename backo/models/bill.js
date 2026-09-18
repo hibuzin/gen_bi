@@ -106,7 +106,6 @@ const billSchema = new mongoose.Schema({
 
     invoiceNo: {
         type: String,
-        unique: true,
         sparse: true
     },
 
@@ -257,4 +256,11 @@ const billSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+
+billSchema.index(
+    { superAdminId: 1, invoiceNo: 1 },
+    { unique: true }
+);
+
 module.exports = mongoose.models.Bill || mongoose.model("Bill", billSchema);
+
