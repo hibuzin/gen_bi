@@ -375,28 +375,40 @@ function POSBilling() {
   }, []);
 
   useEffect(() => {
-    if (!bill || !shouldPrintRef.current) return;
+  if (!bill || !shouldPrintRef.current) return;
 
-    const timer = setTimeout(() => {
-      window.print();
-    }, 600);
+  const printReceipt = async () => {
+    try {
+      // Give React time to render the receipt
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-    const afterPrint = () => {
+      if (!window.electronAPI?.printReceipt) {
+        throw new Error("Electron print API is not available");
+      }
+
+      await window.electronAPI.printReceipt();
+
+      showToast("Bill sent to printer", "success");
+
       shouldPrintRef.current = false;
       setBill(null);
 
       setTimeout(() => {
         itemInputRefs.current[0]?.focus();
       }, 100);
-    };
+    } catch (error) {
+      console.error("Print error:", error);
+      showToast(error.message || "Printing failed", "error");
 
-    window.addEventListener("afterprint", afterPrint);
+      shouldPrintRef.current = false;
+      setBill(null);
+    }
+  };
 
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("afterprint", afterPrint);
-    };
-  }, [bill]);
+  printReceipt();
+}, [bill]);
+
+
 
   useEffect(() => {
     setTimeout(() => {
@@ -1100,10 +1112,7 @@ function POSBilling() {
             setBill(null);
           }}
           onConfirm={confirmPayment}
-          onPrint={() => {
-            window.print();
-            showToast("Bill sent to printer", "success");
-          }}
+          onPrint={() => {}}
           loading={loading}
         />
       )}

@@ -33,7 +33,8 @@ function ThermalReceipt({
             <div className={styles.receipt}>
                 <div className={styles.receiptHeader}>
                     <p className={styles.receiptShopName}>AR TRADERS</p>
-                    <p className={styles.receiptWelcome}>mount road, Tenkasi</p>
+                    <p className={styles.receiptWelcome}>23/11, Mount road, Tenkasi-627811</p>
+                    <p className={styles.receiptWelcome}>Mobile: 8668170419 / 9791845135</p>
                 </div>
 
                 <div className={styles.dashedLine} />
@@ -135,79 +136,91 @@ function ThermalReceipt({
                         </strong>
                     </div>
 
-                    <div className={styles.paymentInfoRow}>
-                        <div>
-                            <span>Paid</span>
-                            <strong>
-                                ₹{" "}
-                                {Number(
-                                    receiptData.paidAmount ??
-                                    receiptData.receivedAmount ??
-                                    receiptData.summary?.paidAmount ??
-                                    0
-                                ).toFixed(2)}
-                            </strong>
-                        </div>
-
-
-                        <div>
-                            <span>Balance</span>
-                            <strong>
-                                ₹{" "}
-                                {Number(
-                                    receiptData.balanceAmount ??
-                                    receiptData.summary?.balanceAmount ??
-                                    0
-                                ).toFixed(2)}
-                            </strong>
-                        </div>
-                    </div>
-
-                    <div className={styles.taxTable}>
-                        <div className={`${styles.taxRow} ${styles.taxHeader}`}>
-                            <span>CGST</span>
-                            <span>SGST</span>
-                            <span>GST</span>
-                            <span>Amt</span>
-                        </div>
-
-                        <div className={styles.taxRow}>
-
-                            <span>
-                                {Number(receiptData.summary?.cgst || 0).toFixed(2)}
-                            </span>
-
-                            <span>
-                                {Number(receiptData.summary?.sgst || 0).toFixed(2)}
-                            </span>
-
-                            <span>
-                                {Number(receiptData.summary?.totalGST || 0).toFixed(2)}
-                            </span>
-
-                            <span>
-                                {Number(receiptData.summary?.subTotal || 0).toFixed(2)}
-                            </span>
 
 
 
-                        </div>
-                    </div>
 
-                    <div className={styles.savedAmountRow}>
-                        <span>You have Saved</span>
 
-                        <strong>
-                            ₹{" "}
-                            {Number(
-                                receiptData.summary?.offerPrice ??
-                                receiptData.summary?.offerAmount ??
-                                receiptData.summary?.offerDiscount ??
-                                receiptData.summary?.discountAmount ??
-                                0
-                            ).toFixed(2)}
-                        </strong>
-                    </div>
+
+                    {/*
+<div className={styles.paymentInfoRow}>
+    <div>
+        <span>Paid</span>
+        <strong>
+            ₹{" "}
+            {Number(
+                receiptData.paidAmount ??
+                receiptData.receivedAmount ??
+                receiptData.summary?.paidAmount ??
+                0
+            ).toFixed(2)}
+        </strong>
+    </div>
+
+    <div>
+        <span>Balance</span>
+        <strong>
+            ₹{" "}
+            {Number(
+                receiptData.balanceAmount ??
+                receiptData.summary?.balanceAmount ??
+                0
+            ).toFixed(2)}
+        </strong>
+    </div>
+</div>
+
+<div className={styles.taxTable}>
+    <div className={`${styles.taxRow} ${styles.taxHeader}`}>
+        <span>CGST</span>
+        <span>SGST</span>
+        <span>GST</span>
+        <span>Amt</span>
+    </div>
+
+    <div className={styles.taxRow}>
+        <span>
+            {Number(receiptData.summary?.cgst || 0).toFixed(2)}
+        </span>
+
+        <span>
+            {Number(receiptData.summary?.sgst || 0).toFixed(2)}
+        </span>
+
+        <span>
+            {Number(receiptData.summary?.totalGST || 0).toFixed(2)}
+        </span>
+
+        <span>
+            {Number(receiptData.summary?.subTotal || 0).toFixed(2)}
+        </span>
+    </div>
+</div>
+
+<div className={styles.savedAmountRow}>
+    <span>You have Saved</span>
+
+    <strong>
+        ₹{" "}
+        {Number(
+            receiptData.summary?.offerPrice ??
+            receiptData.summary?.offerAmount ??
+            receiptData.summary?.offerDiscount ??
+            receiptData.summary?.discountAmount ??
+            0
+        ).toFixed(2)}
+    </strong>
+</div>
+*/}
+
+
+
+
+
+
+
+
+
                 </div>
 
                 <div className={styles.receiptFooter}>

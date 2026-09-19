@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
@@ -142,6 +142,49 @@ mainWindow.loadFile(indexPath);
     console.log("[Renderer]", message);
   });
 }
+
+ipcMain.handle("print-receipt", async (event) => {
+  const webContents = event.sender;
+
+  const printers = await webContents.getPrintersAsync();
+
+  const defaultPrinter = printers.find(
+    (printer) => printer.isDefault
+  );
+
+  if (!defaultPrinter) {
+    throw new Error("No default printer found.");
+  }
+
+  return new Promise((resolve, reject) => {
+    webContents.print(
+      {
+        silent: true,
+        deviceName: defaultPrinter.name,
+        printBackground: true,
+        usePrinterDefaultPageSize: true,
+      },
+      (success, failureReason) => {
+        if (!success) {
+          reject(
+            new Error(failureReason || "Printing failed")
+          );
+          return;
+        }
+
+        console.log(
+          "[Electron] Receipt printed using:",
+          defaultPrinter.name
+        );
+
+        resolve({
+          success: true,
+          printer: defaultPrinter.name,
+        });
+      }
+    );
+  });
+});
 
 app.whenReady().then(async () => {
   startBackend();
