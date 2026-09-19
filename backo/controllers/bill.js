@@ -1690,6 +1690,7 @@ exports.calculateBill = async (req, res) => {
 
             items.push({
                 productId: product._id,
+                 itemCode: product.itemCode,
                 barcodeId: barcode?._id,
                 barcode: barcode?.code,
 
@@ -2228,13 +2229,10 @@ exports.getBills = async (req, res) => {
             superAdminId: hierarchy.superAdminId
         };
 
-        // =========================
-        // DATE FILTER
-        // =========================
+
 
         const now = new Date();
 
-        // Convert date to IST boundaries
         const getISTDate = (date) => {
             return new Date(
                 new Date(date).toLocaleString("en-US", {
@@ -3253,7 +3251,8 @@ exports.getBillById = async (req, res) => {
             superAdminId: hierarchy.superAdminId
         })
             .populate("customerId", "name phone customerId")
-            .populate("createdBy", "name email role");
+            .populate("createdBy", "name email role")
+            .populate("items.productId", "itemCode");
 
         if (!bill) {
             return res.status(404).json({
@@ -3322,7 +3321,10 @@ exports.getBillById = async (req, res) => {
             paidAmount: formattedBill.paidAmount,
             pendingAmount: formattedBill.pendingAmount,
 
-            items: formattedBill.items,
+            items: formattedBill.items.map(item => ({
+                ...item,
+                itemCode: item.productId?.itemCode || null
+            })),
 
             summary: {
                 totalAmount: Number(

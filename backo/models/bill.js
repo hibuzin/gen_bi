@@ -262,5 +262,6 @@ billSchema.index(
     { unique: true }
 );
 
+
 module.exports = mongoose.models.Bill || mongoose.model("Bill", billSchema);
 
