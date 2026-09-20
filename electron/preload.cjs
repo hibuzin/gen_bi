@@ -1,5 +1,12 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
+console.log("========== PRELOAD ==========");
+console.log("[PRELOAD] preload.cjs loaded");
+console.log("=============================");
+
 contextBridge.exposeInMainWorld("electronAPI", {
-  printReceipt: () => ipcRenderer.invoke("print-receipt"),
+  printReceipt: () => {
+    console.log("[PRELOAD] printReceipt called");
+    return ipcRenderer.invoke("print-receipt");
+  },
 });

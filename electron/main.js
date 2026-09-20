@@ -13,89 +13,296 @@ let mainWindow;
 let backendProcess;
 
 
-const THERMAL_PRINTER_NAME = "RP3160 GOLD(U) 1";
+const THERMAL_PRINTER_NAMES = [
+  "RP3160 GOLD(U) 1",
+  "POS-58(copy of 5)",
+];
 
-ipcMain.handle("print-receipt", async () => {
-  if (!mainWindow || mainWindow.isDestroyed()) {
-    throw new Error("Main window is not available");
-  }
+ipcMain.handle("print-receipt", async (event) => {
+  console.log("\n");
+  console.log("==========================================");
+  console.log("[PRINT] PRINT REQUEST RECEIVED");
+  console.log("[PRINT] Time:", new Date().toISOString());
+  console.log("==========================================");
 
-  console.log("[PRINT] Looking for printer:", THERMAL_PRINTER_NAME);
+  try {
+    // -------------------------------------------------
+    // 1. CHECK WINDOW
+    // -------------------------------------------------
 
-  // Get printers installed/available to Electron
-  const printers =
-    await mainWindow.webContents.getPrintersAsync();
+    console.log("[PRINT] Step 1: Checking mainWindow...");
+
+    console.log("[PRINT] mainWindow exists:", !!mainWindow);
+
+    if (mainWindow) {
+      console.log(
+        "[PRINT] mainWindow destroyed:",
+        mainWindow.isDestroyed()
+      );
+    }
+
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      throw new Error("Main window is not available");
+    }
+
+    console.log("[PRINT] Step 1 SUCCESS");
+
+
+    // -------------------------------------------------
+    // 2. CHECK IPC SENDER
+    // -------------------------------------------------
+
+    console.log("[PRINT] Step 2: Checking IPC sender...");
+
+    console.log(
+      "[PRINT] Sender URL:",
+      event.sender.getURL()
+    );
+
+    console.log("[PRINT] Step 2 SUCCESS");
+
+
+    // -------------------------------------------------
+    // 3. FIND INSTALLED PRINTERS
+    // -------------------------------------------------
+
+    console.log("[PRINT] Step 3: Getting printers...");
+
+    console.log(
+      "[PRINT] Target printer:",
+      THERMAL_PRINTER_NAMES
+    );
+
+    const printers =
+      await mainWindow.webContents.getPrintersAsync();
+
+    console.log(
+      "[PRINT] Number of printers found:",
+      printers.length
+    );
+
+    console.log("[PRINT] ===== AVAILABLE PRINTERS =====");
+
+    printers.forEach((printer, index) => {
+      console.log(`[PRINT] Printer ${index + 1}:`);
+      console.log("   name:", printer.name);
+      console.log("   displayName:", printer.displayName);
+      console.log("   description:", printer.description);
+      console.log("   status:", printer.status);
+      console.log("   isDefault:", printer.isDefault);
+      console.log("------------------------------------");
+    });
+
+    console.log("[PRINT] =============================");
+
+
+    // -------------------------------------------------
+    // 4. FIND RP3160
+    // -------------------------------------------------
+
+   // -------------------------------------------------
+// 4. FIND PREFERRED THERMAL PRINTER
+// -------------------------------------------------
+
+console.log(
+  "[PRINT] Step 4: Searching preferred printers:",
+  THERMAL_PRINTER_NAMES
+);
+
+let printer = null;
+
+// Priority:
+// 1. RP3160 GOLD(U) 1
+// 2. POS-58(copy of 5)
+for (const preferredName of THERMAL_PRINTER_NAMES) {
 
   console.log(
-    "[PRINT] Available printers:",
-    printers.map((printer) => ({
-      name: printer.name,
-      displayName: printer.displayName,
-      status: printer.status,
-    }))
+    "[PRINT] Looking for:",
+    preferredName
   );
 
-  const printer = printers.find(
+  printer = printers.find(
     (p) =>
-      p.name === THERMAL_PRINTER_NAME ||
-      p.displayName === THERMAL_PRINTER_NAME
+      p.name === preferredName ||
+      p.displayName === preferredName
   );
 
-  if (!printer) {
-    throw new Error(
-      `Printer "${THERMAL_PRINTER_NAME}" not found. ` +
-      `Available printers: ${printers
-        .map((p) => p.name)
-        .join(", ")}`
+  if (printer) {
+
+    console.log(
+      "[PRINT] Found preferred printer:",
+      preferredName
     );
+
+    break;
   }
 
-  console.log("[PRINT] Using printer:", printer.name);
+  console.warn(
+    "[PRINT] Printer not available:",
+    preferredName
+  );
+}
 
-  return new Promise((resolve, reject) => {
-    mainWindow.webContents.print(
-      {
-        silent: true,
+if (!printer) {
 
-        // IMPORTANT:
-        // Electron expects the actual system device name.
-        deviceName: printer.name,
+  console.error(
+    "[PRINT] ❌ NONE OF THE PREFERRED PRINTERS FOUND"
+  );
 
-        printBackground: true,
+  console.error(
+    "[PRINT] Expected one of:",
+    THERMAL_PRINTER_NAMES
+  );
 
-        margins: {
-          marginType: "none",
-        },
+  console.error(
+    "[PRINT] Available printer names:",
+    printers.map((p) => p.name)
+  );
+
+  throw new Error(
+    `Thermal printer not found. Tried: ${THERMAL_PRINTER_NAMES.join(", ")}`
+  );
+}
+
+console.log("[PRINT] Step 4 SUCCESS");
+
+console.log("[PRINT] Selected printer:");
+console.log("[PRINT] name:", printer.name);
+console.log(
+  "[PRINT] displayName:",
+  printer.displayName
+);
+console.log("[PRINT] status:", printer.status);
+
+
+    // -------------------------------------------------
+    // 5. CHECK PAGE
+    // -------------------------------------------------
+
+    console.log("[PRINT] Step 5: Checking page...");
+
+    console.log(
+      "[PRINT] Current page:",
+      mainWindow.webContents.getURL()
+    );
+
+    console.log(
+      "[PRINT] Is loading:",
+      mainWindow.webContents.isLoading()
+    );
+
+    console.log("[PRINT] Step 5 SUCCESS");
+
+
+    // -------------------------------------------------
+    // 6. SEND PRINT
+    // -------------------------------------------------
+
+    console.log("[PRINT] Step 6: Calling webContents.print()");
+
+    console.log("[PRINT] Print options:", {
+      silent: true,
+      deviceName: printer.name,
+      printBackground: true,
+      margins: {
+        marginType: "none",
       },
-      (success, failureReason) => {
-        if (!success) {
-          console.error(
-            "[PRINT] Failed:",
+    });
+
+    return await new Promise((resolve, reject) => {
+
+      console.log(
+        "[PRINT] Sending job to Windows printer..."
+      );
+
+      mainWindow.webContents.print(
+        {
+          silent: true,
+          deviceName: printer.name,
+          printBackground: true,
+
+          margins: {
+            marginType: "none",
+          },
+        },
+
+        (success, failureReason) => {
+
+          console.log(
+            "[PRINT] webContents.print callback fired"
+          );
+
+          console.log(
+            "[PRINT] success:",
+            success
+          );
+
+          console.log(
+            "[PRINT] failureReason:",
             failureReason
           );
 
-          reject(
-            new Error(
-              failureReason || "Printing failed"
-            )
+          if (!success) {
+
+            console.error(
+              "[PRINT] ❌ PRINT FAILED"
+            );
+
+            console.error(
+              "[PRINT] Reason:",
+              failureReason
+            );
+
+            reject(
+              new Error(
+                failureReason ||
+                "Electron webContents.print failed"
+              )
+            );
+
+            return;
+          }
+
+          console.log(
+            "[PRINT] ✅ PRINT SUCCESS"
           );
 
-          return;
+          console.log(
+            "[PRINT] Printer:",
+            printer.name
+          );
+
+          console.log(
+            "=========================================="
+          );
+
+          resolve({
+            success: true,
+            printer: printer.name,
+          });
         }
+      );
+    });
 
-        console.log(
-          "[PRINT] Receipt sent successfully to:",
-          printer.name
-        );
+  } catch (error) {
 
-        resolve({
-          success: true,
-          printer: printer.name,
-        });
-      }
-    );
-  });
+    console.error("");
+    console.error("==========================================");
+    console.error("[PRINT] ❌ PRINT EXCEPTION");
+    console.error("[PRINT] Message:", error?.message);
+    console.error("[PRINT] Stack:", error?.stack);
+    console.error("==========================================");
+
+    throw error;
+  }
 });
+
+
+
+
+
+
+
 
 function startBackend() {
  const backendPath = app.isPackaged
