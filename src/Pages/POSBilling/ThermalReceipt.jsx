@@ -135,6 +135,8 @@ function ThermalReceipt({
                         </strong>
                     </div>
 
+                    {/*
+
                     <div className={styles.paymentInfoRow}>
                         <div>
                             <span>Paid</span>
@@ -208,6 +210,11 @@ function ThermalReceipt({
                             ).toFixed(2)}
                         </strong>
                     </div>
+
+
+                    */}
+
+                    
                 </div>
 
                 <div className={styles.receiptFooter}>

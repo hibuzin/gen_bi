@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
@@ -11,6 +11,91 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow;
 let backendProcess;
+
+
+const THERMAL_PRINTER_NAME = "RP3160 GOLD(U) 1";
+
+ipcMain.handle("print-receipt", async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    throw new Error("Main window is not available");
+  }
+
+  console.log("[PRINT] Looking for printer:", THERMAL_PRINTER_NAME);
+
+  // Get printers installed/available to Electron
+  const printers =
+    await mainWindow.webContents.getPrintersAsync();
+
+  console.log(
+    "[PRINT] Available printers:",
+    printers.map((printer) => ({
+      name: printer.name,
+      displayName: printer.displayName,
+      status: printer.status,
+    }))
+  );
+
+  const printer = printers.find(
+    (p) =>
+      p.name === THERMAL_PRINTER_NAME ||
+      p.displayName === THERMAL_PRINTER_NAME
+  );
+
+  if (!printer) {
+    throw new Error(
+      `Printer "${THERMAL_PRINTER_NAME}" not found. ` +
+      `Available printers: ${printers
+        .map((p) => p.name)
+        .join(", ")}`
+    );
+  }
+
+  console.log("[PRINT] Using printer:", printer.name);
+
+  return new Promise((resolve, reject) => {
+    mainWindow.webContents.print(
+      {
+        silent: true,
+
+        // IMPORTANT:
+        // Electron expects the actual system device name.
+        deviceName: printer.name,
+
+        printBackground: true,
+
+        margins: {
+          marginType: "none",
+        },
+      },
+      (success, failureReason) => {
+        if (!success) {
+          console.error(
+            "[PRINT] Failed:",
+            failureReason
+          );
+
+          reject(
+            new Error(
+              failureReason || "Printing failed"
+            )
+          );
+
+          return;
+        }
+
+        console.log(
+          "[PRINT] Receipt sent successfully to:",
+          printer.name
+        );
+
+        resolve({
+          success: true,
+          printer: printer.name,
+        });
+      }
+    );
+  });
+});
 
 function startBackend() {
  const backendPath = app.isPackaged
@@ -105,7 +190,7 @@ function createWindow() {
 icon: path.join(__dirname, "../build/icon.ico"),
     
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
     },

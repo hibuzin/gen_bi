@@ -365,38 +365,81 @@ function POSBilling() {
     );
   }, [location.state]);
 
-
-
-
-
   useEffect(() => {
     fetchStockList();
     fetchLatestBillCount();
   }, []);
 
+
+
+
+
   useEffect(() => {
-    if (!bill || !shouldPrintRef.current) return;
+  if (!bill || !shouldPrintRef.current) return;
 
-    const timer = setTimeout(() => {
-      window.print();
-    }, 600);
+  let cancelled = false;
 
-    const afterPrint = () => {
+  const printBill = async () => {
+    // Small delay so React finishes rendering ThermalReceipt.
+    await new Promise((resolve) =>
+      setTimeout(resolve, 300)
+    );
+
+    if (cancelled) return;
+
+    try {
+      if (!window.electronAPI?.printReceipt) {
+        throw new Error(
+          "Electron print API is not available"
+        );
+      }
+
+      const result =
+        await window.electronAPI.printReceipt();
+
+      console.log(
+        "Printed successfully:",
+        result
+      );
+
+      showToast(
+        "Bill printed successfully",
+        "success"
+      );
+    } catch (error) {
+      console.error(
+        "Silent print failed:",
+        error
+      );
+
+      showToast(
+        error?.message || "Printing failed",
+        "error"
+      );
+    } finally {
       shouldPrintRef.current = false;
-      setBill(null);
 
-      setTimeout(() => {
-        itemInputRefs.current[0]?.focus();
-      }, 100);
-    };
+      if (!cancelled) {
+        setBill(null);
 
-    window.addEventListener("afterprint", afterPrint);
+        setTimeout(() => {
+          itemInputRefs.current?.[0]?.focus();
+        }, 100);
+      }
+    }
+  };
 
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("afterprint", afterPrint);
-    };
-  }, [bill]);
+  printBill();
+
+  return () => {
+    cancelled = true;
+  };
+}, [bill]);
+
+
+
+
+
 
   useEffect(() => {
     setTimeout(() => {
@@ -1100,10 +1143,7 @@ function POSBilling() {
             setBill(null);
           }}
           onConfirm={confirmPayment}
-          onPrint={() => {
-            window.print();
-            showToast("Bill sent to printer", "success");
-          }}
+          
           loading={loading}
         />
       )}
