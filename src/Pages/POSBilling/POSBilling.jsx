@@ -419,14 +419,16 @@ function POSBilling() {
     } finally {
       shouldPrintRef.current = false;
 
-      if (!cancelled) {
-        setBill(null);
+       if (!cancelled) {
+    console.log("[PRINT] Keeping receipt mounted for 3 seconds");
 
-        setTimeout(() => {
-          itemInputRefs.current?.[0]?.focus();
-        }, 100);
-      }
-    }
+    setTimeout(() => {
+      console.log("[PRINT] Removing receipt from DOM");
+      setBill(null);
+    }, 3000);
+  }
+}
+    
   };
 
   printBill();
@@ -441,11 +443,7 @@ function POSBilling() {
 
 
 
-  useEffect(() => {
-    setTimeout(() => {
-      itemInputRefs.current[0]?.focus();
-    }, 100);
-  }, []);
+  
 
   const fetchStockList = async () => {
     try {
