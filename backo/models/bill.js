@@ -58,6 +58,11 @@ const billSchema = new mongoose.Schema({
 
             mrp: Number,
 
+            sellingPrice: {
+                type: Number,
+                default: 0
+            },
+
             appliedPriceLevel: {
                 type: String,
                 default: "normal"

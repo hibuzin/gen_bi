@@ -2211,9 +2211,6 @@ exports.searchCustomerBills = async (req, res) => {
 };
 
 
-
-
-
 exports.getBills = async (req, res) => {
     try {
         const hierarchy = attachHierarchy(req.user);
@@ -2474,7 +2471,7 @@ exports.getBills = async (req, res) => {
 
                     mrp: item.mrp,
 
-                    price: item.sellingPrice || item.price,
+                    price: item.sellingPrice ?? item.price ?? 0,
 
                     totalAmount: item.totalAmount,
                     discountPercent: item.discountPercent,
