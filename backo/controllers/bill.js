@@ -2226,13 +2226,10 @@ exports.getBills = async (req, res) => {
             superAdminId: hierarchy.superAdminId
         };
 
-        // =========================
-        // DATE FILTER
-        // =========================
 
         const now = new Date();
 
-        // Convert date to IST boundaries
+
         const getISTDate = (date) => {
             return new Date(
                 new Date(date).toLocaleString("en-US", {
@@ -2472,7 +2469,7 @@ exports.getBills = async (req, res) => {
 
                     mrp: item.mrp,
 
-                    price: item.sellingPrice || item.price,
+                    price: item.price,
 
                     totalAmount: item.totalAmount,
                     discountPercent: item.discountPercent,
@@ -2831,9 +2828,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                     name:
                         item.name,
 
-                    // =========================
-                    // QUANTITY
-                    // =========================
 
                     qty,
 
@@ -2851,9 +2845,6 @@ exports.getBillItemWiseReport = async (req, res) => {
 
                     totalUnitQty,
 
-                    // =========================
-                    // PRICE
-                    // =========================
 
                     mrp:
                         Number(item.mrp || 0),
@@ -3291,6 +3282,48 @@ exports.getBillById = async (req, res) => {
         const cgst = Number((totalGST / 2).toFixed(2));
         const sgst = Number((totalGST / 2).toFixed(2));
 
+        const itemsWithItemCode = await Promise.all(
+            formattedBill.items.map(async (item) => {
+                const product = await mongoose.model("Product").findById(
+                    item.productId
+                ).select("itemCode");
+
+                return {
+                    productId: item.productId,
+                    itemCode: product?.itemCode || "",
+
+                    barcodeId: item.barcodeId,
+                    barcode: item.barcode,
+
+                    name: item.name,
+
+                    qty: item.qty,
+                    freeQty: item.freeQty || 0,
+                    totalGivenQty: item.totalGivenQty || item.qty,
+
+                    unit: item.unit,
+                    unitValue: item.unitValue,
+                    unitText: item.unitText,
+                    totalkg: item.totalkg,
+
+                    mrp: item.mrp,
+
+                    price: item.price,
+
+                    totalAmount: item.totalAmount,
+                    discountAmount: item.discountAmount,
+
+                    gstRate: item.gstRate,
+                    gstAmount: item.gstAmount,
+
+                    finalPrice: item.finalPrice,
+
+                    appliedPriceLevel: item.appliedPriceLevel,
+                    appliedSlab: item.appliedSlab
+                };
+            })
+        );
+
         const response = {
             billId: formattedBill._id,
 
@@ -3320,7 +3353,7 @@ exports.getBillById = async (req, res) => {
             paidAmount: formattedBill.paidAmount,
             pendingAmount: formattedBill.pendingAmount,
 
-            items: formattedBill.items,
+            items: itemsWithItemCode,
 
             summary: {
                 totalAmount: Number(
@@ -3543,7 +3576,6 @@ exports.editBill = async (req, res) => {
 
             const price = Number(
                 billItem.sellingPrice ??
-                barcode.sellingPrice ??
                 product.sellingPrice ??
                 0
             );
@@ -3707,11 +3739,9 @@ exports.editBill = async (req, res) => {
                     )} ` +
                     `${barcode.unit || product.unit || "pcs"}`,
 
-                mrp: Number(barcode.mrp || 0),
+                mrp: Number(product.mrp || 0),
 
-                sellingPrice: price,
-                normalSellingPrice:
-                    Number(barcode.sellingPrice || 0),
+                price: price,
 
                 totalAmount: grossAmount,
 
@@ -4315,8 +4345,7 @@ exports.editBill = async (req, res) => {
                             mrp:
                                 Number(item.mrp || 0),
 
-                            rate:
-                                Number(item.sellingPrice || 0),
+                            rate: Number(item.price || 0),
 
                             gstRate:
                                 Number(item.gstRate || 0),
