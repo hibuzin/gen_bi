@@ -15,7 +15,8 @@ function CreateProduct() {
     gstRate: "",
     mrp: "",
     costPrice: "",
-    sellingPrice: "",
+    retailPrice: "",
+    wholesalePrice: "",
     openingStock: "",
     description: "",
     barcode: "",
@@ -40,7 +41,8 @@ function CreateProduct() {
   const gstRef = useRef(null);
   const mrpRef = useRef(null);
   const costRef = useRef(null);
-  const sellingRef = useRef(null);
+  const retailRef = useRef(null);
+  const wholesaleRef = useRef(null);
   const descriptionRef = useRef(null);
   const barcodeRef = useRef(null);
   const submitRef = useRef(null);
@@ -196,9 +198,9 @@ function CreateProduct() {
         lowStockQty: Number(form.lowStockQty || 0),
 
         costPrice: Number(form.costPrice || 0),
-        sellingPrice: Number(form.sellingPrice || 0),
+        retailPrice: Number(form.retailPrice || 0),
+        wholesalePrice: Number(form.wholesalePrice || 0),
 
-        // ⭐ IMPORTANT
         openingStock: Number(form.openingStock || 0),
 
         productType: form.productType,
@@ -268,7 +270,8 @@ function CreateProduct() {
         gstRate: "",
         mrp: "",
         costPrice: "",
-        sellingPrice: "",
+        retailPrice: "",
+        wholesalePrice: "",
         openingStock: "",
         lowStockQty: "",
         barcode: "",
@@ -455,15 +458,28 @@ function CreateProduct() {
             </div>
 
             <div className={styles.field}>
-              <label>Selling price</label>
+              <label>Retail price</label>
               <input
-                ref={sellingRef}
+                ref={retailRef}
                 type="text"
-                name="sellingPrice"
-                value={form.sellingPrice}
+                name="retailPrice"
+                value={form.retailPrice}
                 onChange={handleChange}
-                onKeyDown={(e) => handleKeyDown(e, barcodeRef)}
-                placeholder="Selling price"
+                onKeyDown={(e) => handleKeyDown(e, wholesaleRef)}
+                placeholder="Retail price"
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label>Wholesale price</label>
+              <input
+                ref={wholesaleRef}
+                type="text"
+                name="wholesalePrice"
+                value={form.wholesalePrice}
+                onChange={handleChange}
+                onKeyDown={(e) => handleKeyDown(e, descriptionRef)}
+                placeholder="Wholesale price"
               />
             </div>
 

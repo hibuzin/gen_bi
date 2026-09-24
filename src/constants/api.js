@@ -54,6 +54,7 @@ export const API = {
 
   // products
   products: `${BASE_URL}/productadd`,
+  productSearch: `${BASE_URL}/productadd/search`,
   createProduct: `${BASE_URL}/productadd/add`,
   createBulkProduct: `${BASE_URL}/productadd/bulk-add`,
   searchProduct: `${BASE_URL}/productadd/search`,

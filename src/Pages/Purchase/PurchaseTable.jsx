@@ -25,12 +25,6 @@ export default function PurchaseTable({
   registerCreateProduct,
 }) {
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const [products, setProducts] = useState([]);
-  const [productsLoading, setProductsLoading] = useState(true);
   const [rowSearches, setRowSearches] = useState({});
   const [rowSearchResults, setRowSearchResults] = useState({});
   const [activeRowIndex, setActiveRowIndex] = useState(null);
@@ -161,60 +155,56 @@ export default function PurchaseTable({
     return idx === -1 ? billItems.length : idx; // ellam full aana kadaisi-la push
   };
 
-  const searchProductsForRow = (rowIndex, value) => {
-    setRowSearches((prev) => ({
+ const searchProductsForRow = async (rowIndex, value) => {
+  setRowSearches((prev) => ({
+    ...prev,
+    [rowIndex]: value,
+  }));
+
+  setActiveRowIndex(rowIndex);
+
+  const searchValue = String(value || "").trim();
+
+  if (!searchValue) {
+    setRowSearchResults((prev) => ({
       ...prev,
-      [rowIndex]: value,
+      [rowIndex]: [],
     }));
+    return;
+  }
 
-    setActiveRowIndex(rowIndex);
+  try {
+    const res = await fetch(
+      `${API.productSearch}?search=${encodeURIComponent(searchValue)}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    const searchValue = String(value || "")
-      .trim()
-      .toLowerCase();
+    const data = await res.json();
 
-    if (!searchValue) {
-      setRowSearchResults((prev) => ({
-        ...prev,
-        [rowIndex]: [],
-      }));
-      return;
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Failed to search products");
     }
-
-    console.log("ALL PRODUCTS:", products);
-    console.log("SEARCH VALUE:", searchValue);
-
-    const filtered = products.filter((product) => {
-      const name = String(
-        product.productName ||
-        product.name ||
-        ""
-      ).toLowerCase();
-
-      const barcode = String(
-        product.barcode ||
-        product.itemCode ||
-        ""
-      ).toLowerCase();
-
-      const hsnCode = String(
-        product.hsnCode || ""
-      ).toLowerCase();
-
-      return (
-        name.includes(searchValue) ||
-        barcode.includes(searchValue) ||
-        hsnCode.includes(searchValue)
-      );
-    });
-
-    console.log("MATCHED PRODUCTS:", filtered);
 
     setRowSearchResults((prev) => ({
       ...prev,
-      [rowIndex]: filtered.slice(0, 20),
+      [rowIndex]: data.data || [],
     }));
-  };
+  } catch (error) {
+    console.error("Product search error:", error);
+
+    setRowSearchResults((prev) => ({
+      ...prev,
+      [rowIndex]: [],
+    }));
+
+    showToast("Failed to search products", "error");
+  }
+};
 
   const selectRowProduct = async (rowIndex, product) => {
     const updated = [...billItems];
