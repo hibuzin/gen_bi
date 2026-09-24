@@ -1127,7 +1127,9 @@ exports.searchProducts = async (req, res) => {
             gstRate: Number(product.gstRate || product.categoryId?.gstRate || 0),
 
             costPrice: Number(product.costPrice || 0),
-            sellingPrice: Number(product.sellingPrice || 0),
+            
+            retailPrice: Number(product.retailPrice || 0),
+            wholesalePrice: Number(product.wholesalePrice || 0),
 
             mrp:
                 product.mrps?.length > 0

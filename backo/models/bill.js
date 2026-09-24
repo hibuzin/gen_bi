@@ -58,9 +58,20 @@ const billSchema = new mongoose.Schema({
 
             mrp: Number,
 
-            sellingPrice: {
+            retailPrice: {
                 type: Number,
                 default: 0
+            },
+
+            wholesalePrice: {
+                type: Number,
+                default: 0
+            },
+
+            selectedPriceType: {
+                type: String,
+                enum: ["retail", "wholesale"],
+                default: "retail"
             },
 
             appliedPriceLevel: {

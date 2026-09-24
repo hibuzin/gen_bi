@@ -59,6 +59,9 @@ exports.createBill = async (req, res) => {
             isWalkInCustomer = false,
             customerId,
             redeemPoints = 0,
+
+            priceType = "retail",
+
             priceLevel = "normal",
 
             discountPercent,
@@ -86,7 +89,24 @@ exports.createBill = async (req, res) => {
         const hierarchy = attachHierarchy(req.user);
 
 
+        if (!["retail", "wholesale"].includes(priceType)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid priceType. Use retail or wholesale."
+            });
+        }
 
+        const getSelectedPrice = (product, priceType) => {
+            if (priceType === "retail") {
+                return Number(product.retailPrice || 0);
+            }
+
+            if (priceType === "wholesale") {
+                return Number(product.wholesalePrice || 0);
+            }
+
+            return 0;
+        };
 
         const invoiceNo = await getNextInvoiceNo(hierarchy.superAdminId);
 
@@ -144,14 +164,16 @@ exports.createBill = async (req, res) => {
                 });
             }
 
-            const normalSellingPrice = Number(
-                barcode?.sellingPrice ?? product.sellingPrice ?? 0
-            );
+            const normalPrice = getSelectedPrice(product, priceType);
 
+            if (normalPrice <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `${priceType === "retail" ? "Retail" : "Wholesale"} price not available for product: ${product.name}`
+                });
+            }
 
-            const billSellingPrice = normalSellingPrice;
-
-            let price = billSellingPrice;
+            let price = normalPrice;
             let slabPrice = null;
             let discountPerItem = 0;
             let totalDiscount = 0;
@@ -205,7 +227,13 @@ exports.createBill = async (req, res) => {
                 (grossAmount - itemDiscount).toFixed(2)
             );
 
-            const taxableAmount = Number((finalPrice / (1 + gstRate / 100)).toFixed(2));
+            const taxableAmount = Number(
+                (
+                    finalPrice /
+                    (1 + gstRateForCalculation / 100)
+                ).toFixed(2)
+            );
+
             const gstAmount = Number((finalPrice - taxableAmount).toFixed(2));
 
             subTotal += taxableAmount;
@@ -235,6 +263,9 @@ exports.createBill = async (req, res) => {
 
                 mrp: Number(barcode.mrp || 0),
 
+                retailPrice: Number(product.retailPrice || 0),
+                wholesalePrice: Number(product.wholesalePrice || 0),
+                selectedPriceType: priceType,
 
                 price: Number(price || 0),
 
@@ -262,7 +293,10 @@ exports.createBill = async (req, res) => {
                     productName: product.name || "",
                     barcode: barcode.code,
                     qty,
-                    sellingPrice: barcode.sellingPrice || 0,
+                    retailPrice: Number(product.retailPrice || 0),
+                    wholesalePrice: Number(product.wholesalePrice || 0),
+                    selectedPriceType: priceType,
+                    price: Number(price || 0),
                     gstRate,
                     gstAmount,
                     finalPrice
@@ -325,20 +359,16 @@ exports.createBill = async (req, res) => {
 
 
 
-            const hasBillSellingPrice =
-                billItem.sellingPrice !== undefined &&
-                billItem.sellingPrice !== null &&
-                billItem.sellingPrice !== "";
+            const normalPrice = getSelectedPrice(product, priceType);
 
-            const normalSellingPrice = Number(
-                barcode?.sellingPrice ?? product.sellingPrice ?? 0
-            );
+            if (normalPrice <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `${priceType === "retail" ? "Retail" : "Wholesale"} price not available for product: ${product.name}`
+                });
+            }
 
-            const billSellingPrice = hasBillSellingPrice
-                ? Number(billItem.sellingPrice)
-                : normalSellingPrice;
-
-            let price = billSellingPrice;
+            let price = normalPrice;
             let slabPrice = null;
             let discountPerItem = 0;
             let totalDiscount = 0;
@@ -401,9 +431,12 @@ exports.createBill = async (req, res) => {
                     });
 
                     if (slab) {
-                        slabPrice = Number(slab.price || normalSellingPrice);
+                        slabPrice = Number(slab.price || normalPrice);
 
-                        discountPerItem = Number((normalSellingPrice - slabPrice).toFixed(2));
+                        discountPerItem = Number(
+                            (normalPrice - slabPrice).toFixed(2)
+                        );
+
                         totalDiscount = Number((discountPerItem * qty).toFixed(2));
 
                         price = slabPrice;
@@ -525,6 +558,9 @@ exports.createBill = async (req, res) => {
                     barcode?.mrp ?? product.mrp ?? 0
                 ),
 
+                retailPrice: Number(product.retailPrice || 0),
+                wholesalePrice: Number(product.wholesalePrice || 0),
+                selectedPriceType: priceType,
 
                 price: Number(price || 0),
 
@@ -1061,11 +1097,13 @@ exports.createBill = async (req, res) => {
                                 mrp: Number(item.mrp || 0),
                                 rate,
 
-                                sellingPrice: Number(
-                                    item.sellingPrice ??
-                                    item.price ??
-                                    0
-                                ),
+                                retailPrice: Number(item.retailPrice || 0),
+
+                                wholesalePrice: Number(item.wholesalePrice || 0),
+
+                                selectedPriceType: item.selectedPriceType || priceType,
+
+                                price: Number(item.price || 0),
 
                                 price: Number(
                                     item.price ??
@@ -1322,6 +1360,9 @@ exports.calculateBill = async (req, res) => {
             items: billItems = [],
             customerId,
             redeemPoints = 0,
+
+            priceType = "retail",
+
             loyaltyPoints = 0,
             priceLevel = "normal",
             discountPercent = 0,
@@ -1342,6 +1383,26 @@ exports.calculateBill = async (req, res) => {
         }
 
         const hierarchy = attachHierarchy(req.user);
+
+
+        const getSelectedPrice = (product, priceType) => {
+            if (priceType === "retail") {
+                return Number(product.retailPrice || 0);
+            }
+
+            if (priceType === "wholesale") {
+                return Number(product.wholesalePrice || 0);
+            }
+
+            return null;
+        };
+
+        if (!["retail", "wholesale"].includes(priceType)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid priceType. Use retail or wholesale."
+            });
+        }
 
         let subTotal = 0;
         let totalGST = 0;
@@ -1392,7 +1453,14 @@ exports.calculateBill = async (req, res) => {
                 });
             }
 
-            const price = Number(barcode.sellingPrice || 0);
+            const price = getSelectedPrice(product, priceType);
+
+            if (price <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `${priceType === "retail" ? "Retail" : "Wholesale"} price not available for product: ${product.name}`
+                });
+            }
 
             const rawGstRate = barcode?.gstRate ?? product.gstRate ?? "none";
 
@@ -1488,8 +1556,12 @@ exports.calculateBill = async (req, res) => {
 
                 mrp: barcode.mrp || 0,
 
-                sellingPrice: price,
-                normalSellingPrice: price,
+                retailPrice: product.retailPrice || 0,
+                wholesalePrice: product.wholesalePrice || 0,
+
+                selectedPriceType: priceType,
+                price: price,
+                normalPrice: price,
 
                 appliedPriceLevel: "normal",
                 appliedSlab: null,
@@ -1545,22 +1617,16 @@ exports.calculateBill = async (req, res) => {
                 superAdminId: hierarchy.superAdminId
             });
 
-            const normalSellingPrice = Number(
-                barcode?.sellingPrice ??
-                product.sellingPrice ??
-                0
-            );
+            const normalPrice = getSelectedPrice(product, priceType);
 
-            const hasBillSellingPrice =
-                billItem.sellingPrice !== undefined &&
-                billItem.sellingPrice !== null &&
-                billItem.sellingPrice !== "";
+            if (normalPrice <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `${priceType === "retail" ? "Retail" : "Wholesale"} price not available for product: ${product.name}`
+                });
+            }
 
-            const billSellingPrice = hasBillSellingPrice
-                ? Number(billItem.sellingPrice)
-                : normalSellingPrice;
-
-            let price = billSellingPrice;
+            let price = normalPrice;
 
 
             let appliedPriceLevel = "normal";
@@ -1606,18 +1672,29 @@ exports.calculateBill = async (req, res) => {
                     });
 
                     if (slab) {
-                        const slabPrice = Number(slab.price || normalSellingPrice);
-                        discountPerItem = Number((normalSellingPrice - slabPrice).toFixed(2));
+                        const slabPrice = Number(slab.price || normalPrice);
+
+                        discountPerItem = Number(
+                            (normalPrice - slabPrice).toFixed(2)
+                        );
+
                         totalDiscount = Number((discountPerItem * qty).toFixed(2));
                         price = slabPrice;
                         appliedPriceLevel = "slab";
-                        appliedSlab = { minQty: slab.minQty, maxQty: slab.maxQty, slabPrice };
+                        appliedSlab = {
+                            minQty: slab.minQty,
+                            maxQty: slab.maxQty,
+                            price: slabPrice
+                        };
                     }
                 }
             }
 
             if (price <= 0) {
-                return res.status(400).json({ success: false, message: `Invalid selling price for product: ${product.name}` });
+                return res.status(400).json({
+                    success: false,
+                    message: `${priceType === "retail" ? "Retail" : "Wholesale"} price not available for product: ${product.name}`
+                });
             }
 
 
@@ -1717,8 +1794,12 @@ exports.calculateBill = async (req, res) => {
 
                 mrp: barcode?.mrp || 0,
 
-                sellingPrice: price,
-                normalSellingPrice,
+                retailPrice: product.retailPrice || 0,
+                wholesalePrice: product.wholesalePrice || 0,
+
+                selectedPriceType: priceType,
+                price: price,
+                normalPrice,
 
                 slabPrice:
                     appliedPriceLevel === "slab"
