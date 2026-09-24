@@ -257,17 +257,29 @@ exports.createPurchase = async (req, res) => {
                 });
             }
 
-            const sellingPrice = Number(
-                item.sellingPrice ??
-                product.sellingPrice ??
-                mrp ??
+            const retailPrice = Number(
+                item.retailPrice ??
+                product.retailPrice ??
                 0
             );
 
-            if (isNaN(sellingPrice) || sellingPrice < 0) {
+            const wholesalePrice = Number(
+                item.wholesalePrice ??
+                product.wholesalePrice ??
+                0
+            );
+
+            if (isNaN(retailPrice) || retailPrice < 0) {
                 return res.status(400).json({
                     success: false,
-                    message: "Invalid selling price"
+                    message: "Invalid retail price"
+                });
+            }
+
+            if (isNaN(wholesalePrice) || wholesalePrice < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid wholesale price"
                 });
             }
 
@@ -432,14 +444,29 @@ exports.createPurchase = async (req, res) => {
                 ? round2(amount / totalStockQty)
                 : 0;
 
-            const profitAmount = round2(sellingPrice - netcost);
-
-            const profitPercent = sellingPrice > 0
-                ? round2((profitAmount / sellingPrice) * 100)
+            const retailProfitAmount = retailPrice > 0
+                ? round2(retailPrice - netcost)
                 : 0;
 
-            const roiPercent = netcost > 0
-                ? round2((profitAmount / netcost) * 100)
+            const wholesaleProfitAmount = wholesalePrice > 0
+                ? round2(wholesalePrice - netcost)
+                : 0;
+
+            const retailProfitPercent = retailPrice > 0
+                ? round2((retailProfitAmount / retailPrice) * 100)
+                : 0;
+
+            const wholesaleProfitPercent = wholesalePrice > 0
+                ? round2((wholesaleProfitAmount / wholesalePrice) * 100)
+                : 0;
+
+            const retailRoiPercent =
+                retailPrice > 0 && netcost > 0
+                    ? round2((retailProfitAmount / netcost) * 100)
+                    : 0;
+
+            const wholesaleRoiPercent = wholesalePrice > 0 && netcost > 0
+                ? round2((wholesaleProfitAmount / netcost) * 100)
                 : 0;
 
 
@@ -471,8 +498,9 @@ exports.createPurchase = async (req, res) => {
                             code: barcode,
 
                             mrp: item.mrp || product.mrp || 0,
-                            costPrice: item.costPrice || product.costPrice || 0,
-                            sellingPrice: item.sellingPrice || product.sellingPrice || 0,
+
+                            retailPrice: item.retailPrice ?? product.retailPrice ?? 0,
+                            wholesalePrice: item.wholesalePrice ?? product.wholesalePrice ?? 0,
 
                             gstRate: product.gstRate || "none",
 
@@ -536,7 +564,8 @@ exports.createPurchase = async (req, res) => {
                     },
                     $set: {
                         costPrice: netcost,
-                        sellingPrice: sellingPrice,
+                        retailPrice: retailPrice,
+                        wholesalePrice: wholesalePrice,
                         mrp: mrp
                     }
                 }
@@ -590,13 +619,18 @@ exports.createPurchase = async (req, res) => {
                 unitValue: purchaseUnitValue,
                 isCustomUnitValue,
 
-                sellingPrice,
+                retailPrice,
+                wholesalePrice,
                 priceLevel,
 
 
-                profitAmount,
-                profitPercent,
-                roiPercent,
+                retailProfitAmount,
+                wholesaleProfitAmount,
+                retailProfitPercent,
+                wholesaleProfitPercent,
+
+                retailRoiPercent,
+                wholesaleRoiPercent,
 
                 receivedQty: stockQty,
                 pendingQty: 0
@@ -683,21 +717,39 @@ exports.createPurchase = async (req, res) => {
                 discountedNetCost * item.qty
             );
 
-            item.profitAmount = round2(
-                item.sellingPrice - item.netcost
-            );
+            item.retailProfitAmount = item.retailPrice > 0
+                ? round2(item.retailPrice - item.netcost)
+                : 0;
 
-            item.profitPercent =
-                item.sellingPrice > 0
+            item.wholesaleProfitAmount = item.wholesalePrice > 0
+                ? round2(item.wholesalePrice - item.netcost)
+                : 0;
+
+            item.retailProfitPercent =
+                item.retailPrice > 0
                     ? round2(
-                        (item.profitAmount / item.sellingPrice) * 100
+                        (item.retailProfitAmount / item.retailPrice) * 100
                     )
                     : 0;
 
-            item.roiPercent =
-                item.netcost > 0
+            item.wholesaleProfitPercent =
+                item.wholesalePrice > 0
                     ? round2(
-                        (item.profitAmount / item.netcost) * 100
+                        (item.wholesaleProfitAmount / item.wholesalePrice) * 100
+                    )
+                    : 0;
+
+            item.retailRoiPercent =
+                item.retailPrice > 0 && item.netcost > 0
+                    ? round2(
+                        (item.retailProfitAmount / item.netcost) * 100
+                    )
+                    : 0;
+
+            item.wholesaleRoiPercent =
+                item.wholesalePrice > 0 && item.netcost > 0
+                    ? round2(
+                        (item.wholesaleProfitAmount / item.netcost) * 100
                     )
                     : 0;
 
@@ -840,7 +892,9 @@ exports.createPurchase = async (req, res) => {
             const products = await Product.find({
                 _id: { $in: productIds }
             })
-                .select("_id itemCode hsnCode sellingPrice mrp unit unitValue")
+                .select(
+                    "_id itemCode hsnCode retailPrice wholesalePrice mrp unit unitValue"
+                )
                 .lean();
 
             const productMap = new Map(
@@ -1004,9 +1058,15 @@ exports.createPurchase = async (req, res) => {
                             mrp:
                                 Number(item.mrp || 0),
 
-                            sellingPrice: Number(
-                                item.sellingPrice ??
-                                product?.sellingPrice ??
+                            retailPrice: Number(
+                                item.retailPrice ??
+                                product?.retailPrice ??
+                                0
+                            ),
+
+                            wholesalePrice: Number(
+                                item.wholesalePrice ??
+                                product?.wholesalePrice ??
                                 0
                             ),
 
@@ -1130,9 +1190,23 @@ exports.createPurchase = async (req, res) => {
                     totalCostWithGST: round2(item.totalCostWithGST || 0),
                     isGstIncluded: item.isGstIncluded,
 
+                    retailProfitAmount:
+                        round2(item.retailProfitAmount || 0),
 
-                    profitPercent: round2(item.profitPercent || 0),
-                    roiPercent: round2(item.roiPercent || 0),
+                    wholesaleProfitAmount:
+                        round2(item.wholesaleProfitAmount || 0),
+
+                    retailProfitPercent:
+                        round2(item.retailProfitPercent || 0),
+
+                    wholesaleProfitPercent:
+                        round2(item.wholesaleProfitPercent || 0),
+
+                    retailRoiPercent:
+                        round2(item.retailRoiPercent || 0),
+
+                    wholesaleRoiPercent:
+                        round2(item.wholesaleRoiPercent || 0),
 
 
                     _id: item._id,
@@ -1173,14 +1247,16 @@ exports.createPurchase = async (req, res) => {
                     unit: item.unit || "",
                     unitValue: item.unitValue || 1,
 
-                    profitAmount:
-                        round2(item.profitAmount || 0),
+
 
                     mrp:
                         item.mrp || 0,
 
-                    sellingPrice:
-                        item.sellingPrice || 0,
+                    retailPrice:
+                        item.retailPrice || 0,
+
+                    wholesalePrice:
+                        item.wholesalePrice || 0,
 
                     taxAmount: round2(item.taxAmount || 0),
 
@@ -1239,162 +1315,190 @@ exports.calculatePurchase = async (req, res) => {
         let totalGrossAmount = 0;
         let totalTaxAmount = 0;
 
-        const calculatedItems = items.map((item, index) => {
-            const qty = Number(item.qty);
-            const freeQty = Number(item.freeQty || 0);
-            const totalStockQty = qty + freeQty;
+        const calculatedItems = await Promise.all(
+            items.map(async (item, index) => {
 
-            const netcost = Number(item.netcost || item.purchasePrice || item.netCost);
-            const mrp = Number(item.mrp || 0);
-            const sellingPrice = Number(item.sellingPrice || mrp);
+                const qty = Number(item.qty);
+                const freeQty = Number(item.freeQty || 0);
+                const totalStockQty = qty + freeQty;
 
-            const rawGst =
-                item.gst ??
-                item.gstRate ??
-                item.taxPercentage ??
-                "none";
+                const netcost = Number(item.netcost || item.purchasePrice || item.netCost);
+                const mrp = Number(item.mrp || 0);
+                const retailPrice = Number(item.retailPrice || 0);
+                const wholesalePrice = Number(item.wholesalePrice || 0);
 
-            const isGstNone =
-                String(rawGst).trim().toLowerCase() === "none";
+                const product = item.productId
+                    ? await Product.findOne({
+                        _id: item.productId
+                    }).select("gstRate mrp costPrice retailPrice wholesalePrice")
+                    : null;
 
-            const taxPercentage = isGstNone
-                ? "none"
-                : Number(rawGst) || 0;
+                const rawGst =
+                    item.gst ??
+                    item.gstRate ??
+                    item.taxPercentage ??
+                    product?.gstRate ??
+                    "none";
 
-            const gstRateForCalculation = isGstNone
-                ? 0
-                : Number(rawGst) || 0;
+                const isGstNone =
+                    String(rawGst).trim().toLowerCase() === "none";
 
-            const discountPercent = Number(item.discountPercent || 0);
-            const discountAmountInput = Number(item.discountAmount || 0);
-            const isGstIncluded = item.isGstIncluded !== false;
+                const taxPercentage = isGstNone
+                    ? "none"
+                    : Number(rawGst) || 0;
 
-            if (isNaN(qty) || qty <= 0) {
-                throw new Error(`Invalid quantity at item ${index + 1}`);
-            }
+                const gstRateForCalculation = isGstNone
+                    ? 0
+                    : Number(rawGst) || 0;
 
-            if (isNaN(netcost) || netcost < 0) {
-                throw new Error(`Invalid purchase price at item ${index + 1}`);
-            }
+                const discountPercent = Number(item.discountPercent || 0);
+                const discountAmountInput = Number(item.discountAmount || 0);
+                const isGstIncluded = item.isGstIncluded !== false;
 
-            if (mrp < 0) {
-                throw new Error(`Invalid MRP at item ${index + 1}`);
-            }
+                if (isNaN(qty) || qty <= 0) {
+                    throw new Error(`Invalid quantity at item ${index + 1}`);
+                }
 
-            const netAmount = round2(netcost * qty);
-            const grossAmount = round2(qty * netcost);
+                if (isNaN(netcost) || netcost < 0) {
+                    throw new Error(`Invalid purchase price at item ${index + 1}`);
+                }
 
-            let discountAmount = 0;
-            let finalDiscountPercent = 0;
+                if (mrp < 0) {
+                    throw new Error(`Invalid MRP at item ${index + 1}`);
+                }
 
-            if (discountPercent > 0 && discountAmountInput > 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Provide either discountPercent or discountAmount for item ${index + 1}, not both.`
-                });
-            }
+                const netAmount = round2(netcost * qty);
+                const grossAmount = round2(qty * netcost);
 
-            if (discountPercent > 0) {
-                finalDiscountPercent = round2(discountPercent);
+                let discountAmount = 0;
+                let finalDiscountPercent = 0;
 
-                discountAmount = round2(
-                    grossAmount * finalDiscountPercent / 100
-                );
-            }
-            else if (discountAmountInput > 0) {
-                discountAmount = round2(discountAmountInput);
+                if (discountPercent > 0 && discountAmountInput > 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Provide either discountPercent or discountAmount for item ${index + 1}, not both.`
+                    });
+                }
 
-                if (discountAmount > grossAmount) {
-                    throw new Error(
-                        `Discount amount cannot exceed gross amount at item ${index + 1}`
+                if (discountPercent > 0) {
+                    finalDiscountPercent = round2(discountPercent);
+
+                    discountAmount = round2(
+                        grossAmount * finalDiscountPercent / 100
+                    );
+                }
+                else if (discountAmountInput > 0) {
+                    discountAmount = round2(discountAmountInput);
+
+                    if (discountAmount > grossAmount) {
+                        throw new Error(
+                            `Discount amount cannot exceed gross amount at item ${index + 1}`
+                        );
+                    }
+
+                    finalDiscountPercent = round2(
+                        (discountAmount / grossAmount) * 100
                     );
                 }
 
-                finalDiscountPercent = round2(
-                    (discountAmount / grossAmount) * 100
-                );
-            }
+                const amountAfterDiscount = round2(grossAmount - discountAmount);
 
-            const amountAfterDiscount = round2(grossAmount - discountAmount);
+                let amount = 0;
+                let taxAmount = 0;
+                let totalCostWithGST = 0;
 
-            let amount = 0;
-            let taxAmount = 0;
-            let totalCostWithGST = 0;
+                if (isGstIncluded) {
+                    totalCostWithGST = amountAfterDiscount;
 
-            if (isGstIncluded) {
-                totalCostWithGST = amountAfterDiscount;
+                    taxAmount = round2(
+                        amountAfterDiscount *
+                        gstRateForCalculation /
+                        (100 + gstRateForCalculation)
+                    );
 
-                taxAmount = round2(
-                    amountAfterDiscount *
-                    gstRateForCalculation /
-                    (100 + gstRateForCalculation)
-                );
+                    amount = round2(
+                        amountAfterDiscount - taxAmount
+                    );
+                } else {
+                    amount = amountAfterDiscount;
 
-                amount = round2(
-                    amountAfterDiscount - taxAmount
-                );
-            } else {
-                amount = amountAfterDiscount;
+                    taxAmount = round2(
+                        amount * gstRateForCalculation / 100
+                    );
 
-                taxAmount = round2(
-                    amount * gstRateForCalculation / 100
-                );
+                    totalCostWithGST = round2(
+                        amount + taxAmount
+                    );
+                }
+                totalGrossAmount = round2(totalGrossAmount + amount);
+                totalTaxAmount = round2(totalTaxAmount + taxAmount);
+                totalAmount = round2(totalAmount + totalCostWithGST);
 
-                totalCostWithGST = round2(
-                    amount + taxAmount
-                );
-            }
-            totalGrossAmount = round2(totalGrossAmount + amount);
-            totalTaxAmount = round2(totalTaxAmount + taxAmount);
-            totalAmount = round2(totalAmount + totalCostWithGST);
+                const Rate = totalStockQty > 0
+                    ? round2(amount / totalStockQty)
+                    : 0;
 
-            const Rate = totalStockQty > 0
-                ? round2(amount / totalStockQty)
-                : 0;
+                const retailProfitAmount = retailPrice > 0
+                    ? round2(retailPrice - netcost)
+                    : 0;
 
-            const profitAmount = round2(sellingPrice - netcost);
+                const wholesaleProfitAmount = wholesalePrice > 0
+                    ? round2(wholesalePrice - netcost)
+                    : 0;
 
-            const profitPercent = sellingPrice > 0
-                ? round2((profitAmount / sellingPrice) * 100)
-                : 0;
+                const retailProfitPercent = retailPrice > 0
+                    ? round2((retailProfitAmount / retailPrice) * 100)
+                    : 0;
 
+                const wholesaleProfitPercent = wholesalePrice > 0
+                    ? round2((wholesaleProfitAmount / wholesalePrice) * 100)
+                    : 0;
 
-            const roiPercent = netcost > 0
-                ? round2((profitAmount / netcost) * 100)
-                : 0;
+                const retailRoiPercent =
+                    retailPrice > 0 && netcost > 0
+                        ? round2((retailProfitAmount / netcost) * 100)
+                        : 0;
 
+                const wholesaleRoiPercent = wholesalePrice > 0 && netcost > 0
+                    ? round2((wholesaleProfitAmount / netcost) * 100)
+                    : 0;
 
+                return {
+                    productName: item.productName || item.itemName || "",
+                    qty,
+                    freeQty,
+                    totalStockQty,
 
-            return {
-                productName: item.productName || item.itemName || "",
-                qty,
-                freeQty,
-                totalStockQty,
+                    discountPercent: finalDiscountPercent,
+                    discountAmount,
 
-                discountPercent: finalDiscountPercent,
-                discountAmount,
+                    amount,
+                    totalCostWithGST,
+                    isGstIncluded,
 
-                amount,
-                totalCostWithGST,
-                isGstIncluded,
+                    retailProfitAmount,
+                    wholesaleProfitAmount,
+                    retailProfitPercent,
+                    wholesaleProfitPercent,
 
-                profitPercent,
-                roiPercent,
+                    retailRoiPercent,
+                    wholesaleRoiPercent,
 
-                taxPercentage,
-                netcost,
-                netAmount,
-                Rate,
-                profitAmount,
-                mrp,
-                sellingPrice,
-                taxAmount,
+                    taxPercentage,
+                    netcost,
+                    netAmount,
+                    Rate,
+                    mrp,
+                    retailPrice,
+                    wholesalePrice,
+                    taxAmount,
 
-                barcode: item.barcode || "",
-                receivedQty: totalStockQty,
-                pendingQty: 0
-            };
-        });
+                    barcode: item.barcode || "",
+                    receivedQty: totalStockQty,
+                    pendingQty: 0
+                };
+            })
+        );
 
 
         const finalFreightCharge = Number(freightCharge || 0);
@@ -1472,23 +1576,44 @@ exports.calculatePurchase = async (req, res) => {
             item.taxAmount = gst;
             item.totalCostWithGST = newTotal;
 
-            // Keep the original purchase cost entered by the user.
-            // Do NOT overwrite netcost.
+
 
             item.netAmount = round2(item.netcost * item.qty);
 
-            item.profitAmount = round2(
-                item.sellingPrice - item.netcost
-            );
+            item.retailProfitAmount = item.retailPrice > 0
+                ? round2(item.retailPrice - item.netcost)
+                : 0;
 
-            item.profitPercent =
-                item.sellingPrice > 0
-                    ? round2((item.profitAmount / item.sellingPrice) * 100)
+            item.wholesaleProfitAmount = item.wholesalePrice > 0
+                ? round2(item.wholesalePrice - item.netcost)
+                : 0;
+
+            item.retailProfitPercent =
+                item.retailPrice > 0
+                    ? round2(
+                        (item.retailProfitAmount / item.retailPrice) * 100
+                    )
                     : 0;
 
-            item.roiPercent =
-                item.netcost > 0
-                    ? round2((item.profitAmount / item.netcost) * 100)
+            item.wholesaleProfitPercent =
+                item.wholesalePrice > 0
+                    ? round2(
+                        (item.wholesaleProfitAmount / item.wholesalePrice) * 100
+                    )
+                    : 0;
+
+            item.retailRoiPercent =
+                item.retailPrice > 0 && item.netcost > 0
+                    ? round2(
+                        (item.retailProfitAmount / item.netcost) * 100
+                    )
+                    : 0;
+
+            item.wholesaleRoiPercent =
+                item.wholesalePrice > 0 && item.netcost > 0
+                    ? round2(
+                        (item.wholesaleProfitAmount / item.netcost) * 100
+                    )
                     : 0;
 
             item.Rate = round2(
@@ -1792,7 +1917,10 @@ exports.getPurchaseItemWiseReport = async (req, res) => {
                         itemCode: item.productId?.itemCode || "",
 
                         mrp: item.mrp || 0,
-                        sellingPrice: item.sellingPrice || 0,
+
+                        retailPrice: item.retailPrice || 0,
+                        wholesalePrice: item.wholesalePrice || 0,
+
                         costPrice: item.netcost || 0,
 
                         unit: item.unit || "",
@@ -1811,6 +1939,7 @@ exports.getPurchaseItemWiseReport = async (req, res) => {
 
                         profitAmount: 0,
                         profitPercent: 0,
+
                         roiPercent: 0
                     };
                 }
@@ -2121,12 +2250,21 @@ exports.getPurchases = async (req, res) => {
                     discountPercent: item.discountPercent || 0,
                     discountAmount: round2(item.discountAmount || 0),
 
-                    profitAmount: round2(item.profitAmount || 0),
-                    profitPercent: round2(item.profitPercent || 0),
-                    roiPercent: round2(item.roiPercent || 0),
+                    retailProfitAmount: round2(item.retailProfitAmount || 0),
+                    wholesaleProfitAmount: round2(item.wholesaleProfitAmount || 0),
+                    retailProfitPercent: round2(item.retailProfitPercent || 0),
+                    wholesaleProfitPercent: round2(item.wholesaleProfitPercent || 0),
+
+                    retailRoiPercent:
+                        round2(item.retailRoiPercent || 0),
+
+                    wholesaleRoiPercent:
+                        round2(item.wholesaleRoiPercent || 0),
 
                     mrp: item.mrp || 0,
-                    sellingPrice: item.sellingPrice || 0,
+
+                    retailPrice: item.retailPrice || 0,
+                    wholesalePrice: item.wholesalePrice || 0,
 
                     barcode: item.barcode || "",
 
@@ -2292,12 +2430,21 @@ exports.getPurchaseById = async (req, res) => {
                     discountPercent: item.discountPercent || 0,
                     discountAmount: round2(item.discountAmount || 0),
 
-                    profitAmount: round2(item.profitAmount || 0),
-                    profitPercent: round2(item.profitPercent || 0),
-                    roiPercent: round2(item.roiPercent || 0),
+                    retailProfitAmount: round2(item.retailProfitAmount || 0),
+                    wholesaleProfitAmount: round2(item.wholesaleProfitAmount || 0),
+                    retailProfitPercent: round2(item.retailProfitPercent || 0),
+                    wholesaleProfitPercent: round2(item.wholesaleProfitPercent || 0),
+
+                    retailRoiPercent:
+                        round2(item.retailRoiPercent || 0),
+
+                    wholesaleRoiPercent:
+                        round2(item.wholesaleRoiPercent || 0),
 
                     mrp: item.mrp || 0,
-                    sellingPrice: item.sellingPrice || 0,
+
+                    retailPrice: item.retailPrice || 0,
+                    wholesalePrice: item.wholesalePrice || 0,
 
                     barcode: item.barcode || "",
                     receivedQty: item.receivedQty || 0,
@@ -2556,12 +2703,32 @@ exports.updatePurchase = async (req, res) => {
                 mrp = parsedMrp;
             }
 
-            const sellingPrice = Number(
-                item.sellingPrice ||
-                product.sellingPrice ||
-                mrp ||
+            const retailPrice = Number(
+                item.retailPrice ??
+                product.retailPrice ??
+                mrp ??
                 0
             );
+
+            const wholesalePrice = Number(
+                item.wholesalePrice ??
+                product.wholesalePrice ??
+                0
+            );
+
+            if (!Number.isFinite(retailPrice) || retailPrice < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid retail price"
+                });
+            }
+
+            if (!Number.isFinite(wholesalePrice) || wholesalePrice < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid wholesale price"
+                });
+            }
 
             if (isNaN(qty) || qty <= 0) {
                 return res.status(400).json({
@@ -2750,16 +2917,30 @@ exports.updatePurchase = async (req, res) => {
                 ? round2(amount / totalStockQty)
                 : 0;
 
-            const profitAmount = round2(sellingPrice - netcost);
-
-            const profitPercent = sellingPrice > 0
-                ? round2((profitAmount / sellingPrice) * 100)
+            const retailProfitAmount = retailPrice > 0
+                ? round2(retailPrice - netcost)
                 : 0;
 
-            const roiPercent = netcost > 0
-                ? round2((profitAmount / netcost) * 100)
+            const wholesaleProfitAmount = wholesalePrice > 0
+                ? round2(wholesalePrice - netcost)
                 : 0;
 
+            const retailProfitPercent = retailPrice > 0
+                ? round2((retailProfitAmount / retailPrice) * 100)
+                : 0;
+
+            const wholesaleProfitPercent = wholesalePrice > 0
+                ? round2((wholesaleProfitAmount / wholesalePrice) * 100)
+                : 0;
+
+            const retailRoiPercent =
+                retailPrice > 0 && netcost > 0
+                    ? round2((retailProfitAmount / netcost) * 100)
+                    : 0;
+
+            const wholesaleRoiPercent = wholesalePrice > 0 && netcost > 0
+                ? round2((wholesaleProfitAmount / netcost) * 100)
+                : 0;
 
             await Product.updateOne(
                 {
@@ -2772,7 +2953,8 @@ exports.updatePurchase = async (req, res) => {
                     },
                     $set: {
                         costPrice: netcost,
-                        sellingPrice: sellingPrice,
+                        retailPrice: retailPrice,
+                        wholesalePrice: wholesalePrice,
                         mrp: mrp
                     }
                 }
@@ -2794,7 +2976,9 @@ exports.updatePurchase = async (req, res) => {
                             mrp: mrp,
 
                             costPrice: item.costPrice || product.costPrice || 0,
-                            sellingPrice: item.sellingPrice || product.sellingPrice || 0,
+
+                            retailPrice: item.retailPrice ?? product.retailPrice ?? 0,
+                            wholesalePrice: item.wholesalePrice ?? product.wholesalePrice ?? 0,
 
                             gstRate: product.gstRate ?? "none",
 
@@ -2875,7 +3059,8 @@ exports.updatePurchase = async (req, res) => {
                 netAmount,
                 Rate,
                 mrp,
-                sellingPrice,
+                retailPrice,
+                wholesalePrice,
 
                 unit: purchaseUnit,
                 unitValue: purchaseUnitValue,
@@ -2884,9 +3069,13 @@ exports.updatePurchase = async (req, res) => {
                 priceLevel: item.priceLevel || null,
                 barcode,
 
-                profitAmount,
-                profitPercent,
-                roiPercent,
+                retailProfitAmount,
+                wholesaleProfitAmount,
+                retailProfitPercent,
+                wholesaleProfitPercent,
+
+                retailRoiPercent,
+                wholesaleRoiPercent,
 
                 stockQty,
                 receivedQty: stockQty,

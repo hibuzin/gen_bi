@@ -36,7 +36,8 @@ exports.productcreate = async (req, res) => {
             unit,
             unitValue,
             costPrice,
-            sellingPrice,
+            retailPrice,
+            wholesalePrice,
             barcode,
             priceLevel,
             productType,
@@ -168,7 +169,8 @@ exports.productcreate = async (req, res) => {
 
 
         const processedCostPrice = Number(costPrice || 0);
-        const processedSellingPrice = Number(sellingPrice || 0);
+        const processedRetailPrice = Number(retailPrice || 0);
+        const processedWholesalePrice = Number(wholesalePrice || 0);
 
         const processedLowStockQty = Number(lowStockQty || 10);
 
@@ -230,7 +232,8 @@ exports.productcreate = async (req, res) => {
             ...(finalUnitValue !== undefined && { unitValue: finalUnitValue }),
 
             costPrice: processedCostPrice,
-            sellingPrice: processedSellingPrice,
+            retailPrice: processedRetailPrice,
+            wholesalePrice: processedWholesalePrice,
 
             categoryId: categoryId || null,
             categoryName: cat ? cat.name : "",
@@ -319,7 +322,6 @@ exports.productcreate = async (req, res) => {
         });
     }
 };
-
 
 
 exports.bulkProductCreate = async (req, res) => {
@@ -1329,7 +1331,8 @@ exports.updateProduct = async (req, res) => {
             unitValue,
             lowStockQty,
             costPrice,
-            sellingPrice,
+            retailPrice,
+            wholesalePrice,
             barcode,
             openingStock
         } = req.body;
@@ -1468,19 +1471,37 @@ exports.updateProduct = async (req, res) => {
             product.costPrice = processedCostPrice;
         }
 
-        if (sellingPrice !== undefined) {
-            const processedSellingPrice = Number(sellingPrice);
+        if (retailPrice !== undefined) {
+            const processedRetailPrice = Number(retailPrice);
 
-            if (isNaN(processedSellingPrice) || processedSellingPrice < 0) {
+            if (
+                !Number.isFinite(processedRetailPrice) ||
+                processedRetailPrice < 0
+            ) {
                 return res.status(400).json({
                     success: false,
-                    message: "Valid selling price is required"
+                    message: "Valid retail price is required"
                 });
             }
 
-            product.sellingPrice = processedSellingPrice;
+            product.retailPrice = processedRetailPrice;
         }
 
+        if (wholesalePrice !== undefined) {
+            const processedWholesalePrice = Number(wholesalePrice);
+
+            if (
+                !Number.isFinite(processedWholesalePrice) ||
+                processedWholesalePrice < 0
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Valid wholesale price is required"
+                });
+            }
+
+            product.wholesalePrice = processedWholesalePrice;
+        }
         if (
             product.mrp &&
             product.costPrice !== undefined &&
@@ -1494,12 +1515,23 @@ exports.updateProduct = async (req, res) => {
 
         if (
             product.mrp &&
-            product.sellingPrice !== undefined &&
-            product.sellingPrice > product.mrp
+            product.retailPrice !== undefined &&
+            product.retailPrice > product.mrp
         ) {
             return res.status(400).json({
                 success: false,
-                message: "Selling price cannot be greater than MRP"
+                message: "Retail price cannot be greater than MRP"
+            });
+        }
+
+        if (
+            product.mrp &&
+            product.wholesalePrice !== undefined &&
+            product.wholesalePrice > product.mrp
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Wholesale price cannot be greater than MRP"
             });
         }
 
@@ -2080,7 +2112,7 @@ exports.deleteProduct = async (req, res) => {
             });
         }
 
-        // Delete all barcodes of this product
+
         await Barcode.deleteMany({
             productId: product._id,
             superAdminId: hierarchy.superAdminId
@@ -2088,7 +2120,7 @@ exports.deleteProduct = async (req, res) => {
 
         res.json({
             success: true,
-            message: "Product and barcode deleted successfully"
+            message: "Product  deleted successfully"
         });
 
     } catch (err) {

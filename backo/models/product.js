@@ -69,7 +69,12 @@ const productSchema = new mongoose.Schema({
         default: 0
     },
 
-    sellingPrice: {
+    retailPrice: {
+        type: Number,
+        default: 0
+    },
+
+    wholesalePrice: {
         type: Number,
         default: 0
     },

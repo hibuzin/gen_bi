@@ -65,9 +65,9 @@ const purchaseSchema = new mongoose.Schema({
 
 
             taxPercentage: {
-    type: mongoose.Schema.Types.Mixed,
-    default: "none"
-},
+                type: mongoose.Schema.Types.Mixed,
+                default: "none"
+            },
 
             taxAmount: {
                 type: Number,
@@ -160,18 +160,30 @@ const purchaseSchema = new mongoose.Schema({
                 default: 1
             },
 
-            profitAmount: {
+            retailProfitAmount: {
+                type: Number,
+                default: 0
+            },
+            wholesaleProfitAmount: {
+                type: Number,
+                default: 0
+            },
+            retailProfitPercent: {
+                type: Number,
+                default: 0
+            },
+            wholesaleProfitPercent: {
                 type: Number,
                 default: 0
             },
 
 
-            profitPercent: {
+            retailRoiPercent: {
                 type: Number,
                 default: 0
             },
 
-            roiPercent: {
+            wholesaleRoiPercent: {
                 type: Number,
                 default: 0
             },
@@ -181,7 +193,12 @@ const purchaseSchema = new mongoose.Schema({
                 default: 0
             },
 
-            sellingPrice: {
+            retailPrice: {
+                type: Number,
+                default: 0
+            },
+
+            wholesalePrice: {
                 type: Number,
                 default: 0
             },
