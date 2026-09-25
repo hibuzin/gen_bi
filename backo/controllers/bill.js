@@ -123,16 +123,42 @@ exports.createBill = async (req, res) => {
 
         const codeQtyMap = {};
 
-        for (const code of codes || []) {
-            const searchValue = String(code).trim();
+        for (const codeItem of codes || []) {
+
+            const searchValue =
+                typeof codeItem === "object"
+                    ? String(codeItem.code || "").trim()
+                    : String(codeItem).trim();
 
             if (!searchValue) continue;
 
-            codeQtyMap[searchValue] =
-                (codeQtyMap[searchValue] || 0) + 1;
+            const customPrice =
+                typeof codeItem === "object"
+                    ? codeItem.price
+                    : undefined;
+
+            if (!codeQtyMap[searchValue]) {
+                codeQtyMap[searchValue] = {
+                    qty: 0,
+                    price: customPrice
+                };
+            }
+
+            codeQtyMap[searchValue].qty += 1;
+
+            if (
+                customPrice !== undefined &&
+                customPrice !== null &&
+                customPrice !== ""
+            ) {
+                codeQtyMap[searchValue].price = Number(customPrice);
+            }
         }
 
-        for (const [searchValue, qty] of Object.entries(codeQtyMap)) {
+        for (const [searchValue, codeData] of Object.entries(codeQtyMap)) {
+
+            const qty = codeData.qty;
+            const customPrice = codeData.price;
 
 
             let barcode = await Barcode.findOne({
@@ -173,7 +199,20 @@ exports.createBill = async (req, res) => {
                 });
             }
 
-            let price = normalPrice;
+            let price =
+                customPrice !== undefined &&
+                    customPrice !== null &&
+                    customPrice !== ""
+                    ? Number(customPrice)
+                    : normalPrice;
+
+            if (isNaN(price) || price <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid price for product: ${product.name}`
+                });
+            }
+
             let slabPrice = null;
             let discountPerItem = 0;
             let totalDiscount = 0;
@@ -263,11 +302,21 @@ exports.createBill = async (req, res) => {
 
                 mrp: Number(barcode.mrp || 0),
 
-                retailPrice: Number(product.retailPrice || 0),
-                wholesalePrice: Number(product.wholesalePrice || 0),
+                retailPrice:
+                    priceType === "retail"
+                        ? Number(price || 0)
+                        : Number(product.retailPrice || 0),
+
+                wholesalePrice:
+                    priceType === "wholesale"
+                        ? Number(price || 0)
+                        : Number(product.wholesalePrice || 0),
+
                 selectedPriceType: priceType,
 
                 price: Number(price || 0),
+
+                normalPrice: Number(defaultPrice || 0),
 
                 costPrice: Number(product.costPrice || 0),
 
@@ -293,10 +342,21 @@ exports.createBill = async (req, res) => {
                     productName: product.name || "",
                     barcode: barcode.code,
                     qty,
-                    retailPrice: Number(product.retailPrice || 0),
-                    wholesalePrice: Number(product.wholesalePrice || 0),
+                    retailPrice:
+                        priceType === "retail"
+                            ? Number(price || 0)
+                            : Number(product.retailPrice || 0),
+
+                    wholesalePrice:
+                        priceType === "wholesale"
+                            ? Number(price || 0)
+                            : Number(product.wholesalePrice || 0),
+
                     selectedPriceType: priceType,
+
                     price: Number(price || 0),
+
+                    normalPrice: Number(defaultPrice || 0),
                     gstRate,
                     gstAmount,
                     finalPrice
@@ -359,16 +419,32 @@ exports.createBill = async (req, res) => {
 
 
 
-            const normalPrice = getSelectedPrice(product, priceType);
+            const defaultPrice = getSelectedPrice(product, priceType);
 
-            if (normalPrice <= 0) {
+            if (defaultPrice <= 0) {
                 return res.status(400).json({
                     success: false,
                     message: `${priceType === "retail" ? "Retail" : "Wholesale"} price not available for product: ${product.name}`
                 });
             }
 
-            let price = normalPrice;
+
+            let price =
+                billItem.price !== undefined &&
+                    billItem.price !== null &&
+                    billItem.price !== ""
+                    ? Number(billItem.price)
+                    : defaultPrice;
+
+            if (isNaN(price) || price <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid price for product: ${product.name}`
+                });
+            }
+
+            const normalPrice = defaultPrice;
+
             let slabPrice = null;
             let discountPerItem = 0;
             let totalDiscount = 0;
@@ -446,7 +522,6 @@ exports.createBill = async (req, res) => {
                             minQty: slab.minQty,
                             maxQty: slab.maxQty,
                             slabPrice,
-                            normalSellingPrice,
                             discountPerItem,
                             totalDiscount
                         };
@@ -558,11 +633,21 @@ exports.createBill = async (req, res) => {
                     barcode?.mrp ?? product.mrp ?? 0
                 ),
 
-                retailPrice: Number(product.retailPrice || 0),
-                wholesalePrice: Number(product.wholesalePrice || 0),
+                retailPrice:
+                    priceType === "retail"
+                        ? Number(price || 0)
+                        : Number(product.retailPrice || 0),
+
+                wholesalePrice:
+                    priceType === "wholesale"
+                        ? Number(price || 0)
+                        : Number(product.wholesalePrice || 0),
+
                 selectedPriceType: priceType,
 
                 price: Number(price || 0),
+
+                normalPrice: Number(defaultPrice || 0),
 
                 costPrice: Number(product.costPrice || 0),
 
@@ -1408,16 +1493,46 @@ exports.calculateBill = async (req, res) => {
         let totalGST = 0;
         let totalItemDiscount = 0;
         const items = [];
+
         const codeQtyMap = {};
 
+        for (const codeItem of codes || []) {
 
-        for (const code of codes || []) {
-            const searchValue = String(code).trim();
+            const searchValue =
+                typeof codeItem === "object"
+                    ? String(codeItem.code || "").trim()
+                    : String(codeItem).trim();
+
             if (!searchValue) continue;
-            codeQtyMap[searchValue] = (codeQtyMap[searchValue] || 0) + 1;
+
+            const customPrice =
+                typeof codeItem === "object"
+                    ? codeItem.price
+                    : undefined;
+
+            if (!codeQtyMap[searchValue]) {
+                codeQtyMap[searchValue] = {
+                    qty: 0,
+                    price: customPrice
+                };
+            }
+
+            codeQtyMap[searchValue].qty += 1;
+
+            // If price is provided, keep it
+            if (
+                customPrice !== undefined &&
+                customPrice !== null &&
+                customPrice !== ""
+            ) {
+                codeQtyMap[searchValue].price = Number(customPrice);
+            }
         }
 
-        for (const [searchValue, qty] of Object.entries(codeQtyMap)) {
+        for (const [searchValue, codeData] of Object.entries(codeQtyMap)) {
+
+            const qty = codeData.qty;
+            const customPrice = codeData.price;
 
             let freeQty = 0;
 
@@ -1453,12 +1568,26 @@ exports.calculateBill = async (req, res) => {
                 });
             }
 
-            const price = getSelectedPrice(product, priceType);
+            const defaultPrice = getSelectedPrice(product, priceType);
 
-            if (price <= 0) {
+            if (defaultPrice <= 0) {
                 return res.status(400).json({
                     success: false,
                     message: `${priceType === "retail" ? "Retail" : "Wholesale"} price not available for product: ${product.name}`
+                });
+            }
+
+            let price =
+                customPrice !== undefined &&
+                    customPrice !== null &&
+                    customPrice !== ""
+                    ? Number(customPrice)
+                    : defaultPrice;
+
+            if (isNaN(price) || price <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid price for product: ${product.name}`
                 });
             }
 
@@ -1556,12 +1685,21 @@ exports.calculateBill = async (req, res) => {
 
                 mrp: barcode.mrp || 0,
 
-                retailPrice: product.retailPrice || 0,
-                wholesalePrice: product.wholesalePrice || 0,
+                retailPrice:
+                    priceType === "retail"
+                        ? Number(price || 0)
+                        : Number(product.retailPrice || 0),
+
+                wholesalePrice:
+                    priceType === "wholesale"
+                        ? Number(price || 0)
+                        : Number(product.wholesalePrice || 0),
 
                 selectedPriceType: priceType,
-                price: price,
-                normalPrice: price,
+
+                price: Number(price || 0),
+
+                normalPrice: Number(defaultPrice || 0),
 
                 appliedPriceLevel: "normal",
                 appliedSlab: null,
@@ -1617,16 +1755,32 @@ exports.calculateBill = async (req, res) => {
                 superAdminId: hierarchy.superAdminId
             });
 
-            const normalPrice = getSelectedPrice(product, priceType);
+            const defaultPrice = getSelectedPrice(product, priceType);
 
-            if (normalPrice <= 0) {
+            if (defaultPrice <= 0) {
                 return res.status(400).json({
                     success: false,
                     message: `${priceType === "retail" ? "Retail" : "Wholesale"} price not available for product: ${product.name}`
                 });
             }
 
-            let price = normalPrice;
+            // Use bill-entered price if provided,
+            // otherwise use product's default retail/wholesale price
+            let price =
+                billItem.price !== undefined &&
+                    billItem.price !== null &&
+                    billItem.price !== ""
+                    ? Number(billItem.price)
+                    : defaultPrice;
+
+            if (isNaN(price) || price <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid price for product: ${product.name}`
+                });
+            }
+
+            const normalPrice = defaultPrice;
 
 
             let appliedPriceLevel = "normal";
@@ -1794,12 +1948,21 @@ exports.calculateBill = async (req, res) => {
 
                 mrp: barcode?.mrp || 0,
 
-                retailPrice: product.retailPrice || 0,
-                wholesalePrice: product.wholesalePrice || 0,
+                retailPrice:
+                    priceType === "retail"
+                        ? Number(price || 0)
+                        : Number(product.retailPrice || 0),
+
+                wholesalePrice:
+                    priceType === "wholesale"
+                        ? Number(price || 0)
+                        : Number(product.wholesalePrice || 0),
 
                 selectedPriceType: priceType,
-                price: price,
-                normalPrice,
+
+                price: Number(price || 0),
+
+                normalPrice: Number(defaultPrice || 0),
 
                 slabPrice:
                     appliedPriceLevel === "slab"
@@ -3819,10 +3982,21 @@ exports.editBill = async (req, res) => {
 
                 mrp: Number(product.mrp || 0),
 
-                retailPrice: Number(product.retailPrice || 0),
-                wholesalePrice: Number(product.wholesalePrice || 0),
+                retailPrice:
+                    priceType === "retail"
+                        ? Number(price || 0)
+                        : Number(product.retailPrice || 0),
 
-                price: price,
+                wholesalePrice:
+                    priceType === "wholesale"
+                        ? Number(price || 0)
+                        : Number(product.wholesalePrice || 0),
+
+                selectedPriceType: priceType,
+
+                price: Number(price || 0),
+
+                normalPrice: Number(defaultPrice || 0),
 
                 totalAmount: grossAmount,
 
