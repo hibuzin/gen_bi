@@ -155,56 +155,56 @@ export default function PurchaseTable({
     return idx === -1 ? billItems.length : idx; // ellam full aana kadaisi-la push
   };
 
- const searchProductsForRow = async (rowIndex, value) => {
-  setRowSearches((prev) => ({
-    ...prev,
-    [rowIndex]: value,
-  }));
-
-  setActiveRowIndex(rowIndex);
-
-  const searchValue = String(value || "").trim();
-
-  if (!searchValue) {
-    setRowSearchResults((prev) => ({
+  const searchProductsForRow = async (rowIndex, value) => {
+    setRowSearches((prev) => ({
       ...prev,
-      [rowIndex]: [],
+      [rowIndex]: value,
     }));
-    return;
-  }
 
-  try {
-    const res = await fetch(
-      `${API.productSearch}?search=${encodeURIComponent(searchValue)}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    setActiveRowIndex(rowIndex);
 
-    const data = await res.json();
+    const searchValue = String(value || "").trim();
 
-    if (!res.ok || !data.success) {
-      throw new Error(data.message || "Failed to search products");
+    if (!searchValue) {
+      setRowSearchResults((prev) => ({
+        ...prev,
+        [rowIndex]: [],
+      }));
+      return;
     }
 
-    setRowSearchResults((prev) => ({
-      ...prev,
-      [rowIndex]: data.data || [],
-    }));
-  } catch (error) {
-    console.error("Product search error:", error);
+    try {
+      const res = await fetch(
+        `${API.productSearch}?search=${encodeURIComponent(searchValue)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    setRowSearchResults((prev) => ({
-      ...prev,
-      [rowIndex]: [],
-    }));
+      const data = await res.json();
 
-    showToast("Failed to search products", "error");
-  }
-};
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to search products");
+      }
+
+      setRowSearchResults((prev) => ({
+        ...prev,
+        [rowIndex]: data.data || [],
+      }));
+    } catch (error) {
+      console.error("Product search error:", error);
+
+      setRowSearchResults((prev) => ({
+        ...prev,
+        [rowIndex]: [],
+      }));
+
+      showToast("Failed to search products", "error");
+    }
+  };
 
   const selectRowProduct = async (rowIndex, product) => {
     const updated = [...billItems];
@@ -230,7 +230,15 @@ export default function PurchaseTable({
         product.purchasePrice ||
         0
       ),
-      sellingPrice: Number(product.sellingPrice || 0),
+      retailPrice: Number(
+        product.retailPrice ||
+        product.sellingPrice ||
+        0
+      ),
+
+      wholesalePrice: Number(
+        product.wholesalePrice || 0
+      ),
 
       tax:
         (product.gstRate ?? product.tax) === "none"

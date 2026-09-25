@@ -285,11 +285,14 @@ export const calculatePurchase = async ({
     showToast,
 }) => {
     const validItems = items.filter(
-        (item) => item.productId && String(item.qty).trim() !== ""
+        (item) =>
+            item.productId &&
+            String(item.qty).trim() !== ""
     );
 
     if (validItems.length === 0) {
         setBillItems(items);
+
         setPurchaseTotals({
             totalAmount: 0,
             totalGrossAmount: 0,
@@ -303,133 +306,369 @@ export const calculatePurchase = async ({
             supplierBillAmount: 0,
             balanceAmount: 0,
         });
+
         setForm((prev) => ({
             ...prev,
             supplierBillAmount: "",
         }));
+
         return;
     }
 
     try {
         const payload = {
+            supplierId: currentForm.supplierId || "",
+
+            invoiceNo: currentForm.invoiceNo || "",
+
+            invoiceDate: currentForm.invoiceDate || "",
+
+            grnDate: currentForm.grnDate || "",
+
+            invoiceAmount: Number(
+                currentForm.invoiceAmount || 0
+            ),
+
             items: validItems.map((item) => ({
-                productId: item.productId,
+                productId:
+                    item.productId?._id ||
+                    item.productId,
+
                 qty: Number(item.qty || 0),
+
                 freeQty: Number(item.freeQty || 0),
-                netcost: Number(item.originalNetcost || item.netcost || item.costPrice || 0),
+
+                netcost: Number(
+                    item.originalNetcost ||
+                    item.netcost ||
+                    item.costPrice ||
+                    0
+                ),
+
                 mrp: Number(item.mrp || 0),
-                sellingPrice: Number(item.sellingPrice || 0),
-                gstRate:
-                    (item.tax ?? item.gstRate) === "none"
-                        ? "none"
-                        : Number(item.tax ?? item.gstRate ?? 0),
+
+                retailPrice: Number(
+                    item.retailPrice ||
+                    item.sellingPrice ||
+                    0
+                ),
+
+                wholesalePrice: Number(
+                    item.wholesalePrice || 0
+                ),
+
+                qtyType:
+                    item.qtyType ||
+                    "unit",
+
+                unitValue: Number(
+                    item.unitValue || 1
+                ),
+
+                isGstIncluded:
+                    item.isGstIncluded !== false,
+
+                discountPercent: Number(
+                    item.discountPercent || 0
+                ),
+
+                discountAmount: Number(
+                    item.discountAmount || 0
+                ),
+
+                barcode:
+                    item.barcode ||
+                    item.itemCode ||
+                    "",
             })),
+
+            freightCharge: Number(
+                currentForm.freightCharge || 0
+            ),
+
+            packagingCharge: Number(
+                currentForm.packagingCharge || 0
+            ),
+
+            billDiscountPercent: Number(
+                currentForm.billDiscountPercent || 0
+            ),
+
+            billDiscountAmount: Number(
+                currentForm.billDiscountAmount || 0
+            ),
+
+            paidAmount: Number(
+                currentForm.paidAmount || 0
+            ),
+
+            DueDate:
+                currentForm.dueDate || "",
+
+            paymentType:
+                currentForm.paymentType ||
+                "cash",
+
+            details: {
+                bankName:
+                    currentForm.bankName || "",
+
+                transactionId:
+                    currentForm.transactionId || "",
+
+                upiId:
+                    currentForm.upiId || "",
+
+                upiTransactionId:
+                    currentForm.upiTransactionId || "",
+
+                cardType:
+                    currentForm.cardType || "",
+
+                cardLast4:
+                    currentForm.cardLast4 || "",
+            },
         };
 
-        if (currentForm.billDiscountPercent !== "") {
-            payload.billDiscountPercent = Number(currentForm.billDiscountPercent || 0);
-        }
+        console.log(
+            "PURCHASE CALCULATION PAYLOAD:",
+            payload
+        );
 
-        if (currentForm.freightCharge !== "") {
-            payload.freightCharge = Number(currentForm.freightCharge || 0);
-        }
-        if (currentForm.packagingCharge !== "") {
-            payload.packagingCharge = Number(
-                currentForm.packagingCharge || 0
-            );
-        }
-        const res = await fetch(API.calculatePurchase, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-        });
+        const res = await fetch(
+            API.calculatePurchase,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    Authorization:
+                        `Bearer ${token}`,
+                },
+
+                body: JSON.stringify(payload),
+            }
+        );
 
         const data = await res.json();
 
-        if (!res.ok || !data.success) return;
+        console.log(
+            "PURCHASE CALCULATION RESPONSE:",
+            data
+        );
+
+        if (!res.ok || !data.success) {
+            throw new Error(
+                data.message ||
+                "Purchase calculation failed"
+            );
+        }
 
         let calcIndex = 0;
 
         const updated = items.map((item) => {
-            if (!item.productId || String(item.qty).trim() === "") return item;
+            if (
+                !item.productId ||
+                String(item.qty).trim() === ""
+            ) {
+                return item;
+            }
 
-            const calc = data.data.items[calcIndex];
+            const calc =
+                data.data.items?.[calcIndex];
+
             calcIndex += 1;
 
-            if (!calc) return item;
+            if (!calc) {
+                return item;
+            }
 
             return {
                 ...item,
-                productName: item.productName || calc.productName || "",
+
+                productName:
+                    item.productName ||
+                    calc.productName ||
+                    "",
+
                 qty: calc.qty,
+
                 freeQty: calc.freeQty,
-                totalStockQty: calc.totalStockQty,
-                receivedQty: calc.receivedQty,
-                pendingQty: calc.pendingQty,
 
-                discountPercent: calc.discountPercent,
-                discountAmount: calc.discountAmount,
+                totalStockQty:
+                    calc.totalStockQty,
 
-                amount: calc.amount,
-                totalCostWithGST: calc.totalCostWithGST,
-                isGstIncluded: calc.isGstIncluded,
+                receivedQty:
+                    calc.receivedQty,
 
-                profitPercent: calc.profitPercent,
-                roiPercent: calc.roiPercent,
-                profitAmount: calc.profitAmount,
+                pendingQty:
+                    calc.pendingQty,
+
+                discountPercent:
+                    calc.discountPercent,
+
+                discountAmount:
+                    calc.discountAmount,
+
+                amount:
+                    calc.amount,
+
+                totalCostWithGST:
+                    calc.totalCostWithGST,
+
+                isGstIncluded:
+                    calc.isGstIncluded,
 
                 tax:
-                    item.tax === "none" || item.gstRate === "none"
-                        ? "none"
+                    calc.taxPercentage === undefined
+                        ? item.tax
                         : calc.taxPercentage,
 
                 gstRate:
-                    item.tax === "none" || item.gstRate === "none"
-                        ? "none"
+                    calc.taxPercentage === undefined
+                        ? item.gstRate
                         : calc.taxPercentage,
 
-                taxAmount: calc.taxAmount,
+                taxAmount:
+                    calc.taxAmount,
 
-                rate: calc.Rate,
-                netcost: calc.netcost,
-                costPrice: calc.netcost,
-                purchasePrice: calc.netcost,
-                originalNetcost: item.originalNetcost || calc.netcost,
-                purchaseDiscount: calc.purchaseDiscount || 0,
-                netAmount: calc.netAmount,
+                rate:
+                    calc.Rate,
 
-                mrp: calc.mrp,
-                sellingPrice: calc.sellingPrice,
+                netcost:
+                    calc.netcost,
 
-                barcode: item.barcode || calc.barcode || "",
+                costPrice:
+                    calc.netcost,
+
+                purchasePrice:
+                    calc.netcost,
+
+                originalNetcost:
+                    item.originalNetcost ||
+                    calc.netcost,
+
+                netAmount:
+                    calc.netAmount,
+
+                mrp:
+                    calc.mrp,
+
+                sellingPrice:
+                    calc.sellingPrice,
+
+                retailPrice:
+                    calc.retailPrice ||
+                    item.retailPrice ||
+                    calc.sellingPrice ||
+                    0,
+
+                wholesalePrice:
+                    calc.wholesalePrice ||
+                    item.wholesalePrice ||
+                    0,
+
+                barcode:
+                    item.barcode ||
+                    calc.barcode ||
+                    "",
+
+                retailProfitAmount:
+                    calc.retailProfitAmount,
+
+                wholesaleProfitAmount:
+                    calc.wholesaleProfitAmount,
+
+                retailProfitPercent:
+                    calc.retailProfitPercent,
+
+                wholesaleProfitPercent:
+                    calc.wholesaleProfitPercent,
+
+                retailRoiPercent:
+                    calc.retailRoiPercent,
+
+                wholesaleRoiPercent:
+                    calc.wholesaleRoiPercent,
+
+                profitAmount:
+                    calc.retailProfitAmount,
+
+                profitPercent:
+                    calc.retailProfitPercent,
+
+                roiPercent:
+                    calc.retailRoiPercent,
+
+                purchaseDiscount:
+                    calc.purchaseDiscount || 0,
             };
         });
 
         setBillItems(updated);
 
+        const result = data.data;
+
         setPurchaseTotals({
-            totalAmount: Number(data.data.totalAmount || 0),
-            totalGrossAmount: Number(data.data.totalGrossAmount || 0),
-            totalTaxAmount: Number(data.data.totalTaxAmount || 0),
-            cgst: Number(data.data.cgst || 0),
-            sgst: Number(data.data.sgst || 0),
-            itemsTotal: Number(data.data.itemsTotal || 0),
-            freightCharge: Number(data.data.freightCharge || 0),
-            packagingCharge: Number(data.data.packagingCharge || 0),
-            billDiscountAmount: Number(data.data.billDiscountAmount || 0),
-            supplierBillAmount: Number(data.data.supplierBillAmount || 0),
-            balanceAmount: Number(data.data.balanceAmount || 0),
+            totalAmount:
+                Number(result.totalAmount || 0),
+
+            totalGrossAmount:
+                Number(result.totalGrossAmount || 0),
+
+            totalTaxAmount:
+                Number(result.totalTaxAmount || 0),
+
+            cgst:
+                Number(result.cgst || 0),
+
+            sgst:
+                Number(result.sgst || 0),
+
+            itemsTotal:
+                Number(result.itemsTotal || 0),
+
+            freightCharge:
+                Number(result.freightCharge || 0),
+
+            packagingCharge:
+                Number(result.packagingCharge || 0),
+
+            billDiscountAmount:
+                Number(
+                    result.billDiscountAmount || 0
+                ),
+
+            supplierBillAmount:
+                Number(
+                    result.supplierBillAmount || 0
+                ),
+
+            balanceAmount:
+                Number(
+                    result.balanceAmount || 0
+                ),
         });
 
         setForm((prev) => ({
             ...prev,
-            supplierBillAmount: data.data.supplierBillAmount || "",
+
+            supplierBillAmount:
+                result.supplierBillAmount || 0,
         }));
     } catch (err) {
-        showToast("Calculation failed", "error");
+        console.error(
+            "Purchase calculation error:",
+            err
+        );
+
+        showToast(
+            err.message ||
+            "Calculation failed",
+            "error"
+        );
     }
 };
 
