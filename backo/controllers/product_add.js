@@ -556,8 +556,11 @@ exports.bulkProductCreate = async (req, res) => {
                 const processedCostPrice =
                     Number(item.costPrice || 0);
 
-                const processedSellingPrice =
-                    Number(item.sellingPrice || 0);
+                const processedRetailPrice =
+                    Number(item.retailPrice || 0);
+
+                const processedWholesalePrice =
+                    Number(item.wholesalePrice || 0);
 
                 const processedLowStockQty =
                     Number(item.lowStockQty || 10);
@@ -661,7 +664,8 @@ exports.bulkProductCreate = async (req, res) => {
                     finalProductType,
                     finalParentProductId,
                     processedCostPrice,
-                    processedSellingPrice,
+                    processedRetailPrice,
+                    processedWholesalePrice,
                     processedLowStockQty,
                     processedOpeningStock
                 });
@@ -717,7 +721,8 @@ exports.bulkProductCreate = async (req, res) => {
                 finalProductType,
                 finalParentProductId,
                 processedCostPrice,
-                processedSellingPrice,
+                processedRetailPrice,
+                processedWholesalePrice,
                 processedLowStockQty,
                 processedOpeningStock
             } = validated;
@@ -754,7 +759,8 @@ exports.bulkProductCreate = async (req, res) => {
                 }),
 
                 costPrice: processedCostPrice,
-                sellingPrice: processedSellingPrice,
+                retailPrice: processedRetailPrice,
+                wholesalePrice: processedWholesalePrice,
 
                 categoryId,
                 categoryName: cat
@@ -789,7 +795,8 @@ exports.bulkProductCreate = async (req, res) => {
                         }),
 
                         costPrice: processedCostPrice,
-                        sellingPrice: processedSellingPrice,
+                        retailPrice: processedRetailPrice,
+                        wholesalePrice: processedWholesalePrice,
                         gstRate: processedGstRate,
 
                         isSold: false,
@@ -1127,7 +1134,7 @@ exports.searchProducts = async (req, res) => {
             gstRate: Number(product.gstRate || product.categoryId?.gstRate || 0),
 
             costPrice: Number(product.costPrice || 0),
-            
+
             retailPrice: Number(product.retailPrice || 0),
             wholesalePrice: Number(product.wholesalePrice || 0),
 
@@ -1681,8 +1688,7 @@ exports.bulkProductUpdate = async (req, res) => {
                     continue;
                 }
 
-                // VERY IMPORTANT
-                // Product must belong to this bulkId
+
                 const product =
                     await Product.findOne({
                         _id: item.productId,
@@ -1859,37 +1865,59 @@ exports.bulkProductUpdate = async (req, res) => {
                 }
 
                 // -------------------------
-                // SELLING PRICE
+                // RETAIL PRICE
                 // -------------------------
 
                 if (
-                    item.sellingPrice !==
+                    item.retailPrice !==
                     undefined
                 ) {
-                    const sellingPrice =
+                    const retailPrice =
                         Number(
-                            item.sellingPrice
+                            item.retailPrice
                         );
 
                     if (
-                        isNaN(sellingPrice) ||
-                        sellingPrice < 0
+                        isNaN(retailPrice) ||
+                        retailPrice < 0
                     ) {
                         errors.push({
                             row: i + 1,
                             message:
-                                "Invalid selling price"
+                                "Invalid retail price"
                         });
                         continue;
                     }
 
-                    product.sellingPrice =
-                        sellingPrice;
+                    product.retailPrice =
+                        retailPrice;
                 }
 
-                // -------------------------
-                // LOW STOCK
-                // -------------------------
+
+                if (
+                    item.wholesalePrice !==
+                    undefined
+                ) {
+                    const wholesalePrice =
+                        Number(
+                            item.wholesalePrice
+                        );
+
+                    if (
+                        isNaN(wholesalePrice) ||
+                        wholesalePrice < 0
+                    ) {
+                        errors.push({
+                            row: i + 1,
+                            message:
+                                "Invalid wholesale price"
+                        });
+                        continue;
+                    }
+
+                    product.wholesalePrice =
+                        wholesalePrice;
+                }
 
                 if (
                     item.lowStockQty !==
@@ -2007,8 +2035,11 @@ exports.bulkProductUpdate = async (req, res) => {
                     barcode.costPrice =
                         product.costPrice;
 
-                    barcode.sellingPrice =
-                        product.sellingPrice;
+                    barcode.retailPrice =
+                        product.retailPrice;
+
+                    barcode.wholesalePrice =
+                        product.wholesalePrice;
 
                     barcode.gstRate =
                         product.gstRate;

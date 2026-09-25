@@ -2430,7 +2430,10 @@ exports.getBills = async (req, res) => {
         const bills = await Bill.find(filter)
             .populate("customerId", "name phone customerId")
             .populate("createdBy", "name email role")
-            .populate("items.productId", "itemCode")
+            .populate(
+                "items.productId",
+                "itemCode retailPrice wholesalePrice"
+            )
             .sort({ createdAt: -1 });
 
         const billsWithFormattedDates = bills.map((bill, index) => {
@@ -2550,6 +2553,9 @@ exports.getBills = async (req, res) => {
 
                     mrp: item.mrp,
 
+                    retailPrice: Number(item.productId?.retailPrice || 0),
+                    wholesalePrice: Number(item.productId?.wholesalePrice || 0),
+
                     price: item.price,
 
                     totalAmount: item.totalAmount,
@@ -2621,9 +2627,6 @@ exports.getBillItemWiseReport = async (req, res) => {
             superAdminId: hierarchy.superAdminId
         };
 
-        // =========================
-        // DATE FILTER
-        // =========================
 
         const now = new Date();
 
@@ -2809,9 +2812,6 @@ exports.getBillItemWiseReport = async (req, res) => {
 
                 itemWiseData.push({
 
-                    // =========================
-                    // BILL DETAILS
-                    // =========================
 
                     itemCount,
 
@@ -2977,9 +2977,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                             item.totalAmount || 0
                         ),
 
-                    // =========================
-                    // PRICE LEVEL
-                    // =========================
 
                     appliedPriceLevel:
                         item.appliedPriceLevel ||
@@ -2992,9 +2989,6 @@ exports.getBillItemWiseReport = async (req, res) => {
             }
         }
 
-        // =========================
-        // RESPONSE
-        // =========================
 
         return res.status(200).json({
 
@@ -3367,7 +3361,7 @@ exports.getBillById = async (req, res) => {
             formattedBill.items.map(async (item) => {
                 const product = await mongoose.model("Product").findById(
                     item.productId
-                ).select("itemCode");
+                ).select("itemCode retailPrice wholesalePrice");
 
                 return {
                     productId: item.productId,
@@ -3388,6 +3382,9 @@ exports.getBillById = async (req, res) => {
                     totalkg: item.totalkg,
 
                     mrp: item.mrp,
+
+                    retailPrice: Number(product?.retailPrice || 0),
+                    wholesalePrice: Number(product?.wholesalePrice || 0),
 
                     price: item.price,
 
@@ -3653,18 +3650,18 @@ exports.editBill = async (req, res) => {
             const totalRequiredQty = qty + freeQty;
 
 
-
+            const retailPrice = Number(product.retailPrice || 0);
+            const wholesalePrice = Number(product.wholesalePrice || 0);
 
             const price = Number(
-                billItem.sellingPrice ??
-                product.sellingPrice ??
-                0
+                billItem.price ??
+                retailPrice
             );
 
             if (price <= 0) {
                 return res.status(400).json({
                     success: false,
-                    message: `Invalid selling price for ${product.name}`
+                    message: `Invalid price for ${product.name}`
                 });
             }
 
@@ -3821,6 +3818,9 @@ exports.editBill = async (req, res) => {
                     `${barcode.unit || product.unit || "pcs"}`,
 
                 mrp: Number(product.mrp || 0),
+
+                retailPrice: Number(product.retailPrice || 0),
+                wholesalePrice: Number(product.wholesalePrice || 0),
 
                 price: price,
 
