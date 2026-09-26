@@ -35,15 +35,13 @@ function ThermalReceipt({
                     <p className={styles.receiptShopName}>AR TRADERS</p>
                     <p className={styles.receiptWelcome}>23/11, Mount Road, Tenkasi</p>
                     <p className={styles.receiptWelcome}>
-                       <strong>Mobile: 866 8170 419 | 979 1845 135</strong> 
+                       <strong>Mobile: 8668170419 | 9791845135</strong> 
                         </p>
                 </div>
 
                 <div className={styles.dashedLine} />
 
-                <p className={styles.receiptCenter}>
-                    <strong>Tax invoice</strong>
-                </p>
+              
 
                 <div className={styles.receiptMeta}>
                     <div>

@@ -77,8 +77,6 @@ import HSNList from "./Pages/HSN/HSNList";
 
 import Account from "./Pages/Settings/Account/Account";
 import ManageBusiness from "./Pages/Settings/ManageBusiness/ManageBusiness";
-import InvoiceSettings from "./Pages/Settings/InvoiceSetting/InvoiceSettings";
-import PrintSettings from "./Pages/Settings/PrintSetting/PrintSettings";
 import ManageUsers from "./Pages/Settings/ManageUsers/ManageUsers";
 import HelpSupport from "./Pages/Settings/Help/HelpSupport";
 import BulkAction from "./Pages/Items/BulkAction";
@@ -215,16 +213,9 @@ function MainLayout() {
             element={<ManageBusiness />}
           />
 
-          <Route
-            path="/settings/invoice"
-            element={<InvoiceSettings />}
-          />
+         
 
-          <Route
-            path="/settings/print"
-            element={<PrintSettings />}
-          />
-
+        
           <Route
             path="/settings/users"
             element={<ManageUsers />}

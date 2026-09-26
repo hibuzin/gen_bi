@@ -82,21 +82,8 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
       path: "/settings/users",
       icon: <FaUsers />,
     },
-    {
-      name: lang === "ta" ? "இன்வாய்ஸ் அமைப்புகள்" : "Invoice Settings",
-      path: "/settings/invoice",
-      icon: <FaFileInvoice />,
-    },
-    {
-      name: lang === "ta" ? "அச்சு அமைப்புகள்" : "Print Settings",
-      path: "/settings/print",
-      icon: <FaPrint />,
-    },
-    {
-      name: lang === "ta" ? "உதவி & ஆதரவு" : "Help & Support",
-      path: "/settings/support",
-      icon: <FaHeadset />,
-    },
+    
+   
 
     {
       divider: true
@@ -166,7 +153,7 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
     },
 
     {
-      name: lang === "ta" ? "பொருட்கள்" : "Reports",
+      name: lang === "ta" ? "பொருட்கள்" : "REPORTS",
       icon: <FaBox />,
       children: [
         { name: lang === "ta" ? "இன்றைய விற்பனை" : "Item wise reports ", path: "/Bill-itemwise" },
