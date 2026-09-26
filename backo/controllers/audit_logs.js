@@ -188,7 +188,6 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
 
         } else if (fromDate || toDate) {
 
-            // CUSTOM DATE FILTER
             filter.createdAt = {};
 
             if (fromDate) {
@@ -386,9 +385,14 @@ exports.getPurchaseBillWiseItemAudit = async (req, res) => {
                     purchasePrice:
                         rate,
 
-                    sellingPrice:
+                    retailPrice:
                         Number(
-                            item.sellingPrice || 0
+                            item.retailPrice || 0
+                        ),
+
+                    wholesalePrice:
+                        Number(
+                            item.wholesalePrice || 0
                         ),
 
                     rate,
@@ -980,8 +984,9 @@ exports.getBillWiseItemAudit = async (req, res) => {
 
                     mrp: Number(item.mrp || 0),
 
-                    // IMPORTANT
-                    sellingPrice: Number(item.sellingPrice || 0),
+                    retailPrice: Number(item.retailPrice || 0),
+
+                    wholesalePrice: Number(item.wholesalePrice || 0),
 
                     rate: Number(item.rate || 0),
 
@@ -1206,7 +1211,7 @@ exports.getBillWiseItemAudit = async (req, res) => {
 
                     loyaltyDiscount: 0,
 
-                   
+
                     grandTotal: gstGrandTotal
 
                 },

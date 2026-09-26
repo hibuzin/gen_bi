@@ -166,14 +166,6 @@ exports.createBill = async (req, res) => {
                 superAdminId: hierarchy.superAdminId
             });
 
-            if (!barcode) {
-                return res.status(400).json({
-                    success: false,
-                    message: `Barcode not found: ${searchValue}`
-                });
-            }
-
-
             let product = null;
 
             if (barcode) {
@@ -1541,9 +1533,7 @@ exports.calculateBill = async (req, res) => {
                 superAdminId: hierarchy.superAdminId
             });
 
-            if (!barcode) {
-                return res.status(400).json({ success: false, message: `Barcode not found: ${searchValue}` });
-            }
+
 
 
             const product = await Product.findOne({
@@ -3669,6 +3659,8 @@ exports.editBill = async (req, res) => {
             customerId,
             isWalkInCustomer = false,
 
+            priceType: priceTypeFromRequest = "retail",
+
             discountPercent = 0,
             discountAmount = 0,
 
@@ -3784,13 +3776,6 @@ exports.editBill = async (req, res) => {
                 superAdminId: hierarchy.superAdminId
             });
 
-            if (!barcode) {
-                return res.status(404).json({
-                    success: false,
-                    message: `Barcode not found for ${product.name}`
-                });
-            }
-
 
             let freeQty = 0;
 
@@ -3815,13 +3800,29 @@ exports.editBill = async (req, res) => {
             const totalRequiredQty = qty + freeQty;
 
 
-            const retailPrice = Number(product.retailPrice || 0);
-            const wholesalePrice = Number(product.wholesalePrice || 0);
-
-            const price = Number(
-                billItem.price ??
-                retailPrice
+            const retailPrice = Number(
+                product.retailPrice || 0
             );
+
+            const wholesalePrice = Number(
+                product.wholesalePrice || 0
+            );
+
+            const priceType = billItem.selectedPriceType || priceTypeFromRequest || "retail";
+
+            const defaultPrice =
+                priceType === "wholesale"
+                    ? wholesalePrice
+                    : retailPrice;
+
+            const hasCustomPrice =
+                billItem.price !== undefined &&
+                billItem.price !== null &&
+                billItem.price !== "";
+
+            const price = hasCustomPrice
+                ? Number(billItem.price)
+                : defaultPrice;
 
             if (price <= 0) {
                 return res.status(400).json({
@@ -3832,7 +3833,7 @@ exports.editBill = async (req, res) => {
 
             const rawGstRate =
                 billItem.gstRate ??
-                barcode.gstRate ??
+                barcode?.gstRate ??
                 product.gstRate ??
                 "none";
 
@@ -3941,8 +3942,8 @@ exports.editBill = async (req, res) => {
             newItems.push({
                 productId: product._id,
 
-                barcodeId: barcode._id,
-                barcode: barcode.code,
+                barcodeId: barcode?._id,
+                barcode: barcode?.code,
 
                 productName: product.name || "",
                 name: product.name || "",
@@ -3952,35 +3953,21 @@ exports.editBill = async (req, res) => {
                 totalGivenQty: qty + freeQty,
 
                 unit:
-                    barcode.unit ||
-                    product.unit ||
-                    "pcs",
+                    product.unit || "pcs",
 
                 unitValue:
-                    barcode.unitValue ||
-                    product.unitValue ||
-                    1,
+                    Number(product.unitValue || 1),
 
                 unitText:
-                    `${barcode.unitValue || product.unitValue || 1} ` +
-                    `${barcode.unit || product.unit || "pcs"}`,
+                    `${product.unitValue || 1} ${product.unit || "pcs"}`,
 
                 totalUnitQty:
-                    qty *
-                    Number(
-                        barcode.unitValue ||
-                        product.unitValue ||
-                        1
-                    ),
+                    qty * Number(product.unitValue || 1),
 
                 totalUnitText:
-                    `${qty *
-                    Number(
-                        barcode.unitValue ||
-                        product.unitValue ||
-                        1
-                    )} ` +
-                    `${barcode.unit || product.unit || "pcs"}`,
+                    `${qty * Number(product.unitValue || 1)} ${product.unit || "pcs"}`,
+
+
 
                 mrp: Number(product.mrp || 0),
 

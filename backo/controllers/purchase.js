@@ -878,9 +878,28 @@ exports.createPurchase = async (req, res) => {
             createdBy: req.user.userId
         });
 
-        const gstPurchaseItems = purchase.items.filter(
-            (item) => item.isNonGst !== true
-        );
+        const allowedGstRates = [0, 5, 12, 18, 40];
+
+        const gstPurchaseItems = purchase.items.filter((item) => {
+            if (item.isNonGst === true) {
+                return false;
+            }
+
+            const gstValue =
+                item.taxPercentage ??
+                item.gstRate ??
+                item.gst;
+
+            if (
+                gstValue === null ||
+                gstValue === undefined ||
+                String(gstValue).trim().toLowerCase() === "none"
+            ) {
+                return false;
+            }
+
+            return allowedGstRates.includes(Number(gstValue));
+        });
 
         if (gstPurchaseItems.length > 0) {
 
@@ -1008,10 +1027,12 @@ exports.createPurchase = async (req, res) => {
 
                     items: gstPurchaseItems.map((item) => {
 
-                        const gstRate =
-                            Number(
-                                item.taxPercentage || 0
-                            );
+                        const gstRate = Number(
+                            item.taxPercentage ??
+                            item.gstRate ??
+                            item.gst ??
+                            0
+                        );
 
                         const taxAmount =
                             Number(
@@ -1790,7 +1811,7 @@ exports.getPurchasesByDate = async (req, res) => {
             };
 
         } else if (fromDate && toDate) {
-            
+
             const [fromDay, fromMonth, fromYear] = fromDate.split("/");
             const [toDay, toMonth, toYear] = toDate.split("/");
 
@@ -3261,6 +3282,86 @@ exports.updatePurchase = async (req, res) => {
 
         await purchase.save();
 
+
+        const allowedGstRates = [0, 5, 12, 18, 40];
+
+        const gstPurchaseItems = purchase.items.filter((item) => {
+            const gstValue =
+                item.taxPercentage ??
+                item.gstRate ??
+                item.gst;
+
+            if (
+                gstValue === null ||
+                gstValue === undefined ||
+                String(gstValue).trim().toLowerCase() === "none"
+            ) {
+                return false;
+            }
+
+            return allowedGstRates.includes(Number(gstValue));
+        });
+
+        const gstAuditItems = gstPurchaseItems.map((item) => {
+
+            const gstRate = Number(
+                item.taxPercentage ??
+                item.gstRate ??
+                item.gst
+            );
+
+            return {
+                productId: item.productId,
+                productName: item.productName || "",
+
+                qty: Number(item.qty || 0),
+                freeQty: Number(item.freeQty || 0),
+                totalStockQty: Number(item.totalStockQty || 0),
+
+                netcost: Number(item.netcost || 0),
+                netAmount: Number(item.netAmount || 0),
+
+                discountPercent: Number(item.discountPercent || 0),
+                discountAmount: Number(item.discountAmount || 0),
+
+                taxableAmount: Number(item.amount || 0),
+
+                gstRate: gstRate,
+
+                taxAmount: Number(item.taxAmount || 0),
+
+                totalCostWithGST: Number(
+                    item.totalCostWithGST || 0
+                ),
+
+                isGstIncluded: item.isGstIncluded !== false
+            };
+        });
+
+        const gstItemsTotal = round2(
+            gstAuditItems.reduce(
+                (sum, item) =>
+                    sum + Number(item.taxableAmount || 0),
+                0
+            )
+        );
+
+        const totalGstAmount = round2(
+            gstAuditItems.reduce(
+                (sum, item) =>
+                    sum + Number(item.taxAmount || 0),
+                0
+            )
+        );
+
+        const totalCgstAmount = round2(
+            totalGstAmount / 2
+        );
+
+        const totalSgstAmount = round2(
+            totalGstAmount / 2
+        );
+
         await AuditLog.findOneAndUpdate(
             {
                 documentId: purchase._id,
@@ -3298,7 +3399,12 @@ exports.updatePurchase = async (req, res) => {
 
                         totalAmount: purchase.totalAmount,
 
-                        items: purchase.items
+                        gstItemsTotal,
+                        totalCgstAmount,
+                        totalSgstAmount,
+                        totalGstAmount,
+
+                        items: gstAuditItems
                     }
                 }
             },
