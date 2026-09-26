@@ -17,7 +17,7 @@ function BillingPopup({
     items = [],
     customerName = "",
     customerPhone = "",
-
+    priceType = "retail",
     summary,
     prevBalance = 0,
 
@@ -378,6 +378,7 @@ function BillingPopup({
                             paidAmount={totalReceived}
                             balanceAmount={balanceAmount}
                             preview={true}
+                            priceType={priceType}
                         />
 
                         <div className={styles.summaryList}>

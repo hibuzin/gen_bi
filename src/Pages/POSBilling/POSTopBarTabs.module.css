@@ -174,3 +174,31 @@
   color: #111827;
   transform: translateY(-1px);
 }
+
+.priceTypeSelector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+}
+
+.priceTypeBtn,
+.priceTypeActive {
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.priceTypeBtn {
+  background: #fff;
+  color: #333;
+}
+
+.priceTypeActive {
+  background: #222;
+  color: #fff;
+  border-color: #222;
+}

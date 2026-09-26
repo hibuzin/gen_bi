@@ -45,6 +45,7 @@ function POSBilling() {
   const [cashAmount, setCashAmount] = useState("");
   const [upiAmount, setUpiAmount] = useState("");
   const [cardAmount, setCardAmount] = useState("");
+  const [priceType, setPriceType] = useState("retail");
   const [customerResults, setCustomerResults] = useState([]);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -375,75 +376,75 @@ function POSBilling() {
 
 
   useEffect(() => {
-  if (!bill || !shouldPrintRef.current) return;
+    if (!bill || !shouldPrintRef.current) return;
 
-  let cancelled = false;
+    let cancelled = false;
 
-  const printBill = async () => {
-    // Small delay so React finishes rendering ThermalReceipt.
-    await new Promise((resolve) =>
-      setTimeout(resolve, 300)
-    );
+    const printBill = async () => {
+      // Small delay so React finishes rendering ThermalReceipt.
+      await new Promise((resolve) =>
+        setTimeout(resolve, 300)
+      );
 
-    if (cancelled) return;
+      if (cancelled) return;
 
-    try {
-      if (!window.electronAPI?.printReceipt) {
-        throw new Error(
-          "Electron print API is not available"
+      try {
+        if (!window.electronAPI?.printReceipt) {
+          throw new Error(
+            "Electron print API is not available"
+          );
+        }
+
+        const result =
+          await window.electronAPI.printReceipt();
+
+        console.log(
+          "Printed successfully:",
+          result
         );
+
+        showToast(
+          "Bill printed successfully",
+          "success"
+        );
+      } catch (error) {
+        console.error(
+          "Silent print failed:",
+          error
+        );
+
+        showToast(
+          error?.message || "Printing failed",
+          "error"
+        );
+      } finally {
+        shouldPrintRef.current = false;
+
+        if (!cancelled) {
+          console.log("[PRINT] Keeping receipt mounted for 3 seconds");
+
+          setTimeout(() => {
+            console.log("[PRINT] Removing receipt from DOM");
+            setBill(null);
+          }, 3000);
+        }
       }
 
-      const result =
-        await window.electronAPI.printReceipt();
+    };
 
-      console.log(
-        "Printed successfully:",
-        result
-      );
+    printBill();
 
-      showToast(
-        "Bill printed successfully",
-        "success"
-      );
-    } catch (error) {
-      console.error(
-        "Silent print failed:",
-        error
-      );
-
-      showToast(
-        error?.message || "Printing failed",
-        "error"
-      );
-    } finally {
-      shouldPrintRef.current = false;
-
-       if (!cancelled) {
-    console.log("[PRINT] Keeping receipt mounted for 3 seconds");
-
-    setTimeout(() => {
-      console.log("[PRINT] Removing receipt from DOM");
-      setBill(null);
-    }, 3000);
-  }
-}
-    
-  };
-
-  printBill();
-
-  return () => {
-    cancelled = true;
-  };
-}, [bill]);
+    return () => {
+      cancelled = true;
+    };
+  }, [bill]);
 
 
 
 
 
 
-  
+
 
   const fetchStockList = async () => {
     try {
@@ -626,11 +627,14 @@ function POSBilling() {
       }
 
       const billItems = scannedItems.map((item) => {
+        const selectedPrice =
+          priceType === "wholesale"
+            ? item.wholesalePrice
+            : item.retailPrice;
+
         const billItem = {
           productId: item.productId,
-          sellingPrice: Number(
-            item.sellingPrice ?? item.price ?? 0
-          ),
+          price: Number(selectedPrice ?? 0),
           qty: Number(item.qty || 1),
         };
 
@@ -657,6 +661,7 @@ function POSBilling() {
 
         body: JSON.stringify({
           isWalkInCustomer,
+          priceType,
 
           ...(!isWalkInCustomer &&
             customerId && {
@@ -822,12 +827,15 @@ function POSBilling() {
 
     try {
       const billItems = items.map((item) => {
+        const selectedPrice =
+          priceType === "wholesale"
+            ? item.wholesalePrice
+            : item.retailPrice;
+
         const billItem = {
           productId: item.productId,
-          sellingPrice: Number(
-            item.sellingPrice ?? item.price ?? 0
-          ),
           qty: Number(item.qty || 1),
+          price: Number(selectedPrice ?? 0),
         };
 
         if (Number(item.discountPercent || 0) > 0) {
@@ -847,6 +855,8 @@ function POSBilling() {
         },
         body: JSON.stringify({
           isWalkInCustomer,
+
+          priceType,
 
           ...(!isWalkInCustomer &&
             selectedCustomer?.id && {
@@ -926,10 +936,11 @@ function POSBilling() {
     upiAmount,
     cardAmount,
     redeemPoints,
-    - selectedCustomer,
-    - isWalkInCustomer,
+    selectedCustomer,
+    isWalkInCustomer,
     billDiscountPercent,
     billDiscountAmount,
+    priceType,
   ]);
 
   useEffect(() => {
@@ -1030,6 +1041,8 @@ function POSBilling() {
       <POSTopBarTabs
         navigate={navigate}
         token={token}
+        priceType={priceType}
+        setPriceType={setPriceType}
 
         holdTabs={holdTabs}
         setHoldTabs={setHoldTabs}
@@ -1062,6 +1075,8 @@ function POSBilling() {
         {/* ── Left Panel ── */}
         <POSItemsTable
           token={token}
+          priceType={priceType}
+          setPriceType={setPriceType}
           scanCode={scanCode}
           setScanCode={setScanCode}
           scannedItems={scannedItems}
@@ -1141,7 +1156,7 @@ function POSBilling() {
             setBill(null);
           }}
           onConfirm={confirmPayment}
-          
+
           loading={loading}
         />
       )}

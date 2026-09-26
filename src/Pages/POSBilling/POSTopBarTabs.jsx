@@ -5,6 +5,8 @@ import { API } from "../../constants/api";
 function POSTopBarTabs({
   navigate,
   token,
+  priceType,
+  setPriceType,
   holdTabs,
   setHoldTabs,
   activeHoldId,
@@ -125,15 +127,26 @@ function POSTopBarTabs({
 
       const payload = {
         customerName: "Walk-in Customer",
-        items: scannedItems.map((item) => ({
-          productId: item.productId,
-          qty: item.qty,
-          sellingPrice: item.sellingPrice || item.mrp,
-          mrp: item.mrp,
-          gst: item.gst || 0,
-          barcode: item.barcode,
-          flavor: item.flavor || "",
-        })),
+        priceType,
+
+        items: scannedItems.map((item) => {
+          const selectedPrice =
+            priceType === "wholesale"
+              ? item.wholesalePrice
+              : item.retailPrice;
+
+          return {
+            productId: item.productId,
+            qty: Number(item.qty || 1),
+            price: Number(selectedPrice ?? 0),
+            retailPrice: Number(item.retailPrice ?? 0),
+            wholesalePrice: Number(item.wholesalePrice ?? 0),
+            mrp: Number(item.mrp ?? 0),
+            gst: item.gst || 0,
+            barcode: item.barcode,
+            flavor: item.flavor || "",
+          };
+        }),
       };
 
       console.log("Hold Bill Payload:", JSON.stringify(payload, null, 2));
@@ -210,8 +223,17 @@ function POSTopBarTabs({
           productName: item.name,
           brand: item.brand,
           barcode: item.barcode,
-          mrp: item.mrp,
-          sellingPrice: item.sellingPrice,
+
+          mrp: Number(item.mrp ?? 0),
+
+          retailPrice: Number(item.retailPrice ?? 0),
+          wholesalePrice: Number(item.wholesalePrice ?? 0),
+
+          price:
+            priceType === "wholesale"
+              ? Number(item.wholesalePrice ?? item.price ?? 0)
+              : Number(item.retailPrice ?? item.price ?? 0),
+
           flavor: item.flavor,
           gst: item.gst,
           qty: item.qty,
@@ -298,6 +320,32 @@ function POSTopBarTabs({
               ? `Editing: ${editInvoiceNo || ""}`
               : `Current Bill: #${Number(latestBillCount || 0) + 1}`}
           </span>
+
+          <div className={styles.priceTypeSelector}>
+            <button
+              type="button"
+              className={
+                priceType === "retail"
+                  ? styles.priceTypeActive
+                  : styles.priceTypeBtn
+              }
+              onClick={() => setPriceType("retail")}
+            >
+              Retail
+            </button>
+
+            <button
+              type="button"
+              className={
+                priceType === "wholesale"
+                  ? styles.priceTypeActive
+                  : styles.priceTypeBtn
+              }
+              onClick={() => setPriceType("wholesale")}
+            >
+              Wholesale
+            </button>
+          </div>
         </div>
 
         <div className={styles.topBarRight}>

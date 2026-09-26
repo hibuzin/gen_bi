@@ -9,18 +9,26 @@ function ThermalReceipt({
     paidAmount = 0,
     balanceAmount = 0,
     preview = false,
+    priceType = "retail",
 }) {
-    const receiptData = bill || {
-        invoiceNo: "PREVIEW",
-        invoiceDate: new Date().toLocaleDateString("en-IN"),
-        invoiceTime: new Date().toLocaleTimeString("en-IN"),
-        items,
-        summary,
-        customer: {
-            customerName,
-            mobile: customerPhone,
-        },
-    };
+    const receiptData = {
+    ...(bill || {}),
+    invoiceNo: bill?.invoiceNo || "PREVIEW",
+    invoiceDate:
+        bill?.invoiceDate ||
+        new Date().toLocaleDateString("en-IN"),
+    invoiceTime:
+        bill?.invoiceTime ||
+        new Date().toLocaleTimeString("en-IN"),
+
+    items: bill?.items || items,
+    summary: bill?.summary || summary,
+
+    customer: bill?.customer || {
+        customerName,
+        mobile: customerPhone,
+    },
+};
 
     return (
         <div
@@ -89,19 +97,12 @@ function ThermalReceipt({
                 {receiptData.items?.map((item, index) => {
                     const qty = Number(item.qty || 0);
 
-                    const rate = Number(
-                        item.sellingPrice ??
-                        item.finalPrice ??
-                        item.rate ??
-                        item.mrp ??
-                        0
-                    );
-
+                    const rate = Number(item.price ?? 0);
                     const amount = Number(
-                        item.totalAmount ??
-                        item.netAmount ??
-                        rate * qty
-                    );
+    item.finalPrice ??
+    item.totalAmount ??
+    (rate * qty)
+);
 
                     return (
                         <div
@@ -214,7 +215,7 @@ function ThermalReceipt({
 
                     */}
 
-                    
+
                 </div>
 
                 <div className={styles.receiptFooter}>

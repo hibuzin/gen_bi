@@ -4,6 +4,8 @@ import { API } from "../../constants/api";
 
 function POSItemsTable({
   token,
+  priceType,
+  setPriceType,
   scanCode,
   setScanCode,
   scannedItems,
@@ -31,18 +33,29 @@ function POSItemsTable({
     ...Array(extraRows).fill(null),
   ];
 
-  const updateSellingPrice = (rowIndex, value) => {
+  const updatePrice = (rowIndex, value) => {
     const cleanedValue = value.replace(/[^0-9.]/g, "");
 
     setScannedItems((prev) =>
-      prev.map((item, index) =>
-        index === rowIndex
-          ? {
+      prev.map((item, index) => {
+        if (index !== rowIndex) {
+          return item;
+        }
+
+        if (priceType === "wholesale") {
+          return {
             ...item,
-            sellingPrice: cleanedValue,
-          }
-          : item
-      )
+            wholesalePrice: cleanedValue,
+            price: cleanedValue,
+          };
+        }
+
+        return {
+          ...item,
+          retailPrice: cleanedValue,
+          price: cleanedValue,
+        };
+      })
     );
   };
 
@@ -55,13 +68,24 @@ function POSItemsTable({
   const getEffectivePrice = (item) => {
     const qty = item.qty || 1;
     const slabs = item.priceLevel?.slabs;
+
     if (item.priceLevel?.pricingType === "slab" && Array.isArray(slabs)) {
       const matched = slabs.find(
-        (s) => qty >= s.minQty && (s.maxQty === null || qty <= s.maxQty)
+        (s) =>
+          qty >= s.minQty &&
+          (s.maxQty === null || qty <= s.maxQty)
       );
-      if (matched && matched.price > 0) return matched.price;
+
+      if (matched && matched.price > 0) {
+        return matched.price;
+      }
     }
-    return item.sellingPrice || item.mrp || 0;
+
+    return Number(
+      priceType === "wholesale"
+        ? item.wholesalePrice ?? 0
+        : item.retailPrice ?? 0
+    );
   };
 
   // STOCK INFO
@@ -116,6 +140,15 @@ function POSItemsTable({
         updated[rowIndex] = {
           ...data.data,
           barcode: data.data.barcode || value,
+
+          retailPrice: data.data.retailPrice ?? 0,
+          wholesalePrice: data.data.wholesalePrice ?? 0,
+
+          price:
+            priceType === "wholesale"
+              ? data.data.wholesalePrice ?? 0
+              : data.data.retailPrice ?? 0,
+
           qty: 1,
           unit: data.data.unit || stockInfo.unit || "",
           stock: stockInfo.stock,
@@ -221,7 +254,12 @@ function POSItemsTable({
         barcode: product.barcode,
         mrp: product.mrp || 0,
         priceLevel: product.priceLevel || null,
-        sellingPrice: product.sellingPrice || 0,
+        retailPrice: product.retailPrice || 0,
+        wholesalePrice: product.wholesalePrice || 0,
+        price:
+          priceType === "wholesale"
+            ? product.wholesalePrice || 0
+            : product.retailPrice || 0,
         flavor: product.flavor || "",
         gst: product.gst || 0,
         stock: stockInfo.stock,
@@ -603,7 +641,11 @@ function POSItemsTable({
               <th>Items</th>
               <th>Qty</th>
               <th>Mrp</th>
-              <th>Sp (₹)</th>
+              <th>
+                {priceType === "wholesale"
+                  ? "Wholesale (₹)"
+                  : "Retail (₹)"}
+              </th>
               <th>Stock</th>
               <th>Amount (₹)</th>
             </tr>
@@ -753,7 +795,10 @@ function POSItemsTable({
                                   </div>
 
                                   <span>
-                                    ₹{product.sellingPrice || product.mrp || 0}
+                                    ₹
+                                    {priceType === "wholesale"
+                                      ? product.wholesalePrice || 0
+                                      : product.retailPrice || 0}
                                   </span>
                                 </div>
                               ))}
@@ -820,9 +865,13 @@ function POSItemsTable({
                         className={styles.cellInput}
                         type="text"
                         inputMode="decimal"
-                        value={item.sellingPrice ?? ""}
+                        value={
+                          priceType === "wholesale"
+                            ? item.wholesalePrice ?? ""
+                            : item.retailPrice ?? ""
+                        }
                         onChange={(e) =>
-                          updateSellingPrice(idx, e.target.value)
+                          updatePrice(idx, e.target.value)
                         }
                         onFocus={() => {
                           activeFocusedRowRef.current = idx;

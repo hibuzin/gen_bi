@@ -194,9 +194,6 @@ exports.allstockcheck = async (req, res) => {
             );
         });
 
-        // -----------------------------------------
-        // TOTAL STOCK VALUE
-        // -----------------------------------------
 
         const totalStockValue = Number(
             data
@@ -314,10 +311,6 @@ exports.getAllRepackStock = async (req, res) => {
                     product.costPrice || 0
                 );
 
-                const sellingPrice = Number(
-                    product.sellingPrice || 0
-                );
-
                 let stockValue = 0;
 
                 if (unit === "g") {
@@ -374,7 +367,11 @@ exports.getAllRepackStock = async (req, res) => {
 
                         costPrice,
 
-                        sellingPrice,
+                        retailPrice:
+                            Number(product.retailPrice || 0),
+
+                        wholesalePrice:
+                            Number(product.wholesalePrice || 0),
 
                         gst,
 
@@ -436,10 +433,6 @@ exports.getAllRepackStock = async (req, res) => {
                     product.costPrice || 0
                 );
 
-                const sellingPrice = Number(
-                    product.sellingPrice || 0
-                );
-
                 const stockValue = Number(
                     (currentStock * costPrice).toFixed(2)
                 );
@@ -473,7 +466,11 @@ exports.getAllRepackStock = async (req, res) => {
 
                     costPrice,
 
-                    sellingPrice,
+                    retailPrice:
+                        Number(product.retailPrice || 0),
+
+                    wholesalePrice:
+                        Number(product.wholesalePrice || 0),
 
                     gst:
                         product.gstRate ?? "none",
@@ -536,7 +533,7 @@ exports.getAllBulkProducts = async (req, res) => {
             productType: "bulk"
         })
             .select(
-                "name itemCode stock unit unitValue mrp costPrice sellingPrice gstRate lowStockQty"
+                "name itemCode stock unit unitValue mrp costPrice retailPrice wholesalePrice gstRate lowStockQty"
             )
 
             .sort({ name: 1 });
@@ -557,7 +554,13 @@ exports.getAllBulkProducts = async (req, res) => {
 
                 mrp: item.mrp || 0,
                 costPrice,
-                sellingPrice: item.sellingPrice || 0,
+
+                retailPrice:
+                    Number(item.retailPrice || 0),
+
+                wholesalePrice:
+                    Number(item.wholesalePrice || 0),
+
                 gst: item.gstRate ?? "none",
 
                 stockValue: Number((stock * costPrice).toFixed(2)),
@@ -616,7 +619,7 @@ exports.stockCheckByBulkId = async (req, res) => {
             superAdminId: hierarchy.superAdminId
         }).populate(
             "productId",
-            "name itemCode stock unit unitValue mrp costPrice sellingPrice parentProductId productType gstRate lowStockQty"
+            "name itemCode stock unit unitValue mrp costPrice retailPrice wholesalePrice parentProductId productType gstRate lowStockQty"
         );
 
         const formatQty = (value) => {
@@ -675,6 +678,13 @@ exports.stockCheckByBulkId = async (req, res) => {
                 totalQty,
 
                 costPrice,
+
+                retailPrice:
+                    Number(product.retailPrice || 0),
+
+                wholesalePrice:
+                    Number(product.wholesalePrice || 0),
+
                 stockValue,
 
                 unit: product.unit,
@@ -734,7 +744,8 @@ exports.getStockValue = async (req, res) => {
 
 
         let totalCostValue = 0;
-        let totalSellingValue = 0;
+        let totalRetailValue = 0;
+        let totalWholesaleValue = 0;
         let totalMrpValue = 0;
 
         const data = [];
@@ -768,7 +779,11 @@ exports.getStockValue = async (req, res) => {
 
             const mrp = Number(product.mrp || 0);
             const costPrice = Number(product.costPrice || 0);
-            const sellingPrice = Number(product.sellingPrice || 0);
+            const retailPrice =
+                Number(product.retailPrice || 0);
+
+            const wholesalePrice =
+                Number(product.wholesalePrice || 0);
 
             let costValue = 0;
             let sellingValue = 0;
@@ -776,7 +791,19 @@ exports.getStockValue = async (req, res) => {
 
             if (product.unit === "g") {
                 costValue = round2((currentStock / 1000) * costPrice);
-                sellingValue = round2((currentStock / 1000) * sellingPrice);
+                
+                retailValue =
+                    round2(
+                        (currentStock / 1000) *
+                        retailPrice
+                    );
+
+                wholesaleValue =
+                    round2(
+                        (currentStock / 1000) *
+                        wholesalePrice
+                    );
+
                 mrpValue = round2((currentStock / 1000) * mrp);
             } else {
                 costValue = round2(currentStock * costPrice);
@@ -1192,7 +1219,11 @@ exports.getproductsearchstock = async (req, res) => {
 
             const costPrice = Number(product.costPrice || 0);
 
-            const sellingPrice = Number(product.sellingPrice || 0);
+            const retailPrice =
+                Number(product.retailPrice || 0);
+
+            const wholesalePrice =
+                Number(product.wholesalePrice || 0);
 
             const mrp = Number(product.mrp || 0);
 
@@ -1383,7 +1414,8 @@ exports.productStockById = async (req, res) => {
 
 
         let totalCostValue = 0;
-        let totalSellingValue = 0;
+        let totalRetailValue = 0;
+        let totalWholesaleValue = 0;
 
         if (unit === "kg") {
             totalCostValue =
