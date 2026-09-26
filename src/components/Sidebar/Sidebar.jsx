@@ -156,6 +156,7 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
       path: "/repack",
       icon: <FaBox />,
     },
+    
     {
       name: lang === "ta" ? "பொருட்கள்" : "RETURN",
       icon: <FaBox />,
@@ -166,7 +167,7 @@ function Sidebar({ collapsed, setCollapsed, lang }) {
     },
 
     {
-      name: lang === "ta" ? "பொருட்கள்" : "Reports",
+      name: lang === "ta" ? "பொருட்கள்" : "REPORTS",
       icon: <FaBox />,
       children: [
         { name: lang === "ta" ? "இன்றைய விற்பனை" : "Item wise reports ", path: "/Bill-itemwise" },
