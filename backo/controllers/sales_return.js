@@ -182,7 +182,12 @@ exports.createSalesReturn = async (req, res) => {
                 productName: soldItem.productName || soldItem.name || "",
                 soldQty: soldItem.qty,
                 returnQty: qty,
-                sellingPrice: soldItem.sellingPrice || soldItem.normalSellingPrice || 0,
+
+                retailPrice: Number(soldItem.retailPrice || 0),
+                wholesalePrice: Number(soldItem.wholesalePrice || 0),
+                selectedPriceType: soldItem.selectedPriceType || null,
+                price: Number(soldItem.price || 0),
+                
                 gstRate,
                 gstAmount,
                 returnAmount

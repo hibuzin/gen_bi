@@ -1776,7 +1776,6 @@ exports.getPurchasesByDate = async (req, res) => {
         };
 
         if (date) {
-            // Single Date
             const [day, month, year] = date.split("/");
 
             const start = new Date(year, month - 1, day);
@@ -1791,7 +1790,7 @@ exports.getPurchasesByDate = async (req, res) => {
             };
 
         } else if (fromDate && toDate) {
-            // Date Range
+            
             const [fromDay, fromMonth, fromYear] = fromDate.split("/");
             const [toDay, toMonth, toYear] = toDate.split("/");
 

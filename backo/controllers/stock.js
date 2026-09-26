@@ -72,9 +72,6 @@ exports.allstockcheck = async (req, res) => {
                 product.costPrice || 0
             );
 
-            // -----------------------------------------
-            // STOCK TEXT
-            // -----------------------------------------
 
             let totalStockText = "";
 
@@ -169,8 +166,11 @@ exports.allstockcheck = async (req, res) => {
 
                 costPrice,
 
-                sellingPrice:
-                    product.sellingPrice || 0,
+                retailPrice:
+                    Number(product.retailPrice || 0),
+
+                wholesalePrice:
+                    Number(product.wholesalePrice || 0),
 
                 gst:
                     product.gstRate ?? "none",
@@ -186,7 +186,7 @@ exports.allstockcheck = async (req, res) => {
             });
         }
 
-        
+
 
         data.sort((a, b) => {
             return String(b.productId).localeCompare(

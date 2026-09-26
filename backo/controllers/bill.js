@@ -3093,16 +3093,18 @@ exports.getBillItemWiseReport = async (req, res) => {
                     mrp:
                         Number(item.mrp || 0),
 
-                    price:
-                        Number(
-                            item.sellingPrice ||
-                            item.price ||
-                            0
-                        ),
+                    retailPrice:
+                        Number(item.retailPrice || 0),
 
-                    // =========================
-                    // DISCOUNT
-                    // =========================
+                    wholesalePrice:
+                        Number(item.wholesalePrice || 0),
+
+                    selectedPriceType:
+                        item.selectedPriceType || null,
+
+                    price:
+                        Number(item.price || 0),
+
 
                     discountPercent:
                         Number(
@@ -3114,9 +3116,6 @@ exports.getBillItemWiseReport = async (req, res) => {
                             item.discountAmount || 0
                         ),
 
-                    // =========================
-                    // GST
-                    // =========================
 
                     gstRate:
                         item.gstRate,
@@ -3225,8 +3224,11 @@ exports.getWalkInCustomerBills = async (req, res) => {
                 totalGivenQty: item.totalGivenQty || item.qty,
                 unit: item.unit,
                 unitValue: item.unitValue,
-                sellingPrice: item.sellingPrice,
-                finalPrice: item.finalPrice,
+                retailPrice: Number(item.retailPrice || 0),
+                wholesalePrice: Number(item.wholesalePrice || 0),
+                selectedPriceType: item.selectedPriceType || null,
+                price: Number(item.price || 0),
+                finalPrice: Number(item.finalPrice || 0),
                 gstRate: item.gstRate,
                 gstAmount: item.gstAmount
             })),
