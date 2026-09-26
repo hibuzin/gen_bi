@@ -230,14 +230,16 @@ export default function PurchaseTable({
         product.purchasePrice ||
         0
       ),
+
       retailPrice: Number(
-        product.retailPrice ||
-        product.sellingPrice ||
+        product.retailPrice ??
+        product.sellingPrice ??
         0
       ),
 
       wholesalePrice: Number(
-        product.wholesalePrice || 0
+        product.wholesalePrice ??
+        0
       ),
 
       tax:
@@ -295,7 +297,9 @@ export default function PurchaseTable({
         0
       ),
 
-      sellingPrice: Number(item.sellingPrice || 0),
+      retailPrice: Number(item.retailPrice ?? 0),
+
+      wholesalePrice: Number(item.wholesalePrice ?? 0),
 
       unit:
         item.unit ||
@@ -450,9 +454,16 @@ export default function PurchaseTable({
         0
       ),
 
-      sellingPrice: Number(
+      retailPrice: Number(
+        createdProduct?.retailPrice ??
         createdProduct?.sellingPrice ??
-        item.sellingPrice ??
+        item.retailPrice ??
+        0
+      ),
+
+      wholesalePrice: Number(
+        createdProduct?.wholesalePrice ??
+        item.wholesalePrice ??
         0
       ),
 
@@ -488,9 +499,12 @@ export default function PurchaseTable({
             <th className={styles.colMrp}>GST %</th>
             <th className={styles.colMrp}>Net cost</th>
             <th className={styles.colMrp}>Mrp</th>
-            <th className={styles.colMrp}>Selling</th>
-            <th className={styles.colMrp}>Roi %</th>
-            <th className={styles.colMrp}>Profit %</th>
+            <th className={styles.colMrp}>Retail Price</th>
+            <th className={styles.colMrp}>Wholesale Price</th>
+            <th className={styles.colMrp}>Retail Profit</th>
+            <th className={styles.colMrp}>Wholesale Profit</th>
+            <th className={styles.colMrp}>Retail ROI %</th>
+            <th className={styles.colMrp}>Wholesale ROI %</th>
             <th className={styles.colMrp}>Tax amt</th>
             <th className={styles.colMrp}>Amount</th>
             <th className={styles.colMrp}>Stock</th>
@@ -731,35 +745,65 @@ export default function PurchaseTable({
                 />
               </td>
 
-              {/* SELLING PRICE */}
               <td>
                 <input
                   type="number"
                   className={styles.cellInput}
-                  value={item.sellingPrice ?? ""}
+                  value={item.retailPrice ?? ""}
                   onChange={(e) =>
                     updateItem(
                       index,
-                      "sellingPrice",
+                      "retailPrice",
                       e.target.value
                     )
                   }
                 />
               </td>
 
-              {/* ROI */}
               <td>
-                {item.roiPercent !== undefined &&
-                  item.roiPercent !== ""
-                  ? `${item.roiPercent}%`
+                <input
+                  type="number"
+                  className={styles.cellInput}
+                  value={item.wholesalePrice ?? ""}
+                  onChange={(e) =>
+                    updateItem(
+                      index,
+                      "wholesalePrice",
+                      e.target.value
+                    )
+                  }
+                />
+              </td>
+
+              {/* RETAIL PROFIT */}
+              <td>
+                {item.retailProfitAmount !== undefined &&
+                  item.retailProfitAmount !== ""
+                  ? `₹ ${item.retailProfitAmount}`
                   : ""}
               </td>
 
-              {/* PROFIT */}
+              {/* WHOLESALE PROFIT */}
               <td>
-                {item.profitPercent !== undefined &&
-                  item.profitPercent !== ""
-                  ? `${item.profitPercent}%`
+                {item.wholesaleProfitAmount !== undefined &&
+                  item.wholesaleProfitAmount !== ""
+                  ? `₹ ${item.wholesaleProfitAmount}`
+                  : ""}
+              </td>
+
+              {/* RETAIL ROI */}
+              <td>
+                {item.retailRoiPercent !== undefined &&
+                  item.retailRoiPercent !== ""
+                  ? `${item.retailRoiPercent}%`
+                  : ""}
+              </td>
+
+              {/* WHOLESALE ROI */}
+              <td>
+                {item.wholesaleRoiPercent !== undefined &&
+                  item.wholesaleRoiPercent !== ""
+                  ? `${item.wholesaleRoiPercent}%`
                   : ""}
               </td>
 

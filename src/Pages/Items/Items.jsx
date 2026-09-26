@@ -421,8 +421,11 @@ function Item() {
           fullItem.netcost ??
           "",
 
-        sellingPrice:
-          fullItem.sellingPrice ?? "",
+        retailPrice:
+          fullItem.retailPrice ?? "",
+
+        wholesalePrice:
+          fullItem.wholesalePrice ?? "",
 
         unit:
           fullItem.unit ||
@@ -522,8 +525,11 @@ function Item() {
       costPrice:
         numberValue(editProduct.costPrice),
 
-      sellingPrice:
-        numberValue(editProduct.sellingPrice),
+      retailPrice:
+        numberValue(editProduct.retailPrice),
+
+      wholesalePrice:
+        numberValue(editProduct.wholesalePrice),
 
       unit: editProduct.unit || "",
 
@@ -889,7 +895,8 @@ function Item() {
               <th>Item code</th>
               <th>Name</th>
               <th>Stock</th>
-              <th>Selling price</th>
+              <th>Retail price</th>
+              <th>Wholesale price</th>
               <th>Purchase price</th>
               <th>Mrp</th>
               <th>Hsn code</th>
@@ -934,7 +941,9 @@ function Item() {
 
                     <td>{p.availableQty || p.stock || 0}</td>
 
-                    <td>₹ {p.sellingPrice || 0}</td>
+                    <td>₹ {p.retailPrice || 0}</td>
+
+                    <td>₹ {p.wholesalePrice || 0}</td>
 
                     <td>₹ {p.costPrice || 0}</td>
 
@@ -1166,11 +1175,21 @@ function Item() {
               </div>
 
               <div className={styles.field}>
-                <label>Selling price</label>
+                <label>Retail price</label>
                 <input
                   type="number"
-                  name="sellingPrice"
-                  value={editProduct.sellingPrice ?? ""}
+                  name="retailPrice"
+                  value={editProduct.retailPrice ?? ""}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className={styles.field}>
+                <label>Wholesale price</label>
+                <input
+                  type="number"
+                  name="wholesalePrice"
+                  value={editProduct.wholesalePrice ?? ""}
                   onChange={handleChange}
                 />
               </div>

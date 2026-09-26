@@ -16,8 +16,6 @@ export const calculateNewItemLocal = (item) => {
         0
     );
 
-    const sellingPrice = Number(item.sellingPrice || 0);
-
     const rawTax =
         item.tax ??
         item.gstRate ??
@@ -116,21 +114,42 @@ export const calculateNewItemLocal = (item) => {
             ? round2(amount / totalStockQty)
             : 0;
 
-    const profitAmount = round2(
-        sellingPrice - netcost
+    const retailPrice = Number(item.retailPrice ?? 0);
+    const wholesalePrice = Number(item.wholesalePrice ?? 0);
+
+    const retailProfitAmount = round2(
+        retailPrice - netcost
     );
 
-    const profitPercent =
-        sellingPrice > 0
+    const wholesaleProfitAmount = round2(
+        wholesalePrice - netcost
+    );
+
+    const retailProfitPercent =
+        retailPrice > 0
             ? round2(
-                (profitAmount / sellingPrice) * 100
+                (retailProfitAmount / retailPrice) * 100
             )
             : 0;
 
-    const roiPercent =
+    const wholesaleProfitPercent =
+        wholesalePrice > 0
+            ? round2(
+                (wholesaleProfitAmount / wholesalePrice) * 100
+            )
+            : 0;
+
+    const retailRoiPercent =
         netcost > 0
             ? round2(
-                (profitAmount / netcost) * 100
+                (retailProfitAmount / netcost) * 100
+            )
+            : 0;
+
+    const wholesaleRoiPercent =
+        netcost > 0
+            ? round2(
+                (wholesaleProfitAmount / netcost) * 100
             )
             : 0;
 
@@ -165,9 +184,21 @@ export const calculateNewItemLocal = (item) => {
 
         netAmount,
 
-        profitAmount,
-        profitPercent,
-        roiPercent,
+        retailPrice,
+        wholesalePrice,
+
+        retailProfitAmount,
+        wholesaleProfitAmount,
+
+        retailProfitPercent,
+        wholesaleProfitPercent,
+
+        retailRoiPercent,
+        wholesaleRoiPercent,
+
+        profitAmount: retailProfitAmount,
+        profitPercent: retailProfitPercent,
+        roiPercent: retailRoiPercent,
 
         receivedQty: totalStockQty,
         pendingQty: 0,
@@ -348,13 +379,11 @@ export const calculatePurchase = async ({
                 mrp: Number(item.mrp || 0),
 
                 retailPrice: Number(
-                    item.retailPrice ||
-                    item.sellingPrice ||
-                    0
+                    item.retailPrice ?? 0
                 ),
 
                 wholesalePrice: Number(
-                    item.wholesalePrice || 0
+                    item.wholesalePrice ?? 0
                 ),
 
                 qtyType:
@@ -556,18 +585,14 @@ export const calculatePurchase = async ({
                 mrp:
                     calc.mrp,
 
-                sellingPrice:
-                    calc.sellingPrice,
-
                 retailPrice:
-                    calc.retailPrice ||
-                    item.retailPrice ||
-                    calc.sellingPrice ||
+                    calc.retailPrice ??
+                    item.retailPrice ??
                     0,
 
                 wholesalePrice:
-                    calc.wholesalePrice ||
-                    item.wholesalePrice ||
+                    calc.wholesalePrice ??
+                    item.wholesalePrice ??
                     0,
 
                 barcode:
@@ -967,8 +992,12 @@ export const handlePurchaseSubmit = async ({
                     0
                 ),
 
-                sellingPrice: Number(
-                    item.sellingPrice || 0
+                retailPrice: Number(
+                    item.retailPrice ?? 0
+                ),
+
+                wholesalePrice: Number(
+                    item.wholesalePrice ?? 0
                 ),
 
                 mrp: Number(item.mrp || 0),

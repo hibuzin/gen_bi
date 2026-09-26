@@ -378,8 +378,36 @@ function CreatePurchase() {
             0
           ),
 
-          sellingPrice: Number(
-            item.sellingPrice || 0
+          retailPrice: Number(
+            item.retailPrice ?? 0
+          ),
+
+          wholesalePrice: Number(
+            item.wholesalePrice ?? 0
+          ),
+
+          retailProfitAmount: Number(
+            item.retailProfitAmount ?? 0
+          ),
+
+          wholesaleProfitAmount: Number(
+            item.wholesaleProfitAmount ?? 0
+          ),
+
+          retailProfitPercent: Number(
+            item.retailProfitPercent ?? 0
+          ),
+
+          wholesaleProfitPercent: Number(
+            item.wholesaleProfitPercent ?? 0
+          ),
+
+          retailRoiPercent: Number(
+            item.retailRoiPercent ?? 0
+          ),
+
+          wholesaleRoiPercent: Number(
+            item.wholesaleRoiPercent ?? 0
           ),
 
           mrp: Number(item.mrp || 0),
@@ -570,11 +598,6 @@ function CreatePurchase() {
 
           if (hasInlineItems && !hasExistingItems) {
             calculateNewPurchaseTotals(
-              billItems,
-              updatedForm
-            );
-          } else if (hasInlineItems && hasExistingItems) {
-            calculateMixedPurchaseTotals(
               billItems,
               updatedForm
             );

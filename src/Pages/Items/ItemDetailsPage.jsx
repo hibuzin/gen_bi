@@ -203,8 +203,11 @@ function ItemDetails() {
                     fullItem.netcost ??
                     "",
 
-                sellingPrice:
-                    fullItem.sellingPrice ?? "",
+                retailPrice:
+                    fullItem.retailPrice ?? "",
+
+                wholesalePrice:
+                    fullItem.wholesalePrice ?? "",
 
                 unit:
                     fullItem.unit ||
@@ -254,7 +257,8 @@ function ItemDetails() {
                         : Number(editProduct.gstRate || 0),
                 mrp: Number(editProduct.mrp),
                 costPrice: Number(editProduct.costPrice),
-                sellingPrice: Number(editProduct.sellingPrice),
+                retailPrice: Number(editProduct.retailPrice),
+                wholesalePrice: Number(editProduct.wholesalePrice),
                 unit: editProduct.unit || "",
                 barcode: editProduct.barcode,
             };
@@ -575,9 +579,16 @@ function ItemDetails() {
                                 <h3 className={styles.cardHeading}>Pricing details</h3>
 
                                 <div className={styles.profileRow}>
-                                    <span className={styles.lbl}>Sales Price</span>
+                                    <span className={styles.lbl}>Retail price</span>
                                     <span className={styles.val}>
-                                        ₹ {formatMoney(item.sellingPrice, firstStock.sellingPrice)}
+                                        ₹ {formatMoney(item.retailPrice, firstStock.retailPrice)}
+                                    </span>
+                                </div>
+
+                                <div className={styles.profileRow}>
+                                    <span className={styles.lbl}>Wholesale price</span>
+                                    <span className={styles.val}>
+                                        ₹ {formatMoney(item.wholesalePrice, firstStock.wholesalePrice)}
                                     </span>
                                 </div>
 
@@ -739,11 +750,19 @@ function ItemDetails() {
 
                                 <div className={styles.field}>
                                     <label>Category</label>
-                                    <select name="categoryId" value={editProduct.categoryId || ""} onChange={handleEditChange}>
-                                        {categories.map((cat) => (
-                                            <option key={cat._id} value={cat._id}>{cat.name}</option>
-                                        ))}
-                                    </select>
+                                    <select
+    name="categoryId"
+    value={editProduct.categoryId || ""}
+    onChange={handleEditChange}
+>
+    <option value="">Select category</option>
+
+    {categories.map((cat) => (
+        <option key={cat._id} value={cat._id}>
+            {cat.name}
+        </option>
+    ))}
+</select>
                                 </div>
 
                                 <div className={styles.field}>
@@ -790,8 +809,23 @@ function ItemDetails() {
                                 </div>
 
                                 <div className={styles.field}>
-                                    <label>Selling price</label>
-                                    <input type="text" name="sellingPrice" value={editProduct.sellingPrice || ""} onChange={handleEditChange} />
+                                    <label>Retail price</label>
+                                    <input
+                                        type="text"
+                                        name="retailPrice"
+                                        value={editProduct.retailPrice ?? ""}
+                                        onChange={handleEditChange}
+                                    />
+                                </div>
+
+                                <div className={styles.field}>
+                                    <label>Wholesale price</label>
+                                    <input
+                                        type="text"
+                                        name="wholesalePrice"
+                                        value={editProduct.wholesalePrice ?? ""}
+                                        onChange={handleEditChange}
+                                    />
                                 </div>
 
                                 <div className={styles.field}>
