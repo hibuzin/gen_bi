@@ -100,10 +100,6 @@ ipcMain.handle("print-receipt", async (event) => {
     // 4. FIND RP3160
     // -------------------------------------------------
 
-   // -------------------------------------------------
-// 4. FIND PREFERRED THERMAL PRINTER
-// -------------------------------------------------
-
 console.log(
   "[PRINT] Step 4: Searching preferred printers:",
   THERMAL_PRINTER_NAMES
